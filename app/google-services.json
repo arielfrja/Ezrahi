@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "556352200875",
+    "firebase_url": "https://ezrahi.firebaseio.com",
+    "project_id": "ezrahi",
+    "storage_bucket": "ezrahi.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:556352200875:android:576fb0d7467818f16297ee",
+        "android_client_info": {
+          "package_name": "com.arielfaridja.ezrahi"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "556352200875-uktsmgqb01c4faf0ljd2ufo79mn39396.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCbl5s9FdUS_2AswBRaXsCLCBr4h8iQjWE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "556352200875-uktsmgqb01c4faf0ljd2ufo79mn39396.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
