@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.arielfaridja.ezrahi.app-mergeDebugResources-46:/values-v31/values-v31.xml",
+            "outputFile": "com.arielfaridja.ezrahi.app-mergeDebugResources-29:/values-v31/values-v31.xml",
             "map": [
                 {
                     "source": "C:\\Users\\ariel\\.gradle\\caches\\transforms-3\\9299ea32c3838a1ab610c6cfa0aa113c\\transformed\\material-1.6.1\\res\\values-v31\\values-v31.xml",

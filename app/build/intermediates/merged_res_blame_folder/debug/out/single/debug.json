@@ -1,70 +1,70 @@
 [
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/mipmap-xhdpi_ic_launcher_round.webp.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/mipmap-xhdpi/ic_launcher_round.webp"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/mipmap-xhdpi_ic_launcher_round.webp.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/mipmap-xhdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/mipmap-mdpi_ic_launcher.webp.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/mipmap-mdpi/ic_launcher.webp"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/drawable_ic_search_black_24dp.xml.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/drawable/ic_search_black_24dp.xml"
     },
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/mipmap-hdpi_ic_launcher.webp.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/mipmap-hdpi/ic_launcher.webp"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/mipmap-xxxhdpi_ic_launcher_round.webp.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/mipmap-xxxhdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/layout_activity_startup.xml.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/layout/activity_startup.xml"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/mipmap-mdpi_ic_launcher_round.webp.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/mipmap-mdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/layout_activity_login.xml.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/layout/activity_login.xml"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/menu_searchbar_actions.xml.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/menu/searchbar_actions.xml"
     },
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/mipmap-mdpi_ic_launcher_round.webp.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/mipmap-mdpi/ic_launcher_round.webp"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/mipmap-xhdpi_ic_launcher.webp.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/mipmap-xhdpi/ic_launcher.webp"
     },
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/drawable_ic_menu_black_24dp.xml.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/drawable/ic_menu_black_24dp.xml"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/layout_activity_main.xml.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/layout/activity_main.xml"
     },
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/mipmap-xxhdpi_ic_launcher_round.webp.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/mipmap-xxhdpi/ic_launcher_round.webp"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/layout_activity_startup.xml.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/layout/activity_startup.xml"
     },
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/mipmap-xxhdpi_ic_launcher.webp.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/mipmap-xxhdpi/ic_launcher.webp"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/mipmap-xxhdpi_ic_launcher.webp.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/mipmap-xxhdpi/ic_launcher.webp"
     },
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/drawable_ic_launcher_background.xml.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/drawable/ic_launcher_background.xml"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/layout_activity_login.xml.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/layout/activity_login.xml"
     },
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/menu_searchbar_actions.xml.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/menu/searchbar_actions.xml"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/mipmap-hdpi_ic_launcher.webp.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/mipmap-hdpi/ic_launcher.webp"
     },
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/mipmap-xhdpi_ic_launcher.webp.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/mipmap-xhdpi/ic_launcher.webp"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/mipmap-xxhdpi_ic_launcher_round.webp.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/mipmap-xxhdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/mipmap-xxxhdpi_ic_launcher.webp.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/mipmap-xxxhdpi/ic_launcher.webp"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/mipmap-hdpi_ic_launcher_round.webp.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/mipmap-hdpi/ic_launcher_round.webp"
     },
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/mipmap-hdpi_ic_launcher_round.webp.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/mipmap-hdpi/ic_launcher_round.webp"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/drawable/ic_launcher_background.xml"
     },
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/drawable_ic_search_black_24dp.xml.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/drawable/ic_search_black_24dp.xml"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/mipmap-xxxhdpi_ic_launcher.webp.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/mipmap-xxxhdpi/ic_launcher.webp"
     },
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/mipmap-xxxhdpi_ic_launcher_round.webp.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/mipmap-xxxhdpi/ic_launcher_round.webp"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/mipmap-mdpi_ic_launcher.webp.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/mipmap-mdpi/ic_launcher.webp"
     },
     {
-        "merged": "com.arielfaridja.ezrahi.app-merged_res-48:/layout_activity_main.xml.flat",
-        "source": "com.arielfaridja.ezrahi.app-main-50:/layout/activity_main.xml"
+        "merged": "com.arielfaridja.ezrahi.app-merged_res-31:/drawable_ic_menu_black_24dp.xml.flat",
+        "source": "com.arielfaridja.ezrahi.app-main-33:/drawable/ic_menu_black_24dp.xml"
     }
 ]
