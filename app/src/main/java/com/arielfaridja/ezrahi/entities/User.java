@@ -26,11 +26,29 @@ public class User implements Serializable {
 
     public User(String id, String firstName, String lastName, String phone, String email, Latlng location) {
         this.id = id;
-        this.phone = phone;
-        this.email = email;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.phone = phone;
+        this.email = email;
         this.location = location;
+    }
+    public User copy(User user)
+    {
+        this.id = user.id;
+        this.firstName = user.firstName;
+        this.lastName = user.lastName;
+        this.phone = user.phone;
+        this.email = user.email;
+        this.location = user.location;
+        return this;
+    }
+    public User() {
+        this.id = "";
+        this.firstName = "";
+        this.lastName = "";
+        this.phone = "";
+        this.email = "";
+        this.location = new Latlng();
     }
 
     public String toString() {

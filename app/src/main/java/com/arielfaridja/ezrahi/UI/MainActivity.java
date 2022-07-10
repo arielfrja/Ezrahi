@@ -5,11 +5,14 @@
 
 package com.arielfaridja.ezrahi.UI;
 
+import android.Manifest;
 import android.content.Context;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.MenuInflater;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
@@ -32,11 +35,13 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 public class MainActivity extends AppCompatActivity {
+
+    MainActivityViewModel model;
     MapView map;
     IMapController mapController;
     MyLocationNewOverlay myLocationOverlay;
+    Context context;
     User user;
-    DataRepo dataRepo;
     private Toolbar toolbar;
     private SearchView searchView;
 
@@ -45,11 +50,9 @@ public class MainActivity extends AppCompatActivity {
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.setUser();
-        Context context = this.getApplicationContext();
-        FirebaseApp.initializeApp(context);
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        this.dataRepo = DataRepoFactory.getInstance();
+        model.init(getIntent());
+        model.context = this.getApplicationContext();
+        context = getApplicationContext();
         Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context));
         this.setContentView(R.layout.activity_main);
         this.findViews();
@@ -67,9 +70,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void setUser() {
-        this.user = new User(this.getIntent().getStringExtra("id"), this.getIntent().getStringExtra("firstName"), this.getIntent().getStringExtra("lastName"), this.getIntent().getStringExtra("phone"), this.getIntent().getStringExtra("email"), new Latlng(this.getIntent().getDoubleExtra("longitude", 32.0D), this.getIntent().getDoubleExtra("latitude", 34.0D)));
-    }
+
 
     public void onBackPressed() {
         if (!this.searchView.isIconified()) {
@@ -92,6 +93,29 @@ public class MainActivity extends AppCompatActivity {
         this.mapController = this.map.getController();
         this.mapController.setZoom(10.0D);
         this.mapController.setCenter(new GeoPoint(31.776551D, 35.233808D));
+
+        ActivityResultLauncher<String[]> locationPermissionRequest =
+                registerForActivityResult(new ActivityResultContracts
+                                .RequestMultiplePermissions(), result -> {
+                            Boolean fineLocationGranted = result.getOrDefault(
+                                    Manifest.permission.ACCESS_FINE_LOCATION, false);
+                            Boolean coarseLocationGranted = result.getOrDefault(
+                                    Manifest.permission.ACCESS_COARSE_LOCATION,false);
+                            if (fineLocationGranted != null && fineLocationGranted) {
+                                // Precise location access granted.
+                            } else if (coarseLocationGranted != null && coarseLocationGranted) {
+                                // Only approximate location access granted.
+                            } else {
+                                // No location access granted.
+                            }
+                        }
+                );
+
+        locationPermissionRequest.launch(new String[] {
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+        });
+
         this.myLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), this.map);
         this.myLocationOverlay.enableMyLocation();
         this.myLocationOverlay.enableFollowLocation();
