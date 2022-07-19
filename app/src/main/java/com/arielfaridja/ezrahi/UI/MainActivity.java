@@ -7,6 +7,8 @@ package com.arielfaridja.ezrahi.UI;
 
 import android.Manifest;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.MenuInflater;
@@ -18,12 +20,7 @@ import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 
 import com.arielfaridja.ezrahi.R;
-import com.arielfaridja.ezrahi.data.DataRepo;
-import com.arielfaridja.ezrahi.data.DataRepoFactory;
-import com.arielfaridja.ezrahi.entities.Latlng;
 import com.arielfaridja.ezrahi.entities.User;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
@@ -50,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        model = new MainActivityViewModel();
         model.init(getIntent());
         model.context = this.getApplicationContext();
         context = getApplicationContext();
@@ -69,7 +67,6 @@ public class MainActivity extends AppCompatActivity {
 
         });
     }
-
 
 
     public void onBackPressed() {
@@ -100,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
                             Boolean fineLocationGranted = result.getOrDefault(
                                     Manifest.permission.ACCESS_FINE_LOCATION, false);
                             Boolean coarseLocationGranted = result.getOrDefault(
-                                    Manifest.permission.ACCESS_COARSE_LOCATION,false);
+                                    Manifest.permission.ACCESS_COARSE_LOCATION, false);
                             if (fineLocationGranted != null && fineLocationGranted) {
                                 // Precise location access granted.
                             } else if (coarseLocationGranted != null && coarseLocationGranted) {
@@ -111,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                 );
 
-        locationPermissionRequest.launch(new String[] {
+        locationPermissionRequest.launch(new String[]{
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION
         });
@@ -120,6 +117,9 @@ public class MainActivity extends AppCompatActivity {
         this.myLocationOverlay.enableMyLocation();
         this.myLocationOverlay.enableFollowLocation();
         this.map.getOverlays().add(this.myLocationOverlay);
+        Bitmap icon = ((BitmapDrawable) getDrawable(R.drawable.current_location)).getBitmap();
+        if (icon != null)
+            myLocationOverlay.setPersonIcon(icon);
         this.mapController.setCenter(this.myLocationOverlay.getMyLocation());
     }
 }

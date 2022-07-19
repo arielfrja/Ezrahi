@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'com.google.gms.google-services'
 }
+apply plugin: 'kotlin-android'
 
 android {
     compileSdk 32
@@ -42,5 +43,11 @@ dependencies {
 
 
     implementation 'org.osmdroid:osmdroid-android:6.1.13'
+    implementation "androidx.core:core-ktx:1.8.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
+}
+repositories {
+    mavenCentral()
+    google()
 }
