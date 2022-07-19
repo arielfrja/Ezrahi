@@ -18,8 +18,8 @@ public class Latlng {
     }
 
     public Latlng() {
-        this.latitude = 32.078442D;
-        this.longitude = 34.799565D;
+        this.latitude = 0.0D;
+        this.longitude = 0.0D;
     }
 
     public Latlng(Latlng latlng) {
