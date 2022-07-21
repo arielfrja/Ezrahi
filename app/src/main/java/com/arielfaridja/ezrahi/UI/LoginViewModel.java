@@ -11,7 +11,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.arielfaridja.ezrahi.data.DataRepo;
 import com.arielfaridja.ezrahi.data.DataRepoFactory;
-import com.arielfaridja.ezrahi.entities.Response;
+import com.arielfaridja.ezrahi.entities.Callback;
 import com.arielfaridja.ezrahi.entities.User;
 
 public class LoginViewModel extends ViewModel {

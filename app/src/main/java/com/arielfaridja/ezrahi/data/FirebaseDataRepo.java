@@ -11,9 +11,9 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.arielfaridja.ezrahi.UI.Callback;
+import com.arielfaridja.ezrahi.entities.Callback;
+import com.arielfaridja.ezrahi.entities.Callback.Response;
 import com.arielfaridja.ezrahi.entities.Latlng;
-import com.arielfaridja.ezrahi.entities.Response;
 import com.arielfaridja.ezrahi.entities.User;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -61,7 +61,7 @@ public class FirebaseDataRepo implements DataRepo {
         return null;
     }
 
-    public MutableLiveData<User> user_get(String uId, Callback callback) {
+    public MutableLiveData<User> user_get(String uId, com.arielfaridja.ezrahi.entities.Callback callback) {
         this.users.document(uId).get().addOnCompleteListener((task) -> {
             if (task.isSuccessful()) {
                 callback.onResponse(new Response(new User(task.getResult().getId(), task.getResult().get("firstName").toString(), task.getResult().get("lastName").toString(), task.getResult().get("email").toString(), task.getResult().get("phone").toString(), new Latlng(((GeoPoint) task.getResult().get("location")).getLatitude(), ((GeoPoint) task.getResult().get("location")).getLongitude()))));
