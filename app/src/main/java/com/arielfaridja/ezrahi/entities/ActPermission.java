@@ -15,7 +15,11 @@ public class ActPermission {
     private Boolean addUser;
     private Boolean removeUser;
 
-    public ActPermission(int level, String name, Boolean showHigher, Boolean showLower, Boolean showRoute, Boolean addUser, Boolean removeUser) {
+    private Boolean showHigherReports;
+    private Boolean showLowerReports;
+    private Boolean canReport;
+
+    public ActPermission(int level, String name, Boolean showHigher, Boolean showLower, Boolean showRoute, Boolean addUser, Boolean removeUser, Boolean showHigherReports, Boolean showLowerReports, Boolean canReport) {
         this.level = level;
         this.name = name;
         this.showHigher = showHigher;
@@ -23,6 +27,33 @@ public class ActPermission {
         this.showRoute = showRoute;
         this.addUser = addUser;
         this.removeUser = removeUser;
+        this.showHigherReports = showHigherReports;
+        this.showLowerReports = showLowerReports;
+        this.canReport = canReport;
+    }
+
+    public Boolean getShowHigherReports() {
+        return showHigherReports;
+    }
+
+    public void setShowHigherReports(Boolean showHigherReports) {
+        this.showHigherReports = showHigherReports;
+    }
+
+    public Boolean getShowLowerReports() {
+        return showLowerReports;
+    }
+
+    public void setShowLowerReports(Boolean showLowerReports) {
+        this.showLowerReports = showLowerReports;
+    }
+
+    public Boolean getCanReport() {
+        return canReport;
+    }
+
+    public void setCanReport(Boolean canReport) {
+        this.canReport = canReport;
     }
 
     public int getActId() {

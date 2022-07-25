@@ -18,7 +18,7 @@
         android:theme="@style/Theme.Ezrahi"
         android:usesCleartextTraffic="true">
         <activity
-            android:name="com.arielfaridja.ezrahi.UI.LoginActivity"
+            android:name="com.arielfaridja.ezrahi.UI.Login.LoginActivity"
             android:exported="false" />
         <activity
             android:name="com.arielfaridja.ezrahi.UI.MainActivity"

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:elevation="8dp"
-    tools:context=".UI.LoginActivity">
+    tools:context=".UI.Login.LoginActivity">
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/email_or_phone"
