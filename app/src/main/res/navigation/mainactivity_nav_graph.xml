@@ -8,6 +8,6 @@
     <fragment
         android:id="@+id/mapFragment"
         android:name="com.arielfaridja.ezrahi.UI.Fragments.Map.mapFragment"
-        android:label="fragment_map"
+        android:label="map"
         tools:layout="@layout/fragment_map" />
 </navigation>

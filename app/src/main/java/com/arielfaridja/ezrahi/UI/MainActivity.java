@@ -7,24 +7,28 @@ package com.arielfaridja.ezrahi.UI;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
-import android.widget.FrameLayout;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.AppBarConfiguration;
+import androidx.navigation.ui.NavigationUI;
 
 import com.arielfaridja.ezrahi.R;
 import com.arielfaridja.ezrahi.entities.Latlng;
 import com.arielfaridja.ezrahi.entities.User;
+import com.google.android.material.navigation.NavigationView;
 
 import org.osmdroid.api.IMapController;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
-import org.osmdroid.util.GeoPoint;
-import org.osmdroid.views.CustomZoomButtonsController.Visibility;
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
 public class MainActivity extends AppCompatActivity implements View.OnFocusChangeListener {
@@ -33,12 +37,14 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     MapView map;
     IMapController mapController;
     MyLocationNewOverlay myLocationOverlay;
+    ////
     User user;
     private Toolbar toolbar;
     private SearchView searchView;
-    /////
-
-    FrameLayout container;
+    NavController navController;
+    private NavigationView navView;
+    private DrawerLayout drawerLayout;
+    private AppBarConfiguration appBarConfiguration;
 
 
     public MainActivity() {
@@ -46,14 +52,21 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.setUser();
+        this.initUser();
         Context context = this.getApplicationContext();
         this.setContentView(R.layout.activity_main);
-
-
         //Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context));
+        //this.mapDefinition();
         this.findViews();
-        this.mapDefinition();
+
+        setSupportActionBar(toolbar);
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setTitle("");
+
+
+        setupNavigationComponent();
+
+
         MenuInflater inflater = this.getMenuInflater();
         this.searchView = (SearchView) this.toolbar.getMenu().getItem(0).getActionView();
         this.toolbar.setOnFocusChangeListener(this);
@@ -62,15 +75,38 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         });
     }
 
-    private void setUser() {
-        this.user = new User(this.getIntent().getStringExtra("id"), this.getIntent().getStringExtra("firstName"), this.getIntent().getStringExtra("lastName"), this.getIntent().getStringExtra("phone"), this.getIntent().getStringExtra("email"), new Latlng(this.getIntent().getDoubleExtra("longitude", 32.0D), this.getIntent().getDoubleExtra("latitude", 34.0D)));
+    @Override
+    public boolean onCreateOptionsMenu(@NonNull Menu menu) {
+        getMenuInflater().inflate(R.menu.searchbar_actions, menu);
+        return true;
+    }
+
+    private void setupNavigationComponent() {
+        NavHostFragment container = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.container);
+        navController = container.getNavController();
+        AppBarConfiguration appBarConfiguration =
+                new AppBarConfiguration.Builder(navController.getGraph()).setDrawerLayout(drawerLayout)
+                        .build();
+        NavigationUI.setupWithNavController(navView, navController);
+        NavigationUI.setupWithNavController(toolbar, navController, appBarConfiguration);
+    }
+
+    private void initUser() {
+        this.user = new User(this.getIntent().getStringExtra("id"),
+                this.getIntent().getStringExtra("firstName"),
+                this.getIntent().getStringExtra("lastName"),
+                this.getIntent().getStringExtra("phone"),
+                this.getIntent().getStringExtra("email"),
+                new Latlng(this.getIntent().getDoubleExtra("longitude", 32.0D),
+                        this.getIntent().getDoubleExtra("latitude", 34.0D)));
     }
 
     public void onBackPressed() {
         if (!this.searchView.isIconified()) {
             this.searchView.setIconified(true);
         } else {
-            super.onBackPressed();
+            //Do nothing
         }
 
     }
@@ -79,9 +115,12 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         ////delete that after modification
         //this.map = this.findViewById(R.id.map);
         this.toolbar = this.findViewById(R.id.toolbar);
-        container = findViewById(R.id.container);
+        drawerLayout = findViewById(R.id.drawerLayout);
+        navView = findViewById(R.id.navView);
     }
 
+    ////delete that after modification
+    /*////
     private void mapDefinition() {
         this.map.setTileSource(TileSourceFactory.MAPNIK);
         this.map.setMultiTouchControls(true);
@@ -95,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         this.map.getOverlays().add(this.myLocationOverlay);
         this.mapController.setCenter(this.myLocationOverlay.getMyLocation());
     }
-
+///*/
     public User getUser() {
         return user;
     }

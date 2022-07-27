@@ -35,7 +35,8 @@ class mapFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         var view = inflater.inflate(R.layout.fragment_map, container, false)
-        user = (activity as MainActivity).user
+        if (activity is MainActivity)
+            user = (activity as MainActivity).user
         Configuration.getInstance()
             .load(context, PreferenceManager.getDefaultSharedPreferences(context))
         this.findViews(view)

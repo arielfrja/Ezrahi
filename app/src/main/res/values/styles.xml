@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Searchbar" parent="android:Widget.DeviceDefault.Light.ActionBar">
+        <item name="android:radius">30dp</item>
+        <item name="height">60dp</item>
+        <item name="android:paddingHorizontal">24dp</item>
+        <item name="background">@color/white</item>
+    </style>
+
+    <style name="AppBar" parent="Theme.Ezrahi">
+        <item name="android:textColorSecondary">@color/design_default_color_on_secondary</item>
+        <item name="android:displayOptions">none</item>
+    </style>
+
+    <style name="Searchbar.rounded">
+        <item name="android:radius">30dp</item>
+    </style>
+</resources>

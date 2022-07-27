@@ -8,8 +8,5 @@
         android:title="@+id/search"
         app:actionViewClass="androidx.appcompat.widget.SearchView"
         app:showAsAction="always" />
-    <item
-        android:icon="@drawable/ic_menu_black_24dp"
-        android:title="@+id/app_navigation"
-        app:showAsAction="always" />
+
 </menu>

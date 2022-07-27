@@ -17,14 +17,5 @@
     <string name="title_activity_login">LoginActivity</string>
     <string name="welcome">"Welcome !"</string>
 
-    <style name="Searchbar" parent="android:Widget.DeviceDefault.Light.ActionBar">
-        <item name="android:radius">30dp</item>
-        <item name="height">60dp</item>
-        <item name="android:paddingHorizontal">24dp</item>
-        <item name="background">@color/white</item>
-    </style>
 
-    <style name="Searchbar.rounded">
-        <item name="android:radius">30dp</item>
-    </style>
 </resources>
