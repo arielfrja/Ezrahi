@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_map"
+            android:icon="@drawable/ic_baseline_map_24"
+            android:title="map" />
+        <item
+            android:id="@+id/nav_chat"
+            android:icon="@drawable/ic_baseline_chat_24"
+            android:title="chat" />
+        <item
+            android:id="@+id/nav_speed_dial"
+            android:icon="@drawable/ic_baseline_phone_24"
+            android:title="speed dial" />
+        <item
+            android:id="@+id/nav_activity_overview"
+            android:icon="@drawable/ic_baseline_vertical_split_24"
+            android:title="Activity Overview" />
+
+    </group>
+</menu>
