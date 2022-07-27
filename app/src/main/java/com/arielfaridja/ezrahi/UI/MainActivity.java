@@ -7,23 +7,19 @@ package com.arielfaridja.ezrahi.UI;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.MenuInflater;
+import android.view.View;
+import android.widget.FrameLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 
 import com.arielfaridja.ezrahi.R;
-import com.arielfaridja.ezrahi.data.DataRepo;
-import com.arielfaridja.ezrahi.data.DataRepoFactory;
 import com.arielfaridja.ezrahi.entities.Latlng;
 import com.arielfaridja.ezrahi.entities.User;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.osmdroid.api.IMapController;
-import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController.Visibility;
@@ -31,14 +27,19 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnFocusChangeListener {
+    //delete that after modification
+    /////
     MapView map;
     IMapController mapController;
     MyLocationNewOverlay myLocationOverlay;
     User user;
-    DataRepo dataRepo;
     private Toolbar toolbar;
     private SearchView searchView;
+    /////
+
+    FrameLayout container;
+
 
     public MainActivity() {
     }
@@ -47,23 +48,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         this.setUser();
         Context context = this.getApplicationContext();
-        FirebaseApp.initializeApp(context);
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        this.dataRepo = DataRepoFactory.getInstance();
-        Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context));
         this.setContentView(R.layout.activity_main);
+
+
+        //Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context));
         this.findViews();
         this.mapDefinition();
         MenuInflater inflater = this.getMenuInflater();
         this.searchView = (SearchView) this.toolbar.getMenu().getItem(0).getActionView();
+        this.toolbar.setOnFocusChangeListener(this);
         this.toolbar.setOnClickListener((view) -> {
             this.searchView.setIconified(false);
-        });
-        this.toolbar.setOnFocusChangeListener((view, b) -> {
-            if (!b) {
-                this.searchView.setIconified(true);
-            }
-
         });
     }
 
@@ -81,8 +76,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void findViews() {
-        this.map = this.findViewById(R.id.map);
+        ////delete that after modification
+        //this.map = this.findViewById(R.id.map);
         this.toolbar = this.findViewById(R.id.toolbar);
+        container = findViewById(R.id.container);
     }
 
     private void mapDefinition() {
@@ -97,5 +94,20 @@ public class MainActivity extends AppCompatActivity {
         this.myLocationOverlay.enableFollowLocation();
         this.map.getOverlays().add(this.myLocationOverlay);
         this.mapController.setCenter(this.myLocationOverlay.getMyLocation());
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    @Override
+    public void onFocusChange(View view, boolean b) {
+        if (!b) {
+            this.searchView.setIconified(true);
+            this.toolbar.setBackgroundColor(getResources().getColor(R.color.transparent, getTheme()));
+        } else {
+            this.toolbar.setBackgroundColor(getResources().getColor(com.google.android.material.R.color.design_default_color_primary_variant, getTheme()));
+        }
+
     }
 }
