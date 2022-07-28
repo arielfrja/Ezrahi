@@ -9,7 +9,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.arielfaridja.ezrahi.R
-import com.arielfaridja.ezrahi.UI.MainActivity
+import com.arielfaridja.ezrahi.UI.Main.MainActivity
 import com.arielfaridja.ezrahi.entities.User
 import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration

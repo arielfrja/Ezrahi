@@ -21,7 +21,7 @@
             android:name="com.arielfaridja.ezrahi.UI.Login.LoginActivity"
             android:exported="false" />
         <activity
-            android:name="com.arielfaridja.ezrahi.UI.MainActivity"
+            android:name="com.arielfaridja.ezrahi.UI.Main.MainActivity"
             android:exported="true" />
         <activity
             android:name="com.arielfaridja.ezrahi.UI.StartupActivity"

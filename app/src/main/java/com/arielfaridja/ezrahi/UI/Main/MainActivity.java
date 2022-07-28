@@ -3,7 +3,7 @@
 // (powered by FernFlower decompiler)
 //
 
-package com.arielfaridja.ezrahi.UI;
+package com.arielfaridja.ezrahi.UI.Main;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -30,6 +31,7 @@ import com.google.android.material.navigation.NavigationView;
 import org.osmdroid.api.IMapController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
+
 
 public class MainActivity extends AppCompatActivity implements View.OnFocusChangeListener {
     //delete that after modification
@@ -45,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     private NavigationView navView;
     private DrawerLayout drawerLayout;
     private AppBarConfiguration appBarConfiguration;
+    private MainActivityViewModel model;
 
 
     public MainActivity() {
@@ -52,7 +55,8 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.initUser();
+        model = new ViewModelProvider(this).get(MainActivityViewModel.class);
+        model.initUser(getIntent());
         Context context = this.getApplicationContext();
         this.setContentView(R.layout.activity_main);
         //Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context));
@@ -61,9 +65,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
 
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
-        actionBar.setTitle("");
-
-
+        
         setupNavigationComponent();
 
 

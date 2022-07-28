@@ -16,7 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.arielfaridja.ezrahi.R
-import com.arielfaridja.ezrahi.UI.MainActivity
+import com.arielfaridja.ezrahi.UI.Main.MainActivity
 import com.arielfaridja.ezrahi.entities.User
 import com.google.android.material.textfield.TextInputLayout
 
