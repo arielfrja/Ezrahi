@@ -5,6 +5,7 @@
 package com.arielfaridja.ezrahi.UI.Login
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -21,6 +22,7 @@ import com.arielfaridja.ezrahi.entities.User
 import com.google.android.material.textfield.TextInputLayout
 
 class LoginActivity : AppCompatActivity(), Observer<User?> {
+    private lateinit var sharedPreferences: SharedPreferences
     lateinit var model: LoginViewModel
     lateinit var emailPhone: TextInputLayout
     lateinit var password: TextInputLayout
@@ -30,6 +32,9 @@ class LoginActivity : AppCompatActivity(), Observer<User?> {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         model = ViewModelProvider(this).get(LoginViewModel::class.java)
+        sharedPreferences = getSharedPreferences("UserSharedPref", MODE_PRIVATE)
+
+
         this.setContentView(R.layout.activity_login)
         emailPhone = findViewById<View>(R.id.email_or_phone) as TextInputLayout
         password = findViewById<View>(R.id.password) as TextInputLayout
@@ -82,15 +87,28 @@ class LoginActivity : AppCompatActivity(), Observer<User?> {
 
     override fun onChanged(user: User?) {
         if (user != null) {
+            putUserToSP(user)
             val intent = Intent(this, MainActivity::class.java)
-            intent.putExtra("firstName", user.firstName)
-            intent.putExtra("lastName", user.lastName)
-            intent.putExtra("id", user.id)
-            intent.putExtra("phone", user.phone)
-            intent.putExtra("email", user.email)
-            intent.putExtra("latitude", user.location.latitude)
-            intent.putExtra("longitude", user.location.longitude)
+//            intent.putExtra("firstName", user.firstName)
+//            intent.putExtra("lastName", user.lastName)
+//            intent.putExtra("id", user.id)
+//            intent.putExtra("phone", user.phone)
+//            intent.putExtra("email", user.email)
+//            intent.putExtra("latitude", user.location.latitude)
+//            intent.putExtra("longitude", user.location.longitude)
             this.startActivity(intent)
         }
+    }
+
+
+    private fun putUserToSP(u: User) {
+        val editor = sharedPreferences.edit()
+        for (field in u.toHashMap().keys) {
+            editor.putString(
+                field as String,
+                u.toHashMap()[field].toString()
+            )
+        }
+        editor.commit()
     }
 }

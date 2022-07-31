@@ -11,13 +11,13 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.arielfaridja.ezrahi.entities.Activity;
 import com.arielfaridja.ezrahi.entities.Callback;
 import com.arielfaridja.ezrahi.entities.Callback.Response;
 import com.arielfaridja.ezrahi.entities.Latlng;
 import com.arielfaridja.ezrahi.entities.User;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.Timestamp;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -27,15 +27,14 @@ import com.google.firebase.firestore.GeoPoint;
 
 import org.json.JSONArray;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class FirebaseDataRepo implements DataRepo {
     private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final CollectionReference Activities;
     private final CollectionReference users;
     String TAG = "FirebaseDataRepo";
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     public FirebaseDataRepo() {
         //useFirebaseEmulators();//debug only!!
@@ -50,16 +49,16 @@ public class FirebaseDataRepo implements DataRepo {
 
     public Boolean user_add(User user) {
         final Boolean[] res = new Boolean[1];
-        Map<String, Object> data = new HashMap<>();
-        data.put("FirstName", user.getFirstName());
-        data.put("LastName", user.getLastName());
-        data.put("Email", user.getEmail());
-        data.put("Location", new GeoPoint(user.getLocation().getLatitude(),
-                user.getLocation().getLatitude()));
-        data.put("phone", user.getPhone());
-        data.put("lastUpdate", Timestamp.now());
-
-
+//        Map<String, Object> data = new HashMap<>();
+//        data.put("FirstName", user.getFirstName());
+//        data.put("LastName", user.getLastName());
+//        data.put("Email", user.getEmail());
+//        data.put("Phone", user.getPhone());
+//        data.put("LastUpdate", Timestamp.now());
+        Map<String, Object> data = user.toHashMap();
+        data.put("Location", new GeoPoint((double) data.get("Latitude"), (double) data.get("Longitude")));
+        data.remove("Latitude");
+        data.remove("Longitude");
         //            public void onSuccess(DocumentReference documentReference) {
 //                Log.d(FirebaseDataRepo.this.TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
 //                res[0] = true;
@@ -131,9 +130,24 @@ public class FirebaseDataRepo implements DataRepo {
         return null;
     }
 
+    @Override
+    public MutableLiveData<Activity> activity_get(String actId, Callback callback) {
+        return null;
+    }
+
+    @Override
+    public Activity activity_getCurrent() {
+        return null;
+    }
+
+
     private void updateLocalUser(FirebaseUser user) {
         if (user != null) {
         }
 
+    }
+
+    public Boolean user_isSignedIn() {
+        return mAuth.getCurrentUser() != null;
     }
 }

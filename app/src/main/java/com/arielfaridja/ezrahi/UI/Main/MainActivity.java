@@ -5,17 +5,26 @@
 
 package com.arielfaridja.ezrahi.UI.Main;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.splashscreen.SplashScreen;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
@@ -24,22 +33,13 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.arielfaridja.ezrahi.R;
+import com.arielfaridja.ezrahi.UI.Login.LoginActivity;
 import com.arielfaridja.ezrahi.entities.Latlng;
 import com.arielfaridja.ezrahi.entities.User;
 import com.google.android.material.navigation.NavigationView;
 
-import org.osmdroid.api.IMapController;
-import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
-
 
 public class MainActivity extends AppCompatActivity implements View.OnFocusChangeListener {
-    //delete that after modification
-    /////
-    MapView map;
-    IMapController mapController;
-    MyLocationNewOverlay myLocationOverlay;
-    ////
     User user;
     private Toolbar toolbar;
     private SearchView searchView;
@@ -48,14 +48,57 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     private DrawerLayout drawerLayout;
     private AppBarConfiguration appBarConfiguration;
     private MainActivityViewModel model;
-
+    Boolean isReady = false;
 
     public MainActivity() {
     }
 
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
+
         super.onCreate(savedInstanceState);
         model = new ViewModelProvider(this).get(MainActivityViewModel.class);
+        splashScreen.setKeepOnScreenCondition(() -> !isReady);
+        MainActivity thisActivity = this;
+        model.getIsSignIn().observe(this, aBoolean -> {
+            if (aBoolean != null)
+                if (!aBoolean) {
+                    Intent intent = new Intent(thisActivity, LoginActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    setIsReady(true);
+
+                    startActivity(intent);
+                } else {
+                    model.loadUserDatafromSP(getSharedPreferences("UserSharedPref", MODE_PRIVATE));
+                    model.loadActivityDatafromSP(getSharedPreferences("ActivitySharedPref", MODE_PRIVATE));
+                    setIsReady(true);
+                }
+            if (model.getActivity().getId() == null) {
+                //TODO: Add dialog
+
+                View view = thisActivity.getLayoutInflater().inflate(R.layout.no_activity_dialog, null);
+                TextView uidBox = view.findViewById(R.id.dialog_uId_box);
+                Button createActivityButton = view.findViewById(R.id.dialog_create_activity_button);
+                uidBox.setText(model.getUser().getId());
+                uidBox.setOnLongClickListener(view1 ->
+                {
+                    ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    ClipData clip = ClipData.newPlainText(model.getUser().getId(), model.getUser().getId());
+                    clipboard.setPrimaryClip(clip);
+                    Toast.makeText(thisActivity, "Text copied!", Toast.LENGTH_SHORT).show();
+                    return true;
+                });
+                createActivityButton.setOnClickListener(view12 -> {
+                    //TODO: go to activity overview on edit mode
+                });
+                AlertDialog.Builder dialog = new AlertDialog.Builder(this)
+                        .setView(view);
+                setIsReady(true);
+                dialog.create().show();
+
+
+            }
+        });
         model.initUser(getIntent());
         Context context = this.getApplicationContext();
         this.setContentView(R.layout.activity_main);
@@ -63,9 +106,13 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         //this.mapDefinition();
         this.findViews();
 
+        //check data repo functions
+        //model.dataRepo.user_add(user);
+
+
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
-        
+
         setupNavigationComponent();
 
 
@@ -105,12 +152,22 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     }
 
     public void onBackPressed() {
+        closeKeyboard();
         if (!this.searchView.isIconified()) {
             this.searchView.setIconified(true);
         } else {
             //Do nothing
         }
 
+    }
+
+    private void closeKeyboard() {
+        View view = getCurrentFocus();
+        if (view != null) {
+            InputMethodManager manager =
+                    (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            manager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 
     private void findViews() {
@@ -121,22 +178,6 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         navView = findViewById(R.id.navView);
     }
 
-    ////delete that after modification
-    /*////
-    private void mapDefinition() {
-        this.map.setTileSource(TileSourceFactory.MAPNIK);
-        this.map.setMultiTouchControls(true);
-        this.map.getZoomController().setVisibility(Visibility.SHOW_AND_FADEOUT);
-        this.mapController = this.map.getController();
-        this.mapController.setZoom(10.0D);
-        this.mapController.setCenter(new GeoPoint(31.776551D, 35.233808D));
-        this.myLocationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(this), this.map);
-        this.myLocationOverlay.enableMyLocation();
-        this.myLocationOverlay.enableFollowLocation();
-        this.map.getOverlays().add(this.myLocationOverlay);
-        this.mapController.setCenter(this.myLocationOverlay.getMyLocation());
-    }
-///*/
     public User getUser() {
         return user;
     }
@@ -150,5 +191,13 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             this.toolbar.setBackgroundColor(getResources().getColor(com.google.android.material.R.color.design_default_color_primary_variant, getTheme()));
         }
 
+    }
+
+    public boolean getIsReady() {
+        return isReady;
+    }
+
+    public void setIsReady(boolean isSignedIn) {
+        this.isReady = isSignedIn;
     }
 }

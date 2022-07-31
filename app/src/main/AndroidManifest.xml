@@ -11,26 +11,32 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_launcher_v2"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_launcher_v2_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Ezrahi"
         android:usesCleartextTraffic="true">
         <activity
             android:name="com.arielfaridja.ezrahi.UI.Login.LoginActivity"
+            android:noHistory="true"
             android:exported="false" />
         <activity
             android:name="com.arielfaridja.ezrahi.UI.Main.MainActivity"
-            android:exported="true" />
-        <activity
-            android:name="com.arielfaridja.ezrahi.UI.StartupActivity"
-            android:exported="true">
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@style/Theme.Ezrahi.SplashScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+        </activity>
+        <activity
+            android:name="com.arielfaridja.ezrahi.UI.StartupActivity"
+            android:exported="true">
+
         </activity>
     </application>
 

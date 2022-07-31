@@ -3,6 +3,7 @@ package com.arielfaridja.ezrahi.data;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.arielfaridja.ezrahi.entities.Activity;
 import com.arielfaridja.ezrahi.entities.Callback;
 import com.arielfaridja.ezrahi.entities.Latlng;
 import com.arielfaridja.ezrahi.entities.User;
@@ -16,7 +17,7 @@ public interface DataRepo {
 
     Boolean user_update(User user);
 
-    MutableLiveData<User> user_get(String user, com.arielfaridja.ezrahi.entities.Callback callback);
+    MutableLiveData<User> user_get(String user, Callback callback);
 
     JSONArray user_getAll();
 
@@ -25,4 +26,10 @@ public interface DataRepo {
     void auth_email_user_register(User user, String password);
 
     LiveData<User> auth_email_user_login(String username, String password, Callback callback);
+
+    MutableLiveData<Activity> activity_get(String actId, Callback callback);
+
+    Activity activity_getCurrent();
+
+    Boolean user_isSignedIn();
 }

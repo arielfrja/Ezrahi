@@ -6,6 +6,7 @@
 package com.arielfaridja.ezrahi.entities;
 
 import java.io.Serializable;
+import java.util.HashMap;
 
 public class User implements Serializable {
     protected String id;
@@ -31,6 +32,10 @@ public class User implements Serializable {
         this.firstName = firstName;
         this.lastName = lastName;
         this.location = location;
+    }
+
+    public User() {
+
     }
 
     public String toString() {
@@ -83,5 +88,18 @@ public class User implements Serializable {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public HashMap toHashMap() {
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("uId", this.id);
+        data.put("FirstName", this.firstName);
+        data.put("LastName", this.lastName);
+        data.put("Email", this.email);
+        data.put("Latitude", this.location.getLatitude());
+        data.put("Longitude", this.location.getLongitude());
+        data.put("Phone", this.phone);
+
+        return data;
     }
 }

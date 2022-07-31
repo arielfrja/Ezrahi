@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="head"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="32dp"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/noActivityDialogHeader"
+        style="@style/MaterialAlertDialog.Material3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="4dp"
+        android:text="Sorry bro" />
+
+    <TextView
+        android:id="@+id/textView2"
+        style="@style/MaterialAlertDialog.Material3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:text=" you are not assigned to any activity" />
+
+    <TextView
+        android:id="@+id/textView3"
+        style="@style/MaterialAlertDialog.Material3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
+        android:paddingHorizontal="16dp"
+        android:text="ask activity's admin to add you with this code\n(copy by hold it):" />
+
+    <TextView
+        android:id="@+id/dialog_uId_box"
+        style="@style/MaterialAlertDialog.Material3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:paddingHorizontal="16dp"
+        android:text="TextView"
+        android:textColor="@color/purple_700" />
+
+    <Button
+        android:id="@+id/dialog_create_activity_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="or create one by yourself" />
+
+</LinearLayout>

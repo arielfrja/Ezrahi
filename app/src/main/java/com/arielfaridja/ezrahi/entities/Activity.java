@@ -24,6 +24,10 @@ public class Activity {
         this.permissions = permissions;
     }
 
+    public Activity() {
+
+    }
+
     public String getId() {
         return this.id;
     }
