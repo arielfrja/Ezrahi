@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.arielfaridja.ezrahi.R
+import com.arielfaridja.ezrahi.UI.Main.MainActivity
 
 class ActivityOverviewFragment : Fragment() {
 
@@ -21,7 +22,9 @@ class ActivityOverviewFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         var view = inflater.inflate(R.layout.fragment_activity_overview, container, false)
-
+        val mainActivity = activity as MainActivity
+        mainActivity.supportActionBar!!.title = null
+        mainActivity.setToolbarFloating(false)
         return view
     }
 

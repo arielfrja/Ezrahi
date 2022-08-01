@@ -35,8 +35,12 @@ class mapFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         var view = inflater.inflate(R.layout.fragment_map, container, false)
-        if (activity is MainActivity)
-            user = (activity as MainActivity).user
+        if (activity is MainActivity) {
+            val mainActivity = activity as MainActivity
+            user = mainActivity.user
+            mainActivity.supportActionBar!!.title = null
+            mainActivity.setToolbarFloating(true)
+        }
         Configuration.getInstance()
             .load(context, PreferenceManager.getDefaultSharedPreferences(context))
         this.findViews(view)

@@ -8,9 +8,10 @@
 
     <TextView
         android:id="@+id/noActivityDialogHeader"
-        style="@style/MaterialAlertDialog.Material3"
+        style="@style/TextAppearance.Material3.HeadlineSmall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:paddingHorizontal="16dp"
         android:paddingVertical="4dp"
         android:text="Sorry bro" />
@@ -48,6 +49,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
+        android:layout_marginBottom="8dp"
         android:text="or create one by yourself" />
 
 </LinearLayout>

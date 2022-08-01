@@ -5,9 +5,25 @@
     android:id="@+id/mainactivity_nav_graph"
     app:startDestination="@id/mapFragment">
 
+    <action
+        android:id="@+id/toActivityOverview"
+        app:destination="@id/activityOverviewFragment" />
     <fragment
         android:id="@+id/mapFragment"
         android:name="com.arielfaridja.ezrahi.UI.Fragments.Map.mapFragment"
         android:label="map"
-        tools:layout="@layout/fragment_map" />
+        tools:layout="@layout/fragment_map">
+        <action
+            android:id="@+id/action_mapFragment_to_activityOverviewFragment"
+            app:destination="@id/activityOverviewFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/activityOverviewFragment"
+        android:name="com.arielfaridja.ezrahi.UI.Fragments.ActivityOverview.ActivityOverviewFragment"
+        android:label="fragment_activity_overview"
+        tools:layout="@layout/fragment_activity_overview">
+        <deepLink
+            android:id="@+id/deepLink"
+            app:uri="ezrahi://activityoverview" />
+    </fragment>
 </navigation>

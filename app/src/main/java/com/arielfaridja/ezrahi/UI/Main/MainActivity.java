@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.TextView;
@@ -24,8 +25,11 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.cardview.widget.CardView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.splashscreen.SplashScreen;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.FragmentContainerView;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
@@ -74,27 +78,8 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                     setIsReady(true);
                 }
             if (model.getActivity().getId() == null) {
-                //TODO: Add dialog
-
-                View view = thisActivity.getLayoutInflater().inflate(R.layout.no_activity_dialog, null);
-                TextView uidBox = view.findViewById(R.id.dialog_uId_box);
-                Button createActivityButton = view.findViewById(R.id.dialog_create_activity_button);
-                uidBox.setText(model.getUser().getId());
-                uidBox.setOnLongClickListener(view1 ->
-                {
-                    ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                    ClipData clip = ClipData.newPlainText(model.getUser().getId(), model.getUser().getId());
-                    clipboard.setPrimaryClip(clip);
-                    Toast.makeText(thisActivity, "Text copied!", Toast.LENGTH_SHORT).show();
-                    return true;
-                });
-                createActivityButton.setOnClickListener(view12 -> {
-                    //TODO: go to activity overview on edit mode
-                });
-                AlertDialog.Builder dialog = new AlertDialog.Builder(this)
-                        .setView(view);
                 setIsReady(true);
-                dialog.create().show();
+                showDialog(thisActivity);
 
 
             }
@@ -122,6 +107,32 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         this.toolbar.setOnClickListener((view) -> {
             this.searchView.setIconified(false);
         });
+    }
+
+    private void showDialog(MainActivity thisActivity) {
+        View view = thisActivity.getLayoutInflater().inflate(R.layout.no_activity_dialog, null);
+
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(view).create();
+
+        TextView uidBox = view.findViewById(R.id.dialog_uId_box);
+        Button createActivityButton = view.findViewById(R.id.dialog_create_activity_button);
+        uidBox.setText(model.getUser().getId());
+        uidBox.setOnLongClickListener(view1 ->
+        {
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText(model.getUser().getId(), model.getUser().getId());
+            clipboard.setPrimaryClip(clip);
+            Toast.makeText(thisActivity, "Text copied!", Toast.LENGTH_SHORT).show();
+            return true;
+        });
+        createActivityButton.setOnClickListener(view12 -> {
+            navController.navigate(R.id.action_mapFragment_to_activityOverviewFragment);
+            dialog.cancel();
+            //TODO: go to activity overview on edit mode
+        });
+        dialog.show();
     }
 
     @Override
@@ -179,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     }
 
     public User getUser() {
-        return user;
+        return model.getUser();
     }
 
     @Override
@@ -199,5 +210,43 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
 
     public void setIsReady(boolean isSignedIn) {
         this.isReady = isSignedIn;
+    }
+
+    public void setToolbarFloating(boolean b) {
+        CardView toolbarContainer = findViewById(R.id.toolbarContainer);
+        FragmentContainerView container = findViewById(R.id.container);
+
+        ConstraintLayout.LayoutParams layoutParams = new ConstraintLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        ConstraintLayout.LayoutParams layoutParams2 = new ConstraintLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ConstraintLayout.LayoutParams.MATCH_CONSTRAINT);
+
+        layoutParams.topToTop = 0;
+        layoutParams.endToEnd = 0;
+        layoutParams.startToStart = 0;
+        layoutParams.verticalBias = 0f;
+
+        layoutParams.bottomToBottom = 0;
+        layoutParams2.rightToRight = 0;
+        layoutParams2.leftToLeft = 0;
+
+        if (!b) {
+
+            layoutParams.setMargins(0, 0, 0, 0);
+
+            layoutParams2.topToBottom = toolbarContainer.getId();
+        }
+        if (b) {
+
+            layoutParams.setMargins(32, 32, 32, 0);
+
+            layoutParams2.topToTop = 0;
+
+
+        }
+        toolbarContainer.setLayoutParams(layoutParams);
+        container.setLayoutParams(layoutParams2);
+
     }
 }
