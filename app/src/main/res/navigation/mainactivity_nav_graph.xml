@@ -3,27 +3,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mainactivity_nav_graph"
-    app:startDestination="@id/mapFragment">
+    app:startDestination="@id/nav_map">
 
     <action
         android:id="@+id/toActivityOverview"
-        app:destination="@id/activityOverviewFragment" />
+        app:destination="@id/nav_activity_overview" />
     <fragment
-        android:id="@+id/mapFragment"
+        android:id="@+id/nav_map"
         android:name="com.arielfaridja.ezrahi.UI.Fragments.Map.mapFragment"
         android:label="map"
         tools:layout="@layout/fragment_map">
         <action
             android:id="@+id/action_mapFragment_to_activityOverviewFragment"
-            app:destination="@id/activityOverviewFragment" />
+            app:destination="@id/nav_activity_overview" />
     </fragment>
     <fragment
-        android:id="@+id/activityOverviewFragment"
+        android:id="@+id/nav_activity_overview"
         android:name="com.arielfaridja.ezrahi.UI.Fragments.ActivityOverview.ActivityOverviewFragment"
         android:label="fragment_activity_overview"
         tools:layout="@layout/fragment_activity_overview">
-        <deepLink
-            android:id="@+id/deepLink"
-            app:uri="ezrahi://activityoverview" />
     </fragment>
 </navigation>

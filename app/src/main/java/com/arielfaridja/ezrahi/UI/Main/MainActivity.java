@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                 .findFragmentById(R.id.container);
         navController = container.getNavController();
         AppBarConfiguration appBarConfiguration =
-                new AppBarConfiguration.Builder(navController.getGraph()).setDrawerLayout(drawerLayout)
+                new AppBarConfiguration.Builder(R.id.nav_map, R.id.nav_activity_overview, R.id.nav_chat, R.id.nav_speed_dial).setDrawerLayout(drawerLayout)
                         .build();
         NavigationUI.setupWithNavController(navView, navController);
         NavigationUI.setupWithNavController(toolbar, navController, appBarConfiguration);
