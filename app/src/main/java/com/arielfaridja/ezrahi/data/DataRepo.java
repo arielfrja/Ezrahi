@@ -23,7 +23,7 @@ public interface DataRepo {
 
     Latlng user_getLocation(String uId);
 
-    void auth_email_user_register(User user, String password);
+    void auth_email_user_register(User user, String password, Callback callback);
 
     LiveData<User> auth_email_user_login(String username, String password, Callback callback);
 

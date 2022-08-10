@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import com.arielfaridja.ezrahi.R
 import com.arielfaridja.ezrahi.UI.Main.MainActivity
 import com.arielfaridja.ezrahi.entities.User
@@ -57,11 +56,6 @@ class mapFragment : Fragment() {
         this.toolbar = activity?.findViewById<Toolbar>(R.id.toolbar)
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        model = ViewModelProvider(this).get(MapViewModel::class.java)
-        // TODO: Use the ViewModel
-    }
 
     private fun mapDefinition() {
         map!!.setTileSource(TileSourceFactory.MAPNIK)

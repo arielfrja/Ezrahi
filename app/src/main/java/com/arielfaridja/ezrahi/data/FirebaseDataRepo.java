@@ -104,16 +104,18 @@ public class FirebaseDataRepo implements DataRepo {
         return null;
     }
 
-    public void auth_email_user_register(final User user, String password) {
+    public void auth_email_user_register(final User user, String password, Callback callback) {
         this.mAuth.createUserWithEmailAndPassword(user.getEmail(), password).addOnSuccessListener(new OnSuccessListener<AuthResult>() {
             public void onSuccess(AuthResult authResult) {
                 user.setId(authResult.getUser().getUid());
                 FirebaseDataRepo.this.user_add(user);
                 FirebaseDataRepo.this.updateLocalUser(authResult.getUser());
+                callback.onResponse(new Response(user));
             }
         }).addOnFailureListener(new OnFailureListener() {
             public void onFailure(@NonNull Exception e) {
-                Log.w(FirebaseDataRepo.this.TAG, "createUserWithEmail:failure", e);
+                Log.e(FirebaseDataRepo.this.TAG, "createUserWithEmail:failure", e);
+                callback.onResponse(new Response(e));
             }
         });
     }
@@ -121,7 +123,16 @@ public class FirebaseDataRepo implements DataRepo {
     public LiveData<User> auth_email_user_login(String email, String password, Callback callback) {
         this.mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener((task) -> {
             if (task.isSuccessful()) {
-                this.user_get(task.getResult().getUser().getUid(), callback);
+                if (task.getResult().getUser().isEmailVerified()) {
+                    this.user_get(task.getResult().getUser().getUid(), callback);
+                } else {
+                    task.getResult().getUser().sendEmailVerification().addOnCompleteListener(task1 -> {
+                        if (task1.isSuccessful())
+                            callback.onResponse(new Response(new Exception("You have to verify your email first, we sent you link right now")));
+                        else
+                            callback.onResponse(new Response(new Exception("You have to verify your email first")));
+                    });
+                }
             } else {
                 callback.onResponse(new Response(task.getException()));
             }
@@ -148,6 +159,9 @@ public class FirebaseDataRepo implements DataRepo {
     }
 
     public Boolean user_isSignedIn() {
-        return mAuth.getCurrentUser() != null;
+        if (mAuth.getCurrentUser() != null) {
+            return mAuth.getCurrentUser().isEmailVerified();
+        }
+        return false;
     }
 }

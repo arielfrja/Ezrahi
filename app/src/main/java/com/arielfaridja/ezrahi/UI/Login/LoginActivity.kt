@@ -4,6 +4,7 @@
 //
 package com.arielfaridja.ezrahi.UI.Login
 
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -13,11 +14,13 @@ import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.arielfaridja.ezrahi.R
 import com.arielfaridja.ezrahi.UI.Main.MainActivity
+import com.arielfaridja.ezrahi.UI.Signup.SignupActivity
 import com.arielfaridja.ezrahi.entities.User
 import com.google.android.material.textfield.TextInputLayout
 
@@ -28,6 +31,7 @@ class LoginActivity : AppCompatActivity(), Observer<User?> {
     lateinit var password: TextInputLayout
     lateinit var loginButton: Button
     lateinit var loginProgressBar: FrameLayout
+    lateinit var dontHaveAnAccount: Button
     var user: User? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,16 +40,17 @@ class LoginActivity : AppCompatActivity(), Observer<User?> {
 
 
         this.setContentView(R.layout.activity_login)
-        emailPhone = findViewById<View>(R.id.email_or_phone) as TextInputLayout
-        password = findViewById<View>(R.id.password) as TextInputLayout
-        loginButton = findViewById<View>(R.id.loginButton) as Button
-        loginProgressBar = findViewById<View>(R.id.loginProgressBar) as FrameLayout
+        emailPhone = findViewById(R.id.email_or_phone)
+        password = findViewById(R.id.password)
+        loginButton = findViewById(R.id.loginButton)
+        loginProgressBar = findViewById(R.id.loginProgressBar)
+        dontHaveAnAccount = findViewById(R.id.dontHaveAnAccount)
         emailPhone.editText!!.addTextChangedListener(object : TextWatcher {
             override fun onTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {
                 if (emailPhone.error != null) {
                     emailPhone.error = null
                 }
-                model.email = (charSequence.toString())
+                model.email = (charSequence.toString()).lowercase()
             }
 
             override fun beforeTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {}
@@ -75,11 +80,26 @@ class LoginActivity : AppCompatActivity(), Observer<User?> {
                 loginProgressBar.visibility = View.INVISIBLE
             }
         }
+        dontHaveAnAccount.setOnClickListener {
+            var intent = Intent(this, SignupActivity::class.java)
+            startActivity(intent)
+        }
         model.currentUser.observe(this, (this as Observer<Any>))
         model.exception.observe(this) { e ->
             if (e != null) {
                 Toast.makeText(this@LoginActivity.applicationContext, e.message, Toast.LENGTH_LONG)
                     .show()
+                var dialog = AlertDialog.Builder(this)
+                    .setIcon(R.drawable.ic_round_warning_48)
+                    .setTitle("We run into a problem")
+                    .setMessage(e.message)
+                    .setNeutralButton(
+                        "ok, I got it",
+                        DialogInterface.OnClickListener { dialogInterface, i ->
+                            dialogInterface.dismiss()
+                        })
+                dialog.create().show()
+
             }
             loginProgressBar.visibility = View.INVISIBLE
         }

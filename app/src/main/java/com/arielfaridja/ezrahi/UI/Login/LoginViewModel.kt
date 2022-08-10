@@ -46,8 +46,8 @@ class LoginViewModel : ViewModel() {
                     }
                 }
             }
-        } catch (var2: Exception) {
-            throw var2
+        } catch (exception: Exception) {
+            throw exception
         }
     }
 }

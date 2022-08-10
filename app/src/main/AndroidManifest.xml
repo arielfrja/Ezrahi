@@ -18,9 +18,15 @@
         android:theme="@style/Theme.Ezrahi"
         android:usesCleartextTraffic="true">
         <activity
-            android:name="com.arielfaridja.ezrahi.UI.Login.LoginActivity"
+            android:name=".UI.Signup.SignupActivity"
+            android:exported="true"
+            android:label="@string/title_activity_signup"
             android:noHistory="true"
-            android:exported="false" />
+            android:theme="@style/Theme.Ezrahi" />
+        <activity
+            android:name="com.arielfaridja.ezrahi.UI.Login.LoginActivity"
+            android:exported="false"
+            android:noHistory="true" />
         <activity
             android:name="com.arielfaridja.ezrahi.UI.Main.MainActivity"
             android:exported="true"
@@ -31,13 +37,10 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
         <activity
             android:name="com.arielfaridja.ezrahi.UI.StartupActivity"
-            android:exported="true">
-
-        </activity>
+            android:exported="true" />
     </application>
 
 </manifest>

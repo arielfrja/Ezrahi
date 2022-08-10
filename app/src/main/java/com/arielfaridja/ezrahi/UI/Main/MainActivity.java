@@ -59,7 +59,6 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
 
     protected void onCreate(Bundle savedInstanceState) {
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
-
         super.onCreate(savedInstanceState);
         model = new ViewModelProvider(this).get(MainActivityViewModel.class);
         splashScreen.setKeepOnScreenCondition(() -> !isReady);
@@ -76,13 +75,11 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
                     model.loadUserDatafromSP(getSharedPreferences("UserSharedPref", MODE_PRIVATE));
                     model.loadActivityDatafromSP(getSharedPreferences("ActivitySharedPref", MODE_PRIVATE));
                     setIsReady(true);
+                    if (model.getActivity() == null) {
+                        showDialog(thisActivity);
+                    }
+
                 }
-            if (model.getActivity().getId() == null) {
-                setIsReady(true);
-                showDialog(thisActivity);
-
-
-            }
         });
         model.initUser(getIntent());
         Context context = this.getApplicationContext();

@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import com.arielfaridja.ezrahi.R
 import com.arielfaridja.ezrahi.UI.Main.MainActivity
 
@@ -28,10 +27,5 @@ class ActivityOverviewFragment : Fragment() {
         return view
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        model = ViewModelProvider(this).get(ActivityOverviewViewModel::class.java)
-        // TODO: Use the ViewModel
-    }
 
 }

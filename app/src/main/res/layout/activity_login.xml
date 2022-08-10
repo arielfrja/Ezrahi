@@ -77,6 +77,17 @@
         app:layout_constraintTop_toBottomOf="@+id/password"
         app:layout_constraintVertical_bias="0.0" />
 
+    <Button
+        android:id="@+id/dontHaveAnAccount"
+        style="@android:style/Widget.Material.Light.Button.Borderless"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="don't have an account yet?"
+        android:textColor="@android:color/primary_text_light_nodisable"
+        app:layout_constraintEnd_toEndOf="@+id/loginButton"
+        app:layout_constraintStart_toStartOf="@+id/loginButton"
+        app:layout_constraintTop_toBottomOf="@+id/loginButton" />
+
     <FrameLayout
         android:id="@+id/loginProgressBar"
         android:layout_width="match_parent"
