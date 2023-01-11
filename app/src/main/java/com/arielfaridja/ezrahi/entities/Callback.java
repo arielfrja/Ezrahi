@@ -5,13 +5,37 @@
 
 package com.arielfaridja.ezrahi.entities;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 public interface Callback {
     void onResponse(Response response);
 
-    class Response {
+    class Response<T> {
+        private HashMap<String, ActUser> users;
+        private HashMap<String, Activity> activities;
+        private ArrayList<Activity> activitiesList;
+
+        public Response(ArrayList<Activity> activities) {
+            this.activitiesList = activities;
+        }
+
         private User user;
         private Activity activity;
+
+        public Response(HashMap<String, T> items) {
+            activities = new HashMap<>();
+            users = new HashMap<>();
+            items.forEach((s, o) -> {
+                if (o instanceof ActUser)
+                    this.users.put(s, (ActUser) o);
+                if (o instanceof Activity)
+                    this.activities.put(s, (Activity) o);
+            });
+        }
+
         private Exception exception;
+
 
         public Response() {
         }
@@ -28,14 +52,20 @@ public interface Callback {
             this.exception = exception;
         }
 
-        public User getUser() {
-            if (user!= null)
-                return this.user;
-            return null;
+        public HashMap<String, Activity> getActivities() {
+            return activities;
         }
 
-        public void setUser(User user) {
-            this.user = user;
+        public void setActivities(HashMap<String, Activity> activities) {
+            this.activities = activities;
+        }
+
+        public ArrayList<Activity> getActivitiesList() {
+            return activitiesList;
+        }
+
+        public void setActivitiesList(ArrayList<Activity> activitiesList) {
+            this.activitiesList = activitiesList;
         }
 
         public Activity getActivity() {
@@ -52,6 +82,24 @@ public interface Callback {
 
         public void setException(Exception exception) {
             this.exception = exception;
+        }
+
+        public User getUser() {
+            if (user != null)
+                return this.user;
+            return null;
+        }
+
+        public void setUser(User user) {
+            this.user = user;
+        }
+
+        public HashMap<String, ActUser> getUsers() {
+            return users;
+        }
+
+        public void setUsers(HashMap<String, ActUser> users) {
+            this.users = users;
         }
     }
 

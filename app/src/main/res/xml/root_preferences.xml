@@ -1,0 +1,5 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <ListPreference
+        android:key="currentActivity"
+        android:title="select activity" />
+</PreferenceScreen>

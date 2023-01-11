@@ -1,4 +1,4 @@
-package com.arielfaridja.distanceintervaltrainer;
+package com.arielfaridja.ezrahi;
 
 import static org.junit.Assert.assertEquals;
 
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals("com.arielfaridja.distanceintervaltrainer", appContext.getPackageName());
+        assertEquals("com.arielfaridja.ezrahi", appContext.getPackageName());
     }
 }

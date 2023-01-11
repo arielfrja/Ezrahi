@@ -5,8 +5,17 @@
 
 package com.arielfaridja.ezrahi.entities;
 
+import androidx.annotation.NonNull;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+
+import java.util.Map;
+
+@Entity(tableName = "permissions")
 public class ActPermission {
-    private int ActId;
+    private String ActId;
+
+    @PrimaryKey
     private int level;
     private String name;
     private Boolean showHigher;
@@ -30,6 +39,22 @@ public class ActPermission {
         this.showHigherReports = showHigherReports;
         this.showLowerReports = showLowerReports;
         this.canReport = canReport;
+    }
+
+    @NonNull
+    public static ActPermission mapToPermission(Map<String, Object> permissions, int level) {
+        return new ActPermission(
+                level,
+                (String) permissions.get("Name"),
+                (Boolean) permissions.get("showHigher"),
+                (Boolean) permissions.get("showLower"),
+                (Boolean) permissions.get("showRoute"),
+                (Boolean) permissions.get("addUser"),
+                (Boolean) permissions.get("removeUser"),
+                (Boolean) permissions.get("showHigherReports"),
+                (Boolean) permissions.get("showLowerReports"),
+                (Boolean) permissions.get("canReport")
+        );
     }
 
     public Boolean getShowHigherReports() {
@@ -56,11 +81,11 @@ public class ActPermission {
         this.canReport = canReport;
     }
 
-    public int getActId() {
+    public String getActId() {
         return this.ActId;
     }
 
-    public void setActId(int actId) {
+    public void setActId(String actId) {
         this.ActId = actId;
     }
 

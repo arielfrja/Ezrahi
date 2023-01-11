@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="activityOverview_textField_enabled_padding">8dp</dimen>
+    <dimen name="activityOverview_textField_enabled_padding_TopBottom">9dp</dimen>
+    <dimen name="activityOverview_textField_enabled_textSize">24sp</dimen>
+    <color name="activityOverview_textField_enabled_color">#FF000000</color>
+</resources>

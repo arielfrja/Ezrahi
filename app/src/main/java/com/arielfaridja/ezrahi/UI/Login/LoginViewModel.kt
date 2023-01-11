@@ -4,11 +4,9 @@
 //
 package com.arielfaridja.ezrahi.UI.Login
 
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.arielfaridja.ezrahi.data.DataRepoFactory
-import com.arielfaridja.ezrahi.entities.User
 
 class LoginViewModel : ViewModel() {
     val currentUser: MutableLiveData<*> = MutableLiveData<Any?>()
@@ -20,14 +18,6 @@ class LoginViewModel : ViewModel() {
 
     private fun setException(exception: Exception) {
         this.exception.value = exception
-    }
-
-    fun getCurrentUser(): LiveData<User?> {
-        return (currentUser as LiveData<User?>)
-    }
-
-    fun setCurrentUser(currentUser: User?) {
-        this.currentUser.value = currentUser
     }
 
     @Throws(Exception::class)

@@ -2,8 +2,8 @@ package com.arielfaridja.ezrahi.UI.Signup
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.arielfaridja.ezrahi.data.DataRepo
 import com.arielfaridja.ezrahi.data.DataRepoFactory
+import com.arielfaridja.ezrahi.data.IDataRepo
 import com.arielfaridja.ezrahi.entities.Latlng
 import com.arielfaridja.ezrahi.entities.User
 import java.util.regex.Pattern
@@ -46,7 +46,7 @@ class SignupActivityViewModel : ViewModel() {
                 errorMessage.appendLine("F: $PHONE_EMPTY")
             } else {
                 var user = User("", firstName, lastName, phone, email, Latlng())
-                dataRepo.auth_email_user_register(user, password) { response ->
+                IDataRepo.auth_email_user_register(user, password) { response ->
                     if (response.user != null) {
                         user = response.user
                         signedUp.value = true
@@ -75,7 +75,7 @@ class SignupActivityViewModel : ViewModel() {
     }
 
     val exception = MutableLiveData<Exception>()
-    private val dataRepo: DataRepo = DataRepoFactory.getInstance()
+    private val IDataRepo: IDataRepo = DataRepoFactory.getInstance()
     var phone: String = ""
     var email: String = ""
     var lastName: String = ""

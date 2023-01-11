@@ -107,7 +107,7 @@ class LoginActivity : AppCompatActivity(), Observer<User?> {
 
     override fun onChanged(user: User?) {
         if (user != null) {
-            putUserToSP(user)
+            //putUserToSP(user)
             val intent = Intent(this, MainActivity::class.java)
 //            intent.putExtra("firstName", user.firstName)
 //            intent.putExtra("lastName", user.lastName)

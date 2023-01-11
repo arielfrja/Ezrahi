@@ -5,10 +5,14 @@
 
 package com.arielfaridja.ezrahi.entities;
 
+import androidx.annotation.NonNull;
+import androidx.room.Entity;
+
+
+@Entity(primaryKeys = {"id"}, tableName = "Users")
 public class ActUser extends User {
     private String actId;
     private int permission;
-    private int userId;
 
     public ActUser(String id, String phone, String email, String firstName, String lastName, Latlng location, String actId, int permission) {
         super(id, phone, email, firstName, lastName, location);
@@ -18,6 +22,13 @@ public class ActUser extends User {
 
     public ActUser(String actId, User u, int permission) {
         super(u);
+        this.actId = actId;
+        this.permission = permission;
+    }
+
+    public ActUser(String actId, String userId, int permission) {
+        super();
+        this.setId(userId);
         this.actId = actId;
         this.permission = permission;
     }
@@ -36,5 +47,14 @@ public class ActUser extends User {
 
     public void setPermission(int permission) {
         this.permission = permission;
+    }
+
+    public void setUser(@NonNull User u) {
+        setId(u.id);
+        setEmail(u.email);
+        setFirstName(u.firstName);
+        setLastName(u.lastName);
+        setLocation(u.location);
+        setPhone(u.phone);
     }
 }

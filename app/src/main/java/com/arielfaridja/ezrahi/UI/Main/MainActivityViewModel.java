@@ -1,41 +1,33 @@
 package com.arielfaridja.ezrahi.UI.Main;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.arielfaridja.ezrahi.data.DataRepo;
 import com.arielfaridja.ezrahi.data.DataRepoFactory;
+import com.arielfaridja.ezrahi.data.IDataRepo;
 import com.arielfaridja.ezrahi.entities.Activity;
 import com.arielfaridja.ezrahi.entities.Latlng;
 import com.arielfaridja.ezrahi.entities.User;
 
+import java.util.HashMap;
+
 public class MainActivityViewModel extends ViewModel {
 
 
-    private User user;
-    Context context;
-    DataRepo dataRepo = DataRepoFactory.getInstance();
+    IDataRepo dataRepo = DataRepoFactory.getInstance();
     Intent intent;
-
     MutableLiveData<Boolean> isSignIn = new MutableLiveData<>(null);
-    private Activity activity;
+    MutableLiveData<Activity> currentActivity = new MutableLiveData<>(dataRepo.activity_getCurrent());
+    private User user;
 
     public MainActivityViewModel() {
         super();
         getIsSignIn().setValue(dataRepo.user_isSignedIn());
+        user = dataRepo.user_getCurrent();
 
-    }
-
-    public Activity getActivity() {
-        return activity;
-    }
-
-    public void setActivity(Activity activity) {
-        this.activity = activity;
     }
 
     public MutableLiveData<Boolean> getIsSignIn() {
@@ -44,6 +36,30 @@ public class MainActivityViewModel extends ViewModel {
 
     public void setIsSignIn(MutableLiveData<Boolean> isSignIn) {
         this.isSignIn = isSignIn;
+    }
+
+    public Activity getActivity() {
+        return currentActivity.getValue();
+    }
+
+    public void setActivity(Activity activity) {
+        currentActivity.setValue(activity);
+    }
+
+    public MutableLiveData<Activity> getCurrentActivity() {
+        return currentActivity;
+    }
+
+    MutableLiveData<HashMap<String, Activity>> getCurrentUsersActivities() {
+        return dataRepo.activity_getAllByCurrentUser();
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     void init(Intent intent) {
@@ -59,14 +75,6 @@ public class MainActivityViewModel extends ViewModel {
                 new Latlng(intent.getDoubleExtra("longitude", 32.0D), intent.getDoubleExtra("latitude", 34.0D)));
     }
 
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
     public void isUserSignedIn() {
         if (!dataRepo.user_isSignedIn())
             isSignIn.setValue(false);
@@ -74,7 +82,19 @@ public class MainActivityViewModel extends ViewModel {
             isSignIn.setValue(true);
     }
 
-    public void loadUserDatafromSP(SharedPreferences sp) {
+    public void loadActivityDataFromSP(SharedPreferences sp) {
+        String actId = sp.getString("actId", "");
+        if (!actId.isEmpty()) {
+            dataRepo.activity_setCurrent(actId);
+            new Thread(() -> {
+                while (dataRepo.activity_getCurrent() == null) ;
+                currentActivity.setValue(dataRepo.activity_getCurrent());
+            }).start();
+            //TODO: populate activity
+        }
+    }
+
+    public void loadUserDataFromSP(SharedPreferences sp) {
         user = new User();
         user.setId(sp.getString("uId", ""));
         user.setFirstName(sp.getString("FirstName", ""));
@@ -84,9 +104,5 @@ public class MainActivityViewModel extends ViewModel {
                 Double.parseDouble(sp.getString("Longitude", "0.0"))));
         user.setPhone(sp.getString("Phone", ""));
         user.setEmail(sp.getString("Email", ""));
-    }
-
-    public void loadActivityDatafromSP(SharedPreferences sp) {
-        activity = new Activity();
     }
 }

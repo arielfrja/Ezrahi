@@ -5,6 +5,10 @@
 
 package com.arielfaridja.ezrahi.entities;
 
+import androidx.annotation.NonNull;
+
+import com.google.firebase.firestore.GeoPoint;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -25,6 +29,11 @@ public class Latlng {
     public Latlng(Latlng latlng) {
         this.latitude = latlng.getLatitude();
         this.longitude = latlng.getLongitude();
+    }
+
+    public Latlng(GeoPoint point) {
+        this.latitude = point.getLatitude();
+        this.longitude = point.getLongitude();
     }
 
     public static Latlng StringToLatlng(String string) throws JSONException {
@@ -52,6 +61,8 @@ public class Latlng {
         this.longitude = longitude;
     }
 
+    @NonNull
+    @Override
     public String toString() {
         return "Latlng: {latitude=" + this.latitude + ", longitude=" + this.longitude + '}';
     }

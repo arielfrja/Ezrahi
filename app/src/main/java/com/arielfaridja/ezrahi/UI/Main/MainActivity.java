@@ -1,14 +1,10 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by FernFlower decompiler)
-//
-
 package com.arielfaridja.ezrahi.UI.Main;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -35,45 +31,98 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import androidx.preference.PreferenceManager;
 
+import com.arielfaridja.ezrahi.LocationTrackingService;
 import com.arielfaridja.ezrahi.R;
 import com.arielfaridja.ezrahi.UI.Login.LoginActivity;
-import com.arielfaridja.ezrahi.entities.Latlng;
+import com.arielfaridja.ezrahi.data.DataRepoFactory;
+import com.arielfaridja.ezrahi.entities.Activity;
 import com.arielfaridja.ezrahi.entities.User;
 import com.google.android.material.navigation.NavigationView;
 
 
 public class MainActivity extends AppCompatActivity implements View.OnFocusChangeListener {
     User user;
+    Activity currentActivity;
+    NavController navController;
+    SharedPreferences sharedPreferences;
+    Boolean isReady = false;
     private Toolbar toolbar;
     private SearchView searchView;
-    NavController navController;
     private NavigationView navView;
     private DrawerLayout drawerLayout;
     private AppBarConfiguration appBarConfiguration;
     private MainActivityViewModel model;
-    Boolean isReady = false;
 
     public MainActivity() {
     }
 
+    public boolean getIsReady() {
+        return isReady;
+    }
+
+    public void setIsReady(boolean isSignedIn) {
+        this.isReady = isSignedIn;
+    }
+
+    public User getUser() {
+        return model.getUser();
+    }
+
+    public void onBackPressed() {
+        closeKeyboard();
+        if (!this.searchView.isIconified()) {
+            this.searchView.setIconified(true);
+        } else {
+            //Do nothing
+        }
+
+    }
+
+    private void closeKeyboard() {
+        View view = getCurrentFocus();
+        if (view != null) {
+            InputMethodManager manager =
+                    (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            manager.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
+
     protected void onCreate(Bundle savedInstanceState) {
+        //show the splash screen, until we see where the user go, and after all data retrieved
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
-        model = new ViewModelProvider(this).get(MainActivityViewModel.class);
+
+        //basic operations tp happen when app initializing
+        initApp();
+
+        //connect the splash screen to isReady, which represent if the activity ready to work
         splashScreen.setKeepOnScreenCondition(() -> !isReady);
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         MainActivity thisActivity = this;
+
+        initModel(thisActivity); //even it illegal, we must init the ViewModel with activity, to be able to connect the sharedPreferences
+        initContentViews();
+
+        //check data repo functions
+        //model.IDataRepo.user_add(user);
+    }
+
+    private void initApp() {
+        DataRepoFactory.getInstance(getApplicationContext());
+        //TODO: get basic data
+    }
+
+    private void initModel(MainActivity thisActivity) {
+        model = new ViewModelProvider(this).get(MainActivityViewModel.class);
         model.getIsSignIn().observe(this, aBoolean -> {
             if (aBoolean != null)
                 if (!aBoolean) {
-                    Intent intent = new Intent(thisActivity, LoginActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    setIsReady(true);
-
-                    startActivity(intent);
+                    goToLogin(thisActivity);
                 } else {
-                    model.loadUserDatafromSP(getSharedPreferences("UserSharedPref", MODE_PRIVATE));
-                    model.loadActivityDatafromSP(getSharedPreferences("ActivitySharedPref", MODE_PRIVATE));
+                    startService(new Intent(getApplicationContext(), LocationTrackingService.class));
+                    loadDataPref();
                     setIsReady(true);
                     if (model.getActivity() == null) {
                         showDialog(thisActivity);
@@ -81,29 +130,51 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
 
                 }
         });
+        model.getCurrentUsersActivities().observe(this, activities -> {
+            if (activities != null)
+                if (activities.size() > 0)
+                    ;//TODO: show select activity dialog
+                else
+                    ;//TODO: show there is no activity connected to this
+
+        });
+        model.getCurrentActivity().observe(this, activity -> {
+            if (activity != null)
+                currentActivity = activity;
+        });
         model.initUser(getIntent());
-        Context context = this.getApplicationContext();
+    }
+
+    private void initContentViews() {
         this.setContentView(R.layout.activity_main);
         //Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context));
         //this.mapDefinition();
         this.findViews();
 
-        //check data repo functions
-        //model.dataRepo.user_add(user);
-
-
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
 
         setupNavigationComponent();
-
-
         MenuInflater inflater = this.getMenuInflater();
         this.searchView = (SearchView) this.toolbar.getMenu().getItem(0).getActionView();
         this.toolbar.setOnFocusChangeListener(this);
         this.toolbar.setOnClickListener((view) -> {
+
             this.searchView.setIconified(false);
         });
+    }
+
+    private void goToLogin(MainActivity thisActivity) {
+        Intent intent = new Intent(thisActivity, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        setIsReady(true);
+
+        startActivity(intent);
+    }
+
+    private void loadDataPref() {
+//        model.loadUserDataFromSP(getSharedPreferences("UserSharedPref", MODE_PRIVATE));
+//        model.loadActivityDataFromSP(getSharedPreferences(ACT_SP, MODE_PRIVATE));
     }
 
     private void showDialog(MainActivity thisActivity) {
@@ -132,10 +203,12 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         dialog.show();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(@NonNull Menu menu) {
-        getMenuInflater().inflate(R.menu.searchbar_actions, menu);
-        return true;
+    private void findViews() {
+        ////delete that after modification
+        //this.map = this.findViewById(R.id.map);
+        this.toolbar = this.findViewById(R.id.toolbar);
+        drawerLayout = findViewById(R.id.drawerLayout);
+        navView = findViewById(R.id.navView);
     }
 
     private void setupNavigationComponent() {
@@ -149,45 +222,10 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
         NavigationUI.setupWithNavController(toolbar, navController, appBarConfiguration);
     }
 
-    private void initUser() {
-        this.user = new User(this.getIntent().getStringExtra("id"),
-                this.getIntent().getStringExtra("firstName"),
-                this.getIntent().getStringExtra("lastName"),
-                this.getIntent().getStringExtra("phone"),
-                this.getIntent().getStringExtra("email"),
-                new Latlng(this.getIntent().getDoubleExtra("longitude", 32.0D),
-                        this.getIntent().getDoubleExtra("latitude", 34.0D)));
-    }
-
-    public void onBackPressed() {
-        closeKeyboard();
-        if (!this.searchView.isIconified()) {
-            this.searchView.setIconified(true);
-        } else {
-            //Do nothing
-        }
-
-    }
-
-    private void closeKeyboard() {
-        View view = getCurrentFocus();
-        if (view != null) {
-            InputMethodManager manager =
-                    (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            manager.hideSoftInputFromWindow(view.getWindowToken(), 0);
-        }
-    }
-
-    private void findViews() {
-        ////delete that after modification
-        //this.map = this.findViewById(R.id.map);
-        this.toolbar = this.findViewById(R.id.toolbar);
-        drawerLayout = findViewById(R.id.drawerLayout);
-        navView = findViewById(R.id.navView);
-    }
-
-    public User getUser() {
-        return model.getUser();
+    @Override
+    public boolean onCreateOptionsMenu(@NonNull Menu menu) {
+        getMenuInflater().inflate(R.menu.searchbar_actions, menu);
+        return true;
     }
 
     @Override
@@ -199,14 +237,6 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             this.toolbar.setBackgroundColor(getResources().getColor(com.google.android.material.R.color.design_default_color_primary_variant, getTheme()));
         }
 
-    }
-
-    public boolean getIsReady() {
-        return isReady;
-    }
-
-    public void setIsReady(boolean isSignedIn) {
-        this.isReady = isSignedIn;
     }
 
     public void setToolbarFloating(boolean b) {

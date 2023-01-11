@@ -10,7 +10,7 @@
         app:destination="@id/nav_activity_overview" />
     <fragment
         android:id="@+id/nav_map"
-        android:name="com.arielfaridja.ezrahi.UI.Fragments.Map.mapFragment"
+        android:name="com.arielfaridja.ezrahi.UI.Fragments.Map.MapFragment"
         android:label="map"
         tools:layout="@layout/fragment_map">
         <action
@@ -21,6 +21,9 @@
         android:id="@+id/nav_activity_overview"
         android:name="com.arielfaridja.ezrahi.UI.Fragments.ActivityOverview.ActivityOverviewFragment"
         android:label="fragment_activity_overview"
-        tools:layout="@layout/fragment_activity_overview">
-    </fragment>
+        tools:layout="@layout/fragment_activity_overview"></fragment>
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="com.arielfaridja.ezrahi.UI.Fragments.Settings.SettingsFragment"
+        android:label="SettingsFragment" />
 </navigation>

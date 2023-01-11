@@ -1,16 +1,22 @@
 package com.arielfaridja.ezrahi.data;
 
+import android.content.Context;
+
 public class DataRepoFactory {
-    static DataRepo instance = null;
+    static IDataRepo instance = null;
 
     private DataRepoFactory() {
     }
 
-    public static DataRepo getInstance() {
+    public static IDataRepo getInstance(Context context) {
         if (instance == null) {
-            instance = new FirebaseDataRepo();
+            instance = new FirebaseDataRepo(context);
         }
 
+        return instance;
+    }
+
+    public static IDataRepo getInstance() {
         return instance;
     }
 }

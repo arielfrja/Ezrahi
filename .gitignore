@@ -31,5 +31,7 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+
 /fireabasedata/
 /firebase-emulator.bat

@@ -14,15 +14,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.arielfaridja.ezrahi.R;
 import com.arielfaridja.ezrahi.UI.Login.LoginActivity;
 import com.arielfaridja.ezrahi.UI.Main.MainActivity;
-import com.arielfaridja.ezrahi.data.DataRepo;
 import com.arielfaridja.ezrahi.data.DataRepoFactory;
+import com.arielfaridja.ezrahi.data.IDataRepo;
 import com.arielfaridja.ezrahi.entities.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 public class StartupActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
-    DataRepo dataRepo = DataRepoFactory.getInstance();
+    IDataRepo IDataRepo = DataRepoFactory.getInstance(getApplicationContext());
     SharedPreferences sharedPreferences;
 
     public StartupActivity() {
@@ -39,7 +39,7 @@ public class StartupActivity extends AppCompatActivity {
         super.onStart();
         FirebaseUser currentUser = this.mAuth.getCurrentUser();
         if (currentUser != null) {
-            dataRepo.user_get(currentUser.getUid(), response -> {
+            IDataRepo.user_get(currentUser.getUid(), response -> {
                 User u = response.getUser();
                 //putUserToSP(u);
                 Intent intent = new Intent(this, MainActivity.class);

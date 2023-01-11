@@ -25,7 +25,12 @@ public class Activity {
     }
 
     public Activity() {
-
+        id = "";
+        name = "";
+        routesSrc = new ArrayList<>();
+        owner = new User();
+        users = new ArrayList<>();
+        permissions = new ArrayList<>();
     }
 
     public String getId() {
