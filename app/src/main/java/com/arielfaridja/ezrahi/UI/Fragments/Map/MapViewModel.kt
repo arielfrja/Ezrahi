@@ -8,6 +8,7 @@ import com.arielfaridja.ezrahi.entities.ActUser
 class MapViewModel : ViewModel() {
     private val db = DataRepoFactory.getInstance()
     val users = MutableLiveData<Map<String, ActUser>>()
+    val currentUser = db.user_getCurrent()
 
     init {
         db.user_getAllByCurrentActivity().observeForever { dBusers ->

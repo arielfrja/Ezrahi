@@ -291,12 +291,12 @@ public class FirebaseDataRepo implements IDataRepo {
     private void user_saveCurrentToSP(User u) {
         SharedPreferences sp = context.getSharedPreferences(context.getString(R.string.current_user_pref), Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
-        editor.putString("email", u.getEmail());
-        editor.putString("firstName", u.getFirstName());
-        editor.putString("lastName", u.getLastName());
-        editor.putString("id", u.getId());
-        editor.putString("phone", u.getPhone());
-        editor.putString("email", u.getEmail());
+        editor.putString("Email", u.getEmail());
+        editor.putString("FirstName", u.getFirstName());
+        editor.putString("LastName", u.getLastName());
+        editor.putString("Uid", u.getId());
+        editor.putString("Phone", u.getPhone());
+        editor.putString("Email", u.getEmail());
         editor.apply();
     }
 
@@ -559,14 +559,18 @@ public class FirebaseDataRepo implements IDataRepo {
         private void loadUserFromSP(Context context) {
             SharedPreferences sp = context.getSharedPreferences("UserSharedPref", Context.MODE_PRIVATE);
             if (sp != null) {
-                currentUser.setId(sp.getString("uId", ""));
+                currentUser.setId(sp.getString("Uid", ""));
                 currentUser.setFirstName(sp.getString("FirstName", ""));
                 currentUser.setLastName(sp.getString("LastName", ""));
-                currentUser.setLocation(new Latlng(
-                        Double.parseDouble(sp.getString("Latitude", "0.0")),
-                        Double.parseDouble(sp.getString("Longitude", "0.0"))));
+//                currentUser.setLocation(new Latlng(
+//                        Double.parseDouble(sp.getString("Latitude", "0.0")),
+//                        Double.parseDouble(sp.getString("Longitude", "0.0"))));
                 currentUser.setPhone(sp.getString("Phone", ""));
                 currentUser.setEmail(sp.getString("Email", ""));
+                user_get(mAuth.getUid(), response -> {
+                    currentUser = response.getUser();
+                    user_saveCurrentToSP(currentUser);
+                });
             }
         }
 

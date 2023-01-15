@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
@@ -46,19 +47,31 @@ class MapFragment : Fragment() {
     private fun addUserMarker(user: ActUser) {
         var marker = Marker(map).apply {
             when (user.permission) { //TODO: set by type
-                0 -> icon = resources.getDrawable(R.drawable.ic_round_man_24, null)
+                0 -> icon =
+                    resources.getDrawable(R.drawable.hiker_sign, null)
+
+                else -> icon =
+                    resources.getDrawable(R.drawable.hiker_sign, null)
             }
-            position.latitude = user.location.latitude
-            position.longitude = user.location.longitude
+            position = GeoPoint(user.location.latitude, user.location.latitude)
+            title = user.firstName + " " + user.lastName
+            //setTextIcon(user.firstName + " " + user.lastName)
+            textLabelFontSize = 12
+            setVisible(true)
         }
         usersMarkers.put(user.id, marker)
         map!!.overlays.add(usersMarkers[user.id])
+        map!!.invalidate()
     }
 
 
     private fun modifyUserMarker(user: ActUser, marker: Marker?) {
-        usersMarkers.get(user.id)!!.position.latitude = user.location.latitude
-        usersMarkers.get(user.id)!!.position.latitude = user.location.longitude
+        if (user.id == model.currentUser.id)
+            marker!!.remove(map)
+        usersMarkers.get(user.id)!!.position =
+            GeoPoint(user.location.latitude, user.location.longitude)
+
+
     }
 
     private lateinit var locationManager: LocationManager
@@ -74,7 +87,6 @@ class MapFragment : Fragment() {
             requireActivity().getSystemService(Context.LOCATION_SERVICE) as LocationManager
         if (activity is MainActivity) {
             val mainActivity = activity as MainActivity
-            user = mainActivity.user
             mainActivity.supportActionBar!!.title = null
             mainActivity.setToolbarFloating(true)
 
@@ -87,6 +99,7 @@ class MapFragment : Fragment() {
         myLocationButton.setOnClickListener { view ->
             if (checkLocationPermission()) {
                 myLocationOverlay!!.enableFollowLocation()
+
                 setMapCenter(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER))
                 mapController!!.zoomTo(20, null)
             }
@@ -96,10 +109,14 @@ class MapFragment : Fragment() {
         this.mapDefinition()
         model.users.observe(viewLifecycleOwner, Observer { users ->
             for (u in users) {
-                if (usersMarkers.containsKey(u.key))
-                    modifyUserMarker(u.value, usersMarkers.get(u.key))
-                else
-                    addUserMarker(u.value)
+                if (!u.key.equals(model.currentUser!!.id))
+                    if (usersMarkers.containsKey(u.key))
+//                    if (u.value.location.latitude != usersMarkers[u.key]!!.position.latitude ||
+//                        u.value.location.longitude != usersMarkers[u.key]!!.position.longitude
+//                    )
+                        modifyUserMarker(u.value, usersMarkers.get(u.key))
+                    else
+                        addUserMarker(u.value)
             }
         })
 
@@ -179,9 +196,16 @@ class MapFragment : Fragment() {
         }
 
         myLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), map)
-        //myLocationOverlay!!.setPersonIcon(BitmapFactory.decodeResource(resources,R.drawable.ic_my_location_dot_24, null))
+        myLocationOverlay!!.setPersonIcon(
+            BitmapFactory.decodeResource(
+                resources,
+                R.drawable.current_location
+            )
+        )
+        myLocationOverlay!!.setPersonAnchor(.5f, .5f)
         myLocationOverlay!!.enableMyLocation()
         myLocationOverlay!!.enableFollowLocation()
+
         map!!.overlays.add(myLocationOverlay)
         (mapController as IMapController).setCenter(myLocationOverlay!!.myLocation)
     }

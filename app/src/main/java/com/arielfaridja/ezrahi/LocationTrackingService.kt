@@ -19,6 +19,8 @@ import com.arielfaridja.ezrahi.data.DataRepoFactory
 import com.arielfaridja.ezrahi.entities.User
 
 
+private const val REFRESH_INTERVAL = 15000L
+
 class LocationTrackingService : Service() {
 
     val dataRepo = DataRepoFactory.getInstance()
@@ -37,6 +39,7 @@ class LocationTrackingService : Service() {
             lastLocation = location
             dataRepo.user_getCurrent().location.latitude = location.latitude
             dataRepo.user_getCurrent().location.longitude = location.longitude
+            dataRepo.user_update(dataRepo.user_getCurrent())
         }
     }
 
@@ -59,10 +62,10 @@ class LocationTrackingService : Service() {
         )
 
         val stopSelf = Intent(this, LocationTrackingService::class.java)
-        stopSelf.action = "STOP"
-        val pStopSelf = PendingIntent
+        stopSelf.action = ACTION_STOP
+        val sPendingIntent = PendingIntent
             .getService(
-                this, 0, stopSelf, PendingIntent.FLAG_CANCEL_CURRENT
+                this, 0, stopSelf, PendingIntent.FLAG_IMMUTABLE
             ) // That you should change this part in your code
 
         val notificationBuilder = NotificationCompat.Builder(this, notificationChannelId)
@@ -72,15 +75,17 @@ class LocationTrackingService : Service() {
             .setAutoCancel(false)
             .setOngoing(true)
             .setContentIntent(pendingIntent)
-            .addAction(R.drawable.ic_launcher_foreground, "STOP", pStopSelf)
+            .addAction(R.drawable.ic_launcher_foreground, "STOP", sPendingIntent)
         return notificationBuilder.build()
     }
 
     private val runnable = object : Runnable {
         override fun run() {
-            dataRepo.user_update(dataRepo.user_getCurrent())
             resyncActivityUsers()
-            handler.postDelayed(this, 15000) // Get users from the database every 15 seconds
+            handler.postDelayed(
+                this,
+                REFRESH_INTERVAL
+            ) // Get users from the database every 15 seconds
         }
     }
 
@@ -126,22 +131,39 @@ class LocationTrackingService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForeground(notificationId, createNotification())
-        locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
-        try {
-            locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER, 1000, 0f, locationListener
-            )
-        } catch (e: SecurityException) {
-            e.printStackTrace()
+
+        when (intent?.action) {
+            ACTION_STOP -> {
+                if (!MainActivity.getIsVisible()) {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                    //NotificationManagerCompat.from(this).cancel(NOTIFICATION_ID)
+                }
+            }
+            else -> {
+                startForeground(notificationId, createNotification())
+                locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+                try {
+                    locationManager.requestLocationUpdates(
+                        LocationManager.GPS_PROVIDER, 1000, 0f, locationListener
+                    )
+                } catch (e: SecurityException) {
+                    e.printStackTrace()
+                }
+                handler.post(runnable)
+            }
         }
-        handler.post(runnable)
         return START_NOT_STICKY
+
     }
 
     private fun resyncActivityUsers() {
         dataRepo.user_getAllByCurrentActivity()
     }
 
-
+    companion object {
+        const val LOCATION_SERVICE_CHANNEL = "LocationService"
+        const val NOTIFICATION_ID = 1
+        const val ACTION_STOP = "ACTION_STOP"
+    }
 }

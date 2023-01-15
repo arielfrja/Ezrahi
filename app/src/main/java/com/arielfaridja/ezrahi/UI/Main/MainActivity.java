@@ -54,8 +54,17 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     private DrawerLayout drawerLayout;
     private AppBarConfiguration appBarConfiguration;
     private MainActivityViewModel model;
+    private static boolean isVisible = false;
 
     public MainActivity() {
+    }
+
+    public static boolean getIsVisible() {
+        return isVisible;
+    }
+
+    public static void setIsVisible(boolean isVisible) {
+        MainActivity.isVisible = isVisible;
     }
 
     public boolean getIsReady() {
@@ -112,6 +121,18 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     private void initApp() {
         DataRepoFactory.getInstance(getApplicationContext());
         //TODO: get basic data
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        setIsVisible(false);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        setIsVisible(true);
     }
 
     private void initModel(MainActivity thisActivity) {
@@ -263,12 +284,14 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
             layoutParams.setMargins(0, 0, 0, 0);
 
             layoutParams2.topToBottom = toolbarContainer.getId();
+            layoutParams2.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID;
         }
         if (b) {
 
             layoutParams.setMargins(32, 32, 32, 0);
 
             layoutParams2.topToTop = 0;
+            layoutParams2.bottomToBottom = ConstraintLayout.LayoutParams.PARENT_ID;
 
 
         }
@@ -277,3 +300,5 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
 
     }
 }
+
+
