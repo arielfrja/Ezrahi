@@ -21,7 +21,7 @@ public interface LocalDao {
     @Query("DELETE from Users")
     void deleteAllUsers();
 
-    @Query("SELECT * from permissions where level == :permission")
+    @Query("SELECT * from permissions where id == :permission")
     ActPermission getPermission(int permission);
 
     @Query("SELECT * from Users where id == :uId")

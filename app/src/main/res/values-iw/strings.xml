@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">אזרחי</string>
+    <string name="users">משתמשים</string>
+    <string name="login">התחבר</string>
+    <string name="login_using_email">התחבר באמצעות אימייל</string>
+    <string name="password">סיסמה</string>
+    <string name="email_or_phone">אימייל או סיסמה</string>
+    <string name="TrackingNotificationText">שירות איתור המיקום רץ ברקע</string>
+    <string name="TrackingNotificationTitle">שירות איתור המיקום</string>
+    <string name="reports">דיווחים</string>
+    <string name="cancel">ביטול</string>
+    <string name="routes">מסלולים</string>
+    <string name="don_t_have_an_account_yet">עדיין אין לך משתמש?</string>
+    <string name="Click_again_to_exit">לחץ שוב ליציאה</string>
+    <string name="Add">הוסף</string>
+    <string name="add_marker">הוסף סמן</string>
+    <string name="title_activity_signup">מסך הרשמה</string>
+    <string name="edit_button">כפתור עריכה</string>
+    <string name="activity_name">שם הפעילות</string>
+</resources>

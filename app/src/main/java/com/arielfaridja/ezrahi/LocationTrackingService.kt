@@ -1,7 +1,11 @@
 package com.arielfaridja.ezrahi
 
 import android.Manifest
-import android.app.*
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -29,10 +33,8 @@ class LocationTrackingService : Service() {
     private lateinit var locationManager: LocationManager
     private val handler = Handler(Looper.getMainLooper())
 
-    private val notificationId = 1
-    private val notificationChannelId = "location_tracking_service"
-    private val notificationTitle = "Location Tracking Service"
-    private val notificationText = "The location trackong service run in background"
+    private lateinit var notificationTitle: String
+    private lateinit var notificationText: String
     private val locationListener = LocationListener { location ->
         if (lastLocation == null || location.latitude != lastLocation!!.latitude || location.longitude != lastLocation!!.longitude) {
             // Save the location to the database
@@ -48,7 +50,7 @@ class LocationTrackingService : Service() {
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationChannel = NotificationChannel(
-                notificationChannelId,
+                Companion.NOTIFICATOIN_CHANNEL_ID,
                 notificationTitle,
                 NotificationManager.IMPORTANCE_DEFAULT
             )
@@ -68,7 +70,10 @@ class LocationTrackingService : Service() {
                 this, 0, stopSelf, PendingIntent.FLAG_IMMUTABLE
             ) // That you should change this part in your code
 
-        val notificationBuilder = NotificationCompat.Builder(this, notificationChannelId)
+        val notificationBuilder = NotificationCompat.Builder(
+            this,
+            Companion.NOTIFICATOIN_CHANNEL_ID
+        )
             .setContentTitle(notificationTitle)
             .setContentText(notificationText)
             .setSmallIcon(R.drawable.ic_baseline_my_location_24)
@@ -92,6 +97,8 @@ class LocationTrackingService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        notificationTitle = getString(R.string.TrackingNotificationTitle)
+        notificationText = getString(R.string.TrackingNotificationText)
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         if (ActivityCompat.checkSelfPermission(
                 this,
@@ -141,7 +148,7 @@ class LocationTrackingService : Service() {
                 }
             }
             else -> {
-                startForeground(notificationId, createNotification())
+                startForeground(Companion.NOTIFICATION_ID, createNotification())
                 locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
                 try {
                     locationManager.requestLocationUpdates(
@@ -163,7 +170,8 @@ class LocationTrackingService : Service() {
 
     companion object {
         const val LOCATION_SERVICE_CHANNEL = "LocationService"
-        const val NOTIFICATION_ID = 1
         const val ACTION_STOP = "ACTION_STOP"
+        private const val NOTIFICATOIN_CHANNEL_ID = "location_tracking_service"
+        private const val NOTIFICATION_ID = 1
     }
 }

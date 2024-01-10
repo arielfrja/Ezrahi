@@ -11,19 +11,26 @@ import android.os.Bundle
 import android.preference.PreferenceManager
 import android.provider.Settings
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Spinner
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.arielfaridja.ezrahi.Consts
 import com.arielfaridja.ezrahi.R
+import com.arielfaridja.ezrahi.UI.IconTextAdapter
 import com.arielfaridja.ezrahi.UI.Main.MainActivity
 import com.arielfaridja.ezrahi.entities.ActUser
+import com.arielfaridja.ezrahi.entities.Report
 import com.arielfaridja.ezrahi.entities.User
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.textfield.TextInputEditText
 import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -31,6 +38,8 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.Overlay
+import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 
@@ -43,10 +52,11 @@ class MapFragment : Fragment() {
     var myLocationOverlay: MyLocationNewOverlay? = null
     var user: User? = null
     private val usersMarkers = mutableMapOf<String, Marker>()
+    private val reportsMarker = mutableMapOf<String, Marker>()
 
     private fun addUserMarker(user: ActUser) {
         var marker = Marker(map).apply {
-            when (user.permission) { //TODO: set by type
+            when (user.role) { //TODO: set by type
                 0 -> icon =
                     resources.getDrawable(R.drawable.hiker_sign, null)
 
@@ -60,10 +70,13 @@ class MapFragment : Fragment() {
             setVisible(true)
         }
         usersMarkers.put(user.id, marker)
-        map!!.overlays.add(usersMarkers[user.id])
+        map!!.overlayManager.add(usersMarkers[user.id])
         map!!.invalidate()
     }
 
+    private fun addReportMarker(report: Report) {
+
+    }
 
     private fun modifyUserMarker(user: ActUser, marker: Marker?) {
         if (user.id == model.currentUser.id)
@@ -164,6 +177,7 @@ class MapFragment : Fragment() {
 
 
     private fun mapDefinition() {
+
         map!!.setTileSource(TileSourceFactory.MAPNIK)
         map!!.setMultiTouchControls(true)
         map!!.zoomController.setVisibility(CustomZoomButtonsController.Visibility.SHOW_AND_FADEOUT)
@@ -206,8 +220,84 @@ class MapFragment : Fragment() {
         myLocationOverlay!!.enableMyLocation()
         myLocationOverlay!!.enableFollowLocation()
 
-        map!!.overlays.add(myLocationOverlay)
+        map!!.overlayManager.add(myLocationOverlay)
         (mapController as IMapController).setCenter(myLocationOverlay!!.myLocation)
+
+        val rotationGestureOverlay = RotationGestureOverlay(map!!)
+        rotationGestureOverlay.isEnabled = true
+        map!!.overlayManager.add(rotationGestureOverlay)
+
+        val overlay = object : Overlay() {
+            override fun onLongPress(event: MotionEvent?, mapView: MapView?): Boolean {
+                event?.let { ev ->
+                    val x = ev.x
+                    val y = ev.y
+                    mapView?.let { mapView1 ->
+                        val dialogView = layoutInflater.inflate(R.layout.dialog_add_marker, null)
+                        val titleEditText =
+                            dialogView.findViewById<TextInputEditText>(R.id.edit_text_title)
+                        val snippetEditText =
+                            dialogView.findViewById<TextInputEditText>(R.id.edit_text_snippet)
+                        val iconSpinner = dialogView.findViewById<Spinner>(R.id.spinner_icon)
+                        iconSpinner.adapter = IconTextAdapter(context, Consts.iconTextArray)
+
+                        val dialogBuilder = AlertDialog.Builder(requireContext())
+                            .setTitle(getString(R.string.add_marker))
+                            .setView(dialogView)
+                            .setPositiveButton(getString(R.string.Add)) { _, _ ->
+                                val title = titleEditText.text.toString()
+                                val description = snippetEditText.text.toString()
+                                val selectedIcon = iconSpinner.selectedItem.toString()
+                                val marker = Marker(mapView)
+                                var location = mapView.projection.fromPixels(
+                                    event.x.toInt(),
+                                    event.y.toInt()
+                                ) as GeoPoint?
+                                model.addReport(title, description, location) { response ->
+                                    if (response.message.equals(Consts.REPORT_ADD_SUCCESS)) {
+                                        //addReportMarker()
+                                        marker.position = location
+                                        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                                        marker.title = title
+                                        marker.snippet =
+                                            "${(iconSpinner.selectedItem as Pair<Int, String>).second}:\n$description"
+                                        marker.icon = resources.getDrawable(
+                                            (iconSpinner.selectedItem as Pair<Int, String>).first,
+                                            null
+                                        )
+
+                                        mapView.overlays.add(marker)
+                                        mapView.invalidate()
+                                    } else
+                                        Toast.makeText(
+                                            requireContext(),
+                                            response.exception.message,
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                }
+
+
+                            }
+                            .setNegativeButton(getString(R.string.cancel)) { _, _ -> }
+                        val dialog = dialogBuilder.create()
+                        dialog.show()
+//                        val geoPoint = mapView1.projection.fromPixels(x.toInt(), y.toInt())
+//                        //////TODO:  replace with dialog
+//                        /////show the marker just after it updated in db.
+//                        val marker = Marker(mapView1)
+//                        marker.position = geoPoint as GeoPoint?
+//                        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+//                        marker.title = "New marker"
+//                        marker.snippet = "You have added a new marker"
+//                        map!!.overlayManager.add(marker)
+//                        /////
+//                        mapView1.invalidate()
+                    }
+                }
+                return super.onLongPress(event, mapView)
+            }
+        }
+        map!!.overlayManager.add(overlay)
     }
 
 

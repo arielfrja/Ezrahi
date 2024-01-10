@@ -15,29 +15,30 @@ public interface Callback {
         private HashMap<String, ActUser> users;
         private HashMap<String, Activity> activities;
         private ArrayList<Activity> activitiesList;
+        private String message;
+        private User user;
+        private Activity activity;
+        private Exception exception;
 
         public Response(ArrayList<Activity> activities) {
             this.activitiesList = activities;
         }
 
-        private User user;
-        private Activity activity;
+        public Response() {
+        }
 
         public Response(HashMap<String, T> items) {
             activities = new HashMap<>();
             users = new HashMap<>();
             items.forEach((s, o) -> {
-                if (o instanceof ActUser)
-                    this.users.put(s, (ActUser) o);
-                if (o instanceof Activity)
-                    this.activities.put(s, (Activity) o);
+                if (o instanceof ActUser) this.users.put(s, (ActUser) o);
+                if (o instanceof Activity) this.activities.put(s, (Activity) o);
             });
         }
 
-        private Exception exception;
 
-
-        public Response() {
+        public Response(String message) {
+            this.message = message;
         }
 
         public Response(User user) {
@@ -47,6 +48,7 @@ public interface Callback {
         public Response(Activity activity) {
             this.activity = activity;
         }
+
 
         public Response(Exception exception) {
             this.exception = exception;
@@ -84,9 +86,16 @@ public interface Callback {
             this.exception = exception;
         }
 
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
         public User getUser() {
-            if (user != null)
-                return this.user;
+            if (user != null) return this.user;
             return null;
         }
 

@@ -1,23 +1,22 @@
 <resources>
     <string name="app_name">Ezrahi</string>
-    <string name="title_activity_signup">SignupActivity</string>
+    <string name="title_activity_signup">Signup Activity</string>
     <string name="users">Users</string>
-    <string name="trails">trails</string>
     <string name="reports">reports</string>
     <string name="routes">Routes</string>
     <!-- Preference Titles -->
-    <string name="messages_header">Messages</string>
-    <string name="sync_header">Sync</string>
 
     <!-- Messages Preferences -->
-    <string name="signature_title">Your signature</string>
-    <string name="reply_title">Default reply action</string>
 
     <!-- Sync Preferences -->
-    <string name="sync_title">Sync email periodically</string>
-    <string name="attachment_title">Download incoming attachments</string>
-    <string name="attachment_summary_on">Automatically download attachments for incoming emails
-    </string>
-    <string name="attachment_summary_off">Only download attachments when manually requested</string>
-    <string name="current_user_pref">UserSharedPref</string>
+    <string name="current_user_pref" translatable="false">UserSharedPref</string>
+    <string name="TrackingNotificationTitle">Location Tracking Service</string>
+    <string name="TrackingNotificationText">The location tracking service run in background</string>
+    <string name="don_t_have_an_account_yet">don\'t have an account yet?</string>
+    <string name="edit_button">edit button</string>
+    <string name="activity_name">activity Name</string>
+    <string name="Click_again_to_exit">Click again to exit</string>
+    <string name="cancel">Cancel</string>
+    <string name="Add">Add</string>
+    <string name="add_marker">Add Marker</string>
 </resources>

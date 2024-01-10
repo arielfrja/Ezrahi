@@ -11,7 +11,7 @@
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="activity Name"
+        android:hint="@string/activity_name"
         app:boxStrokeWidth="0dp"
         app:expandedHintEnabled="true"
         app:hintAnimationEnabled="true"
@@ -26,7 +26,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:enabled="false"
-            android:text="activity Name" />
+            android:text="@string/activity_name" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -54,7 +54,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:clickable="true"
-        android:contentDescription="edit button"
+        android:contentDescription="@string/edit_button"
         android:src="@android:drawable/ic_menu_edit"
         app:elevation="14dp"
         app:layout_constraintBottom_toTopOf="@+id/activityDetailsMenu"

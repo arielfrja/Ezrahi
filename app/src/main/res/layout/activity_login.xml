@@ -82,7 +82,7 @@
         style="@android:style/Widget.Material.Light.Button.Borderless"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="don't have an account yet?"
+        android:text="@string/don_t_have_an_account_yet"
         android:textColor="@android:color/primary_text_light_nodisable"
         app:layout_constraintEnd_toEndOf="@+id/loginButton"
         app:layout_constraintStart_toStartOf="@+id/loginButton"

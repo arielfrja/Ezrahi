@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
@@ -24,6 +25,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.splashscreen.SplashScreen;
+import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.FragmentContainerView;
 import androidx.lifecycle.ViewModelProvider;
@@ -55,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
     private AppBarConfiguration appBarConfiguration;
     private MainActivityViewModel model;
     private static boolean isVisible = false;
+    private boolean doubleBackToExitPressedOnce = false;
 
     public MainActivity() {
     }
@@ -81,12 +84,26 @@ public class MainActivity extends AppCompatActivity implements View.OnFocusChang
 
     public void onBackPressed() {
         closeKeyboard();
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START);
+        }
         if (!this.searchView.isIconified()) {
             this.searchView.setIconified(true);
         } else {
-            //Do nothing
-        }
+            if (navController.getCurrentDestination().getId() != R.id.nav_map) {
+                navController.navigate(R.id.nav_map);
+            } else {
+                if (doubleBackToExitPressedOnce) {
+                    super.onBackPressed();
+                    return;
+                }
+                this.doubleBackToExitPressedOnce = true;
+                Toast.makeText(this, R.string.Click_again_to_exit, Toast.LENGTH_SHORT).show();
+                new Handler().postDelayed(() -> doubleBackToExitPressedOnce = false, 2000);
+                //Do nothing
+            }
 
+        }
     }
 
     private void closeKeyboard() {

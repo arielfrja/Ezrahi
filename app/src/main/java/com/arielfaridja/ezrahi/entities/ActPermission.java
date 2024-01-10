@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 @Entity(tableName = "permissions")
@@ -16,29 +17,25 @@ public class ActPermission {
     private String ActId;
 
     @PrimaryKey
-    private int level;
+    private int id;
     private String name;
-    private Boolean showHigher;
-    private Boolean showLower;
     private Boolean showRoute;
     private Boolean addUser;
     private Boolean removeUser;
+    private ArrayList<Integer> rolesToHide;
+    private ArrayList<Integer> reportsToHide;
 
-    private Boolean showHigherReports;
-    private Boolean showLowerReports;
     private Boolean canReport;
 
-    public ActPermission(int level, String name, Boolean showHigher, Boolean showLower, Boolean showRoute, Boolean addUser, Boolean removeUser, Boolean showHigherReports, Boolean showLowerReports, Boolean canReport) {
-        this.level = level;
+    public ActPermission(int id, String name, Boolean showRoute, Boolean addUser, Boolean removeUser, Boolean canReport, ArrayList<Integer> rolesToHide, ArrayList<Integer> reportsToHide) {
+        this.id = id;
         this.name = name;
-        this.showHigher = showHigher;
-        this.showLower = showLower;
         this.showRoute = showRoute;
         this.addUser = addUser;
         this.removeUser = removeUser;
-        this.showHigherReports = showHigherReports;
-        this.showLowerReports = showLowerReports;
         this.canReport = canReport;
+        this.rolesToHide = rolesToHide;
+        this.reportsToHide = reportsToHide;
     }
 
     @NonNull
@@ -46,35 +43,25 @@ public class ActPermission {
         return new ActPermission(
                 level,
                 (String) permissions.get("Name"),
-                (Boolean) permissions.get("showHigher"),
-                (Boolean) permissions.get("showLower"),
-                (Boolean) permissions.get("showRoute"),
-                (Boolean) permissions.get("addUser"),
-                (Boolean) permissions.get("removeUser"),
-                (Boolean) permissions.get("showHigherReports"),
-                (Boolean) permissions.get("showLowerReports"),
-                (Boolean) permissions.get("canReport")
+                (Boolean) permissions.get("ShowRoute"),
+                (Boolean) permissions.get("AddUser"),
+                (Boolean) permissions.get("RemoveUser"),
+                (Boolean) permissions.get("CanReport"),
+                (ArrayList<Integer>) permissions.get("RolesToHide"),
+                (ArrayList<Integer>) permissions.get("ReportsToHide")
         );
-    }
-
-    public Boolean getShowHigherReports() {
-        return showHigherReports;
-    }
-
-    public void setShowHigherReports(Boolean showHigherReports) {
-        this.showHigherReports = showHigherReports;
-    }
-
-    public Boolean getShowLowerReports() {
-        return showLowerReports;
-    }
-
-    public void setShowLowerReports(Boolean showLowerReports) {
-        this.showLowerReports = showLowerReports;
     }
 
     public Boolean getCanReport() {
         return canReport;
+    }
+
+    public int getId() {
+        return this.id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public void setCanReport(Boolean canReport) {
@@ -89,12 +76,12 @@ public class ActPermission {
         this.ActId = actId;
     }
 
-    public int getLevel() {
-        return this.level;
+    public ArrayList<Integer> getReportsToHide() {
+        return reportsToHide;
     }
 
-    public void setLevel(int level) {
-        this.level = level;
+    public void setReportsToHide(ArrayList<Integer> reportsToHide) {
+        this.reportsToHide = reportsToHide;
     }
 
     public String getName() {
@@ -105,24 +92,16 @@ public class ActPermission {
         this.name = name;
     }
 
-    public Boolean getShowHigher() {
-        return this.showHigher;
-    }
-
-    public void setShowHigher(Boolean showHigher) {
-        this.showHigher = showHigher;
-    }
-
-    public Boolean getShowLower() {
-        return this.showLower;
-    }
-
-    public void setShowLower(Boolean showLower) {
-        this.showLower = showLower;
-    }
-
     public Boolean getShowRoute() {
         return this.showRoute;
+    }
+
+    public ArrayList<Integer> getRolesToHide() {
+        return rolesToHide;
+    }
+
+    public void setRolesToHide(ArrayList<Integer> rolesToHide) {
+        this.rolesToHide = rolesToHide;
     }
 
     public void setShowRoute(Boolean showRoute) {

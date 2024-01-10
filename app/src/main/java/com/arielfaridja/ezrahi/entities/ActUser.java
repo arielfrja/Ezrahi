@@ -12,25 +12,25 @@ import androidx.room.Entity;
 @Entity(primaryKeys = {"id"}, tableName = "Users")
 public class ActUser extends User {
     private String actId;
-    private int permission;
+    private int role;
 
-    public ActUser(String id, String phone, String email, String firstName, String lastName, Latlng location, String actId, int permission) {
+    public ActUser(String id, String phone, String email, String firstName, String lastName, Latlng location, String actId, int role) {
         super(id, phone, email, firstName, lastName, location);
         this.actId = actId;
-        this.permission = permission;
+        this.role = role;
     }
 
-    public ActUser(String actId, User u, int permission) {
+    public ActUser(String actId, User u, int role) {
         super(u);
         this.actId = actId;
-        this.permission = permission;
+        this.role = role;
     }
 
-    public ActUser(String actId, String userId, int permission) {
+    public ActUser(String actId, String userId, int role) {
         super();
         this.setId(userId);
         this.actId = actId;
-        this.permission = permission;
+        this.role = role;
     }
 
     public String getActId() {
@@ -41,12 +41,12 @@ public class ActUser extends User {
         this.actId = actId;
     }
 
-    public int getPermission() {
-        return this.permission;
+    public int getRole() {
+        return this.role;
     }
 
-    public void setPermission(int permission) {
-        this.permission = permission;
+    public void setRole(int role) {
+        this.role = role;
     }
 
     public void setUser(@NonNull User u) {
