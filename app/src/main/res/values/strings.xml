@@ -19,4 +19,5 @@
     <string name="cancel">Cancel</string>
     <string name="Add">Add</string>
     <string name="add_marker">Add Marker</string>
+    <string name="can_t_get_occured_location_right_now">can\'t get occured location right now</string>
 </resources>

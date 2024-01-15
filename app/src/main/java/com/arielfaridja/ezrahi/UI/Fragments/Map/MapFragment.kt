@@ -111,11 +111,27 @@ class MapFragment : Fragment() {
         this.findViews(view)
         myLocationButton.setOnClickListener { view ->
             if (checkLocationPermission()) {
-                myLocationOverlay!!.enableFollowLocation()
+                if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    myLocationOverlay!!.enableFollowLocation()
 
-                setMapCenter(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER))
-                mapController!!.zoomTo(20, null)
+                    setMapCenter(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER))
+                    mapController!!.zoomTo(20, null)
+                } else {
+                    val alertDialog = AlertDialog.Builder(context!!)
+                    alertDialog.setTitle("Enable GPS")
+                    alertDialog.setMessage("GPS is not enabled. Do you want to enable it now?")
+                    alertDialog.setPositiveButton("Yes") { _, _ ->
+                        // You can open the device settings to enable GPS here
+                        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                        startActivity(intent)
+                    }
+                    alertDialog.setNegativeButton("No") { _, _ ->
+                        // Do Nothing
+                    }
+                    alertDialog.show()
+                }
             }
+
 
         }
 
@@ -165,7 +181,13 @@ class MapFragment : Fragment() {
     }
 
     private fun setMapCenter(location: Location?) {
-        mapController?.setCenter(GeoPoint(location))
+        if (location != null)
+            mapController?.setCenter(GeoPoint(location))
+        else
+            Toast.makeText(
+                context,
+                getString(R.string.can_t_get_occured_location_right_now), Toast.LENGTH_SHORT
+            ).show()
     }
 
 

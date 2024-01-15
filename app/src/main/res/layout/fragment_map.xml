@@ -51,10 +51,12 @@
         android:layout_marginLeft="16dp"
         android:layout_marginBottom="16dp"
         android:clickable="true"
+        android:padding="16dp"
         android:src="@drawable/ic_baseline_my_location_24"
         app:backgroundTint="#F3F3F3"
-        app:fabSize="mini"
+        app:fabSize="normal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:useCompatPadding="true" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -24,7 +24,7 @@ class ActivityOverviewFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = FragmentActivityOverviewBinding.inflate(inflater, container, false)
         var view = binding.root
         val mainActivity = activity as MainActivity
