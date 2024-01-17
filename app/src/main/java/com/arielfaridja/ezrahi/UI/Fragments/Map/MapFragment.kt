@@ -8,7 +8,6 @@ import android.graphics.BitmapFactory
 import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -23,6 +22,7 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.preference.PreferenceManager
 import com.arielfaridja.ezrahi.Consts
 import com.arielfaridja.ezrahi.R
 import com.arielfaridja.ezrahi.UI.ExtensionMethods.Companion.toEnum
@@ -109,7 +109,7 @@ class MapFragment : Fragment() {
         }
 
         Configuration.getInstance()
-            .load(context, PreferenceManager.getDefaultSharedPreferences(context))
+            .load(context, PreferenceManager.getDefaultSharedPreferences(requireContext()))
         this.findViews(view)
         myLocationButton.setOnClickListener { _ ->
             if (checkLocationPermission()) {
