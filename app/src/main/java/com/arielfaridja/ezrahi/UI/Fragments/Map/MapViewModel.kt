@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import com.arielfaridja.ezrahi.data.DataRepoFactory
 import com.arielfaridja.ezrahi.entities.ActUser
 import com.arielfaridja.ezrahi.entities.Callback
+import com.arielfaridja.ezrahi.entities.Latlng
 import com.arielfaridja.ezrahi.entities.Report
 import com.arielfaridja.ezrahi.entities.ReportStatus
 import com.arielfaridja.ezrahi.entities.ReportType
@@ -12,17 +13,24 @@ import org.osmdroid.util.GeoPoint
 import java.util.Date
 
 class MapViewModel : ViewModel() {
-    fun addReport(title: String, description: String, location: GeoPoint?, callback: Callback) {
+    fun addReport(
+        title: String,
+        description: String,
+        location: GeoPoint?,
+        type: ReportType = ReportType.GENERAL,
+        callback: Callback
+    ) {
+
         db.report_add(
             Report(
-                currentActivity.id,
-                db.user_getCurrent(),
-                title,
-                description,
-                currentUser.location,
-                Date(System.currentTimeMillis()),
-                ReportStatus.REPORTED,
-                ReportType.GENERAL
+                /* actId = */ currentActivity.id,
+                /* reporter = */ db.user_getCurrent(),
+                /* title = */ title,
+                /* description = */ description,
+                /* location = */ Latlng(location!!.latitude, location.longitude),
+                /* reportTime = */ Date(System.currentTimeMillis()),
+                /* reportStatus = */ ReportStatus.REPORTED,
+                /* reportType = */ type
             ), callback
         )
     }

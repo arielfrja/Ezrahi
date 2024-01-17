@@ -19,15 +19,18 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.arielfaridja.ezrahi.Consts
 import com.arielfaridja.ezrahi.R
+import com.arielfaridja.ezrahi.UI.ExtensionMethods.Companion.toEnum
 import com.arielfaridja.ezrahi.UI.IconTextAdapter
 import com.arielfaridja.ezrahi.UI.Main.MainActivity
 import com.arielfaridja.ezrahi.entities.ActUser
 import com.arielfaridja.ezrahi.entities.Report
+import com.arielfaridja.ezrahi.entities.ReportType
 import com.arielfaridja.ezrahi.entities.User
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
@@ -42,7 +45,6 @@ import org.osmdroid.views.overlay.Overlay
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
-
 
 class MapFragment : Fragment() {
     private lateinit var myLocationButton: FloatingActionButton
@@ -95,7 +97,7 @@ class MapFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         var view = inflater.inflate(R.layout.fragment_map, container, false)
-        model = ViewModelProvider(this).get(MapViewModel::class.java)
+        model = ViewModelProvider(this)[MapViewModel::class.java]
         locationManager =
             requireActivity().getSystemService(Context.LOCATION_SERVICE) as LocationManager
         if (activity is MainActivity) {
@@ -109,7 +111,7 @@ class MapFragment : Fragment() {
         Configuration.getInstance()
             .load(context, PreferenceManager.getDefaultSharedPreferences(context))
         this.findViews(view)
-        myLocationButton.setOnClickListener { view ->
+        myLocationButton.setOnClickListener { _ ->
             if (checkLocationPermission()) {
                 if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     myLocationOverlay!!.enableFollowLocation()
@@ -117,7 +119,7 @@ class MapFragment : Fragment() {
                     setMapCenter(locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER))
                     mapController!!.zoomTo(20, null)
                 } else {
-                    val alertDialog = AlertDialog.Builder(context!!)
+                    val alertDialog = AlertDialog.Builder(requireContext())
                     alertDialog.setTitle("Enable GPS")
                     alertDialog.setMessage("GPS is not enabled. Do you want to enable it now?")
                     alertDialog.setPositiveButton("Yes") { _, _ ->
@@ -186,8 +188,12 @@ class MapFragment : Fragment() {
         else
             Toast.makeText(
                 context,
-                getString(R.string.can_t_get_occured_location_right_now), Toast.LENGTH_SHORT
+                getString(R.string.cant_get_occurred_location_right_now), Toast.LENGTH_SHORT
             ).show()
+    }
+
+    private fun setMapCenter(latitude: Double, longitude: Double) {
+        mapController?.setCenter(GeoPoint(latitude, longitude))
     }
 
 
@@ -203,8 +209,8 @@ class MapFragment : Fragment() {
         map!!.setTileSource(TileSourceFactory.MAPNIK)
         map!!.setMultiTouchControls(true)
         map!!.zoomController.setVisibility(CustomZoomButtonsController.Visibility.SHOW_AND_FADEOUT)
-        mapController = map!!.controller
-        (mapController as IMapController).setZoom(18.0)
+        setLastMapCenter()
+
         (mapController as IMapController).setCenter(GeoPoint(31.776551, 35.233808))
 
 
@@ -269,22 +275,29 @@ class MapFragment : Fragment() {
                             .setPositiveButton(getString(R.string.Add)) { _, _ ->
                                 val title = titleEditText.text.toString()
                                 val description = snippetEditText.text.toString()
-                                val selectedIcon = iconSpinner.selectedItem.toString()
+                                val selectedIcon =
+                                    (iconSpinner.selectedItem as Triple<*, *, *>).third as Int
                                 val marker = Marker(mapView)
                                 var location = mapView.projection.fromPixels(
                                     event.x.toInt(),
                                     event.y.toInt()
                                 ) as GeoPoint?
-                                model.addReport(title, description, location) { response ->
-                                    if (response.message.equals(Consts.REPORT_ADD_SUCCESS)) {
+                                model.addReport(
+                                    title,
+                                    description,
+                                    location,
+                                    selectedIcon.toEnum<ReportType>()!!
+                                ) { response ->
+                                    if (response.message.startsWith(requireContext().getString(R.string.report_add_success))) {
                                         //addReportMarker()
                                         marker.position = location
                                         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                                         marker.title = title
                                         marker.snippet =
-                                            "${(iconSpinner.selectedItem as Pair<Int, String>).second}:\n$description"
-                                        marker.icon = resources.getDrawable(
-                                            (iconSpinner.selectedItem as Pair<Int, String>).first,
+                                            "${requireContext().getString((iconSpinner.selectedItem as Triple<*, Int, *>).second)}:\n$description"
+                                        marker.icon = ResourcesCompat.getDrawable(
+                                            resources,
+                                            (iconSpinner.selectedItem as Triple<*, *, *>).first as Int,
                                             null
                                         )
 
@@ -322,8 +335,51 @@ class MapFragment : Fragment() {
         map!!.overlayManager.add(overlay)
     }
 
+    override fun onPause() {
+        super.onPause()
+        saveMapCenter()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        setLastMapCenter()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        saveMapCenter()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        setLastMapCenter()
+    }
+
+
+    private fun saveMapCenter() {
+        val editor = requireActivity().getPreferences(Context.MODE_PRIVATE).edit()
+        editor.putFloat("lastLatitude", map!!.mapCenter.latitude.toFloat())
+        editor.putFloat("lastLongitude", map!!.mapCenter.longitude.toFloat())
+        editor.putInt("lastZoomLevel", map!!.zoomLevelDouble.toInt())
+        editor.apply()
+    }
+
+    private fun setLastMapCenter() {
+        val sharedPreferences = requireActivity().getPreferences(Context.MODE_PRIVATE)
+        val lastLatitude =
+            sharedPreferences.getFloat("lastLatitude", DEFAULT_LATITUDE.toFloat()).toDouble()
+        val lastLongitude =
+            sharedPreferences.getFloat("lastLongitude", DEFAULT_LONGITUDE.toFloat()).toDouble()
+        val lastZoomLevel = sharedPreferences.getInt("lastZoomLevel", DEFAULT_ZOOM_LEVEL).toDouble()
+        mapController = map!!.controller
+        (mapController as IMapController).setZoom(lastZoomLevel)
+        setMapCenter(lastLatitude, lastLongitude)
+    }
 
     companion object {
         fun newInstance() = MapFragment()
+        private const val DEFAULT_ZOOM_LEVEL = 18
+        private const val DEFAULT_LATITUDE = 31.776551
+        private const val DEFAULT_LONGITUDE = 35.233808
     }
 }

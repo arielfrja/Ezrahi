@@ -18,4 +18,8 @@
     <string name="title_activity_signup">מסך הרשמה</string>
     <string name="edit_button">כפתור עריכה</string>
     <string name="activity_name">שם הפעילות</string>
+    <string name="general">כללי</string>
+    <string name="medical">רפוראי</string>
+    <string name="cant_get_occurred_location_right_now">לא ניתן לשיג מיקום מדוייק ברגע זה</string>
+    <string name="report_add_success">הדיווח נוסף בהצלחה</string>
 </resources>

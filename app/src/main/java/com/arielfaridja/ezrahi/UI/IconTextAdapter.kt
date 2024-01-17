@@ -10,8 +10,8 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.arielfaridja.ezrahi.R
 
-class IconTextAdapter(context: Context?, private val elements: Array<Pair<Int, String>>) :
-    ArrayAdapter<Pair<Int, String>>(
+class IconTextAdapter(context: Context?, private val elements: Array<Triple<Int, Int, Int>>) :
+    ArrayAdapter<Triple<Int, Int, Int>>(
         context!!,
         R.layout.icon_text_layout, R.id.text_spinner, elements
     ) {
@@ -33,7 +33,7 @@ class IconTextAdapter(context: Context?, private val elements: Array<Pair<Int, S
         }
         val element = getItem(position)
         holder.icon.setImageDrawable(ContextCompat.getDrawable(context, element!!.first))
-        holder.text.text = element.second
+        holder.text.text = context.getString(element.second)
         return view
     }
 
@@ -54,7 +54,7 @@ class IconTextAdapter(context: Context?, private val elements: Array<Pair<Int, S
         }
         val element = getItem(position)
         holder.icon.setImageDrawable(ContextCompat.getDrawable(context, element!!.first))
-        holder.text.text = element.second
+        holder.text.text = context.getString(element.second)
         return view
     }
 

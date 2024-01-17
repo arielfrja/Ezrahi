@@ -17,7 +17,6 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.preference.PreferenceManager;
 import androidx.room.Room;
 
-import com.arielfaridja.ezrahi.Consts;
 import com.arielfaridja.ezrahi.R;
 import com.arielfaridja.ezrahi.entities.ActPermission;
 import com.arielfaridja.ezrahi.entities.ActUser;
@@ -405,7 +404,7 @@ public class FirebaseDataRepo implements IDataRepo {
         data.put("Type", report.getReportType().getValue());
         reports.add(data).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
-                callback.onResponse(new Response<>(Consts.REPORT_ADD_SUCCESS + ":" + task.getResult().getId()));
+                callback.onResponse(new Response<>(context.getString(R.string.report_add_success) + ":" + task.getResult().getId()));
 
             } else callback.onResponse(new Response(task.getException()));
         });

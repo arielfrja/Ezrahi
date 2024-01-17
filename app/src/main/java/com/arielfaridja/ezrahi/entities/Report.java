@@ -24,6 +24,7 @@ public class Report {
         this.location = location;
         this.reportTime = reportTime;
         this.reportStatus = reportStatus;
+        this.reportType = reportType;
     }
 
     public String getActId() {
