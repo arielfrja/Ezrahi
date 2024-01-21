@@ -59,8 +59,9 @@ public class FirebaseDataRepo implements IDataRepo {
     private final CollectionReference reports;
     private final Context context;
     FirebaseFirestore db = FirebaseFirestore.getInstance();
-    ListenerRegistration currentActivityUsersListener;
     AppDatabase localDb;
+    ListenerRegistration currentActivityUsersListener;
+    ListenerRegistration currentActivityReportsListener;
     ListenerRegistration currentUsersActivitiesListener;
     String TAG = "FirebaseDataRepo";
     Data data;
@@ -81,91 +82,8 @@ public class FirebaseDataRepo implements IDataRepo {
             data.currentUsersActivities.setValue(response.getActivities());
             if (!data.currentActivity.getId().isEmpty()) {
                 setCurrentActivityUsersListener();
+                setCurrentActivityReportsListener();
                 setCurrentUsersListener();
-            }
-        });
-    }
-
-    private void saveActivityToSP(Activity activity) {
-        SharedPreferences sp = context.getSharedPreferences(ACT_SP, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sp.edit();
-        editor.putString("id", activity.getId());
-        editor.putString("Name", activity.getName());
-        editor.putString("owner", activity.getOwner().getId());
-        String routes = new Gson().toJson(activity.getRoutesSrc());
-        editor.putString("routes", routes);
-        editor.commit();
-
-        //TODO: put activity's permissions and users to DB, not SP!
-    }
-
-    /***
-     * A mathod to add a listener to the server's data about updates of this activity's users
-     */
-    void setCurrentActivityUsersListener() {
-        currentActivityUsersListener = this.actUsers.whereEqualTo("ActId", data.currentActivity.getId()).addSnapshotListener((value, error) -> {
-            if (error != null) try {
-                throw error;
-            } catch (FirebaseFirestoreException e) {
-                e.printStackTrace();
-            }
-            else if (value != null) {
-                for (DocumentChange doc : value.getDocumentChanges()) {
-                    String userId = doc.getDocument().get("UserId").toString();
-                    String actId = doc.getDocument().get("ActId").toString();
-                    int permission = ((Long) doc.getDocument().get("Permission")).intValue();
-                    switch (doc.getType()) {
-                        case REMOVED:
-                            data.currentActivityUsers.getValue().remove(userId);
-                            currentUsersListener.remove();
-                            setCurrentUsersListener();
-                            break;
-                        case ADDED: {
-                            data.currentActivityUsers.getValue().put(userId, new ActUser(actId, userId, permission));
-                            user_get(userId, response -> {
-                                data.currentActivityUsers.getValue().get(userId).setUser(response.getUser());
-                            });
-                            if (currentUsersListener != null) currentUsersListener.remove();
-                            setCurrentUsersListener();
-                            break;
-                        }
-                        case MODIFIED:
-                            data.currentActivityUsers.getValue().get(userId).setRole(permission);
-                            //only permission is not read-only field.
-                            break;
-                    }
-                }
-
-            }
-        });
-    }
-
-    /***
-     * A mathod to add a listener to the server's data about updates of this user's acticties
-     */
-    void setCurrentUsersActivitiesListener() {
-        currentUsersActivitiesListener = this.actUsers.whereEqualTo("UserId", mAuth.getCurrentUser().getUid()).addSnapshotListener((value, error) -> {
-            if (error != null) try {
-                throw error;
-            } catch (FirebaseFirestoreException e) {
-                e.printStackTrace();
-            }
-            else for (DocumentChange doc : value.getDocumentChanges()) {
-                String actId = (String) doc.getDocument().get("ActId");
-                switch (doc.getType()) {
-                    case ADDED:
-                        activity_get(actId, response -> {
-                            data.currentUsersActivities.getValue().put(actId, response.getActivity());
-                        });
-                        break;
-
-                    case REMOVED:
-                        data.currentUsersActivities.getValue().remove(actId);
-                        break;
-
-                    case MODIFIED: //should not be happened
-                        break;
-                }
             }
         });
     }
@@ -247,6 +165,7 @@ public class FirebaseDataRepo implements IDataRepo {
                 data.currentActivity = response.getActivity();
                 saveActivityToSP(data.currentActivity);
                 user_getAllByCurrentActivity();
+                report_getAllByCurrentActivity();
             }
         });
     }
@@ -275,18 +194,6 @@ public class FirebaseDataRepo implements IDataRepo {
 
         });
         return null;
-    }
-
-    private void user_saveCurrentToSP(User u) {
-        SharedPreferences sp = context.getSharedPreferences(context.getString(R.string.current_user_pref), Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sp.edit();
-        editor.putString("Email", u.getEmail());
-        editor.putString("FirstName", u.getFirstName());
-        editor.putString("LastName", u.getLastName());
-        editor.putString("Uid", u.getId());
-        editor.putString("Phone", u.getPhone());
-        editor.putString("Email", u.getEmail());
-        editor.apply();
     }
 
     public void auth_email_user_register(final User user, String password, Callback callback) {
@@ -333,7 +240,7 @@ public class FirebaseDataRepo implements IDataRepo {
     }
 
     public MutableLiveData<User> user_get(String uId, com.arielfaridja.ezrahi.entities.Callback callback) {
-        this.users.document(uId).get().addOnCompleteListener((task) -> {
+        this.users.document(uId.trim()).get().addOnCompleteListener((task) -> {
             if (task.isSuccessful()) {
                 callback.onResponse(new Response(docSnapshotToUser(task.getResult())));
             } else {
@@ -411,6 +318,13 @@ public class FirebaseDataRepo implements IDataRepo {
     }
 
     @Override
+    public MutableLiveData<HashMap<String, Report>> report_getAllByCurrentActivity() {
+        if (currentActivityReportsListener == null)
+            setCurrentActivityReportsListener();
+        return data.currentActivityReports;
+    }
+
+    @Override
     public MutableLiveData<HashMap<String, ActUser>> user_getAllByCurrentActivity() {
         if (currentUsersListener == null)
             setCurrentUsersListener();
@@ -454,12 +368,6 @@ public class FirebaseDataRepo implements IDataRepo {
         return null;
     }
 
-    private void updateLocalUser(FirebaseUser user) {
-        if (user != null) {
-        }
-
-    }
-
     private Activity docSnapshotToActivity(DocumentSnapshot doc, User owner) {
         Activity act = new Activity();
         act.setId(doc.getId());
@@ -481,9 +389,145 @@ public class FirebaseDataRepo implements IDataRepo {
         return act;
     }
 
+    private Report docSnapshotToReport(DocumentSnapshot doc, User reporter) {
+        return new Report(
+                doc.getString("ActId"),
+                reporter,
+                doc.getString("Title"),
+                doc.getString("Description"),
+                new Latlng(doc.getGeoPoint("Location")),
+                doc.getTimestamp("Time").toDate(),
+                ReportStatus.getByValue(doc.getDouble("Status").intValue()),
+                ReportType.getByValue(doc.getDouble("Type").intValue()),
+                doc.getId()
+        );
+    }
+
     @NonNull
     private User docSnapshotToUser(DocumentSnapshot snapshot) {
-        return new User(snapshot.getId(), snapshot.get("FirstName").toString(), snapshot.get("LastName").toString(), snapshot.get("Phone").toString(), snapshot.get("Email").toString(), new Latlng(((GeoPoint) snapshot.get("Location"))));
+        return new User(snapshot.getId(),
+                snapshot.getString("FirstName"),
+                snapshot.getString("LastName"),
+                snapshot.getString("Phone"),
+                snapshot.getString("Email"),
+                new Latlng(snapshot.getGeoPoint("Location"))
+        );
+    }
+
+    private void saveActivityToSP(Activity activity) {
+        SharedPreferences sp = context.getSharedPreferences(ACT_SP, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putString("id", activity.getId());
+        editor.putString("Name", activity.getName());
+        editor.putString("owner", activity.getOwner().getId());
+        String routes = new Gson().toJson(activity.getRoutesSrc());
+        editor.putString("routes", routes);
+        editor.commit();
+
+        //TODO: put activity's permissions and users to DB, not SP!
+    }
+
+    void setCurrentActivityReportsListener() {
+        currentActivityReportsListener = this.reports.whereEqualTo("ActId", data.currentActivity.getId()).addSnapshotListener((value, error) -> {
+            if (error != null) try {
+                throw error;
+            } catch (FirebaseFirestoreException e) {
+                e.printStackTrace();
+            }
+            else if (value != null) {
+                for (DocumentChange doc : value.getDocumentChanges()) {
+                    {
+                        switch (doc.getType()) {
+                            case ADDED:
+                                if (data.currentActivityUsers.getValue().containsKey(doc.getDocument().getString("ReporterId")))
+                                    data.currentActivityReports.getValue().put(doc.getDocument().getId(),
+                                            docSnapshotToReport(doc.getDocument(), data.currentActivityUsers.getValue().get(doc.getDocument().getString("ReporterId"))));
+                                else
+                                    user_get(doc.getDocument().getString("ReporterId"), response -> data.currentActivityReports.getValue().put(doc.getDocument().getId(),
+                                            docSnapshotToReport(doc.getDocument(), response.getUser())));
+                                break;
+                            case MODIFIED: //TODO: Add report modified
+                                break;
+                            case REMOVED:
+                                data.currentActivityReports.getValue().remove(doc.getDocument().getId());
+                                break;
+
+                        }
+                    }
+                }
+                data.currentActivityReports.postValue(new HashMap<>(data.currentActivityReports.getValue()));
+            }
+        });
+    }
+
+    /***
+     * A mathod to add a listener to the server's data about updates of this activity's users
+     */
+    void setCurrentActivityUsersListener() {
+        currentActivityUsersListener = this.actUsers.whereEqualTo("ActId", data.currentActivity.getId()).addSnapshotListener((value, error) -> {
+            if (error != null) try {
+                throw error;
+            } catch (FirebaseFirestoreException e) {
+                e.printStackTrace();
+            }
+            else if (value != null) {
+                for (DocumentChange doc : value.getDocumentChanges()) {
+                    String userId = doc.getDocument().get("UserId").toString();
+                    String actId = doc.getDocument().get("ActId").toString();
+                    int permission = doc.getDocument().getLong("Permission").intValue();
+                    switch (doc.getType()) {
+                        case REMOVED:
+                            data.currentActivityUsers.getValue().remove(userId);
+                            currentUsersListener.remove();
+                            setCurrentUsersListener();
+                            break;
+                        case ADDED: {
+                            data.currentActivityUsers.getValue().put(userId, new ActUser(actId, userId, permission));
+                            user_get(userId, response -> data.currentActivityUsers.getValue().get(userId).setUser(response.getUser()));
+                            if (currentUsersListener != null) currentUsersListener.remove();
+                            setCurrentUsersListener();
+                            break;
+                        }
+                        case MODIFIED:
+                            data.currentActivityUsers.getValue().get(userId).setRole(permission);
+                            //only permission is not read-only field.
+                            break;
+                    }
+                }
+                data.currentActivityUsers.postValue(new HashMap<>(data.currentActivityUsers.getValue()));
+
+            }
+        });
+    }
+
+    /***
+     * A mathod to add a listener to the server's data about updates of this user's acticties
+     */
+    void setCurrentUsersActivitiesListener() {
+        currentUsersActivitiesListener = this.actUsers.whereEqualTo("UserId", mAuth.getCurrentUser().getUid()).addSnapshotListener((value, error) -> {
+            if (error != null) try {
+                throw error;
+            } catch (FirebaseFirestoreException e) {
+                e.printStackTrace();
+            }
+            else for (DocumentChange doc : value.getDocumentChanges()) {
+                String actId = (String) doc.getDocument().get("ActId");
+                switch (doc.getType()) {
+                    case ADDED:
+                        activity_get(actId, response -> {
+                            data.currentUsersActivities.getValue().put(actId, response.getActivity());
+                        });
+                        break;
+
+                    case REMOVED:
+                        data.currentUsersActivities.getValue().remove(actId);
+                        break;
+
+                    case MODIFIED: //should not be happened
+                        break;
+                }
+            }
+        });
     }
 
     void setCurrentUsersListener() {
@@ -513,9 +557,16 @@ public class FirebaseDataRepo implements IDataRepo {
                                 break;
                         }
                     }
+                    data.currentActivityUsers.postValue(new HashMap<>(data.currentActivityUsers.getValue()));
 
                 }
             });
+    }
+
+    private void updateLocalUser(FirebaseUser user) {
+        if (user != null) {
+        }
+
     }
 
     /***
@@ -526,14 +577,26 @@ public class FirebaseDataRepo implements IDataRepo {
         db.useEmulator("10.0.0.4", 9099);
     }
 
+    private void user_saveCurrentToSP(User u) {
+        SharedPreferences sp = context.getSharedPreferences(context.getString(R.string.current_user_pref), Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putString("Email", u.getEmail());
+        editor.putString("FirstName", u.getFirstName());
+        editor.putString("LastName", u.getLastName());
+        editor.putString("Uid", u.getId());
+        editor.putString("Phone", u.getPhone());
+        editor.putString("Email", u.getEmail());
+        editor.apply();
+    }
+
     /***
      * class to gather all the data already pulled
      */
     class Data {
-        MutableLiveData<HashMap<String, Report>> currentActivityReports = new MutableLiveData<HashMap<String, Report>>();
         User currentUser = new User();
         Activity currentActivity = new Activity();
         MutableLiveData<HashMap<String, ActUser>> currentActivityUsers = new MutableLiveData<>();
+        MutableLiveData<HashMap<String, Report>> currentActivityReports = new MutableLiveData<>();
         MutableLiveData<HashMap<String, Activity>> currentUsersActivities = new MutableLiveData<>();
 
         public Data(Context context) {
@@ -547,6 +610,12 @@ public class FirebaseDataRepo implements IDataRepo {
                 });
             }
             currentActivityUsers.setValue(new HashMap<>());
+            currentActivityReports.setValue(new HashMap<>());
+        }
+
+        private void loadCurrentActivityUsers(SharedPreferences sp) {
+            if (sp != null) ; //load from sp
+            else user_getAllByCurrentActivity();
         }
 
         /***
@@ -588,11 +657,6 @@ public class FirebaseDataRepo implements IDataRepo {
                         user_saveCurrentToSP(currentUser);
                     });
             }
-        }
-
-        private void loadCurrentActivityUsers(SharedPreferences sp) {
-            if (sp != null) ; //load from sp
-            else user_getAllByCurrentActivity();
         }
     }
 

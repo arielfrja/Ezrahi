@@ -13,4 +13,15 @@ public enum ReportType {
     public int getValue() {
         return value;
     }
+
+    public static ReportType getByValue(int value) {
+        switch (value) {
+            case 0:
+                return GENERAL;
+            case 1:
+                return MEDICAL;
+            default:
+                return GENERAL;
+        }
+    }
 }

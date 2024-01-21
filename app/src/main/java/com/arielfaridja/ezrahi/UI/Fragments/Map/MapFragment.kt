@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.graphics.drawable.Drawable
 import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
@@ -24,12 +25,13 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
 import com.arielfaridja.ezrahi.Consts
+import com.arielfaridja.ezrahi.ExtensionMethods.Companion.toEnum
 import com.arielfaridja.ezrahi.R
-import com.arielfaridja.ezrahi.UI.ExtensionMethods.Companion.toEnum
 import com.arielfaridja.ezrahi.UI.IconTextAdapter
 import com.arielfaridja.ezrahi.UI.Main.MainActivity
 import com.arielfaridja.ezrahi.entities.ActUser
 import com.arielfaridja.ezrahi.entities.Report
+import com.arielfaridja.ezrahi.entities.ReportStatus
 import com.arielfaridja.ezrahi.entities.ReportType
 import com.arielfaridja.ezrahi.entities.User
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -53,17 +55,15 @@ class MapFragment : Fragment() {
     var mapController: IMapController? = null
     var myLocationOverlay: MyLocationNewOverlay? = null
     var user: User? = null
-    private val usersMarkers = mutableMapOf<String, Marker>()
-    private val reportsMarker = mutableMapOf<String, Marker>()
+    private val usersMarkers = mutableMapOf<String, Marker>() // <user ID, Marker>
+    private val reportsMarkers = mutableMapOf<String, Marker>()
 
     private fun addUserMarker(user: ActUser) {
         var marker = Marker(map).apply {
             when (user.role) { //TODO: set by type
-                0 -> icon =
-                    resources.getDrawable(R.drawable.hiker_sign, null)
+                0 -> icon = resources.getDrawable(R.drawable.hiker_sign, null)
 
-                else -> icon =
-                    resources.getDrawable(R.drawable.hiker_sign, null)
+                else -> icon = resources.getDrawable(R.drawable.hiker_sign, null)
             }
             position = GeoPoint(user.location.latitude, user.location.latitude)
             title = user.firstName + " " + user.lastName
@@ -76,13 +76,29 @@ class MapFragment : Fragment() {
         map!!.invalidate()
     }
 
-    private fun addReportMarker(report: Report) {
 
+    private fun addReportMarker(report: Report) {
+        var marker = Marker(map).apply {
+            icon = reportTypeToIcon(report.reportType)
+            position = GeoPoint(report.location.latitude, report.location.longitude)
+            title = report.title
+            snippet = report.description
+            alpha = when (report.reportStatus) {
+                ReportStatus.REPORTED -> 1f
+                ReportStatus.HANDLED -> .5f
+                null -> throw IllegalStateException("the report status cannot be null")
+            }
+            //setTextIcon(user.firstName + " " + user.lastName)
+            textLabelFontSize = 12
+            setVisible(true)
+        }
+        reportsMarkers.put(report.id, marker)
+        map!!.overlayManager.add(marker)
+        map!!.invalidate()
     }
 
     private fun modifyUserMarker(user: ActUser, marker: Marker?) {
-        if (user.id == model.currentUser.id)
-            marker!!.remove(map)
+        if (user.id == model.currentUser.id) marker!!.remove(map)
         usersMarkers.get(user.id)!!.position =
             GeoPoint(user.location.latitude, user.location.longitude)
 
@@ -93,8 +109,7 @@ class MapFragment : Fragment() {
     private lateinit var model: MapViewModel
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
         var view = inflater.inflate(R.layout.fragment_map, container, false)
         model = ViewModelProvider(this)[MapViewModel::class.java]
@@ -140,28 +155,70 @@ class MapFragment : Fragment() {
         this.mapDefinition()
         model.users.observe(viewLifecycleOwner, Observer { users ->
             for (u in users) {
-                if (!u.key.equals(model.currentUser!!.id))
-                    if (usersMarkers.containsKey(u.key))
+                if (!u.key.equals(model.currentUser!!.id)) if (usersMarkers.containsKey(u.key))
 //                    if (u.value.location.latitude != usersMarkers[u.key]!!.position.latitude ||
 //                        u.value.location.longitude != usersMarkers[u.key]!!.position.longitude
 //                    )
-                        modifyUserMarker(u.value, usersMarkers.get(u.key))
-                    else
-                        addUserMarker(u.value)
+                    modifyUserMarker(u.value, usersMarkers.get(u.key))
+                else addUserMarker(u.value)
             }
         })
+        model.reports.observe(viewLifecycleOwner, Observer { reports ->
+            val deletedKeys = reportsMarkers.keys.subtract(reports.keys)
+            for (r in reports) {
+                if (reportsMarkers.containsKey(r.key)) modifyReportMarker(
+                    r.value,
+                    reportsMarkers.get(r.key)
+                )
+                else addReportMarker(r.value)
+            }
+            for (key in deletedKeys) {
+                reportsMarkers[key]!!.remove(map!!)
+                reportsMarkers.remove(key)
+            }
+
+        })
+
 
 
         return view
     }
 
+    private fun modifyReportMarker(report: Report, marker: Marker?) {
+        if (marker != null) {
+            marker.title = report.title
+            marker.snippet = report.description
+            marker.position = GeoPoint(report.location.latitude, report.location.longitude)
+            marker.icon = reportTypeToIcon(report.reportType)
+            marker.alpha = when (report.reportStatus) {
+                ReportStatus.REPORTED -> 1f
+                ReportStatus.HANDLED -> .5f
+                null -> throw IllegalStateException("the report status cannot be null")
+            }
+        }
+    }
+
+    private fun reportTypeToIcon(reportType: ReportType): Drawable? {
+        return when (reportType) {
+            ReportType.GENERAL -> ResourcesCompat.getDrawable(
+                resources,
+                R.drawable.report_canvas,
+                null
+            )
+
+            ReportType.MEDICAL -> ResourcesCompat.getDrawable(
+                resources,
+                R.drawable.report_medical,
+                null
+            )
+        }
+    }
+
     private fun checkLocationPermission(): Boolean {
         if (ActivityCompat.checkSelfPermission(
-                requireActivity(),
-                Manifest.permission.ACCESS_FINE_LOCATION
+                requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                requireActivity(),
-                Manifest.permission.ACCESS_COARSE_LOCATION
+                requireActivity(), Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             ActivityCompat.requestPermissions(
@@ -178,18 +235,14 @@ class MapFragment : Fragment() {
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
             return false
-        } else
-            return true
+        } else return true
     }
 
     private fun setMapCenter(location: Location?) {
-        if (location != null)
-            mapController?.setCenter(GeoPoint(location))
-        else
-            Toast.makeText(
-                context,
-                getString(R.string.cant_get_occurred_location_right_now), Toast.LENGTH_SHORT
-            ).show()
+        if (location != null) mapController?.setCenter(GeoPoint(location))
+        else Toast.makeText(
+            context, getString(R.string.cant_get_occurred_location_right_now), Toast.LENGTH_SHORT
+        ).show()
     }
 
     private fun setMapCenter(latitude: Double, longitude: Double) {
@@ -214,23 +267,21 @@ class MapFragment : Fragment() {
         (mapController as IMapController).setCenter(GeoPoint(31.776551, 35.233808))
 
 
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) &&
-            !locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) && !locationManager.isProviderEnabled(
+                LocationManager.NETWORK_PROVIDER
+            )
         ) {
             // Location services are not enabled
             // Show a dialog to the user asking them to enable location services
 
-            AlertDialog.Builder(requireActivity())
-                .setTitle("Enable Location Services")
+            AlertDialog.Builder(requireActivity()).setTitle("Enable Location Services")
                 .setMessage("Location services are required for this app. Please enable location services.")
                 .setPositiveButton("Go to Settings") { _, _ ->
                     // Open the settings page to enable location services
                     startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                }
-                .setNegativeButton("Cancel") { _, _ ->
+                }.setNegativeButton("Cancel") { _, _ ->
                     // Do nothing
-                }
-                .show()
+                }.show()
         } else {
             // Location services are enabled
             // Start requesting location updates
@@ -240,8 +291,7 @@ class MapFragment : Fragment() {
         myLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), map)
         myLocationOverlay!!.setPersonIcon(
             BitmapFactory.decodeResource(
-                resources,
-                R.drawable.current_location
+                resources, R.drawable.current_location
             )
         )
         myLocationOverlay!!.setPersonAnchor(.5f, .5f)
@@ -270,8 +320,7 @@ class MapFragment : Fragment() {
                         iconSpinner.adapter = IconTextAdapter(context, Consts.iconTextArray)
 
                         val dialogBuilder = AlertDialog.Builder(requireContext())
-                            .setTitle(getString(R.string.add_marker))
-                            .setView(dialogView)
+                            .setTitle(getString(R.string.add_marker)).setView(dialogView)
                             .setPositiveButton(getString(R.string.Add)) { _, _ ->
                                 val title = titleEditText.text.toString()
                                 val description = snippetEditText.text.toString()
@@ -279,8 +328,7 @@ class MapFragment : Fragment() {
                                     (iconSpinner.selectedItem as Triple<*, *, *>).third as Int
                                 val marker = Marker(mapView)
                                 var location = mapView.projection.fromPixels(
-                                    event.x.toInt(),
-                                    event.y.toInt()
+                                    event.x.toInt(), event.y.toInt()
                                 ) as GeoPoint?
                                 model.addReport(
                                     title,
@@ -290,6 +338,7 @@ class MapFragment : Fragment() {
                                 ) { response ->
                                     if (response.message.startsWith(requireContext().getString(R.string.report_add_success))) {
                                         //addReportMarker()
+                                        /*
                                         marker.position = location
                                         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                                         marker.title = title
@@ -303,17 +352,16 @@ class MapFragment : Fragment() {
 
                                         mapView.overlays.add(marker)
                                         mapView.invalidate()
-                                    } else
-                                        Toast.makeText(
-                                            requireContext(),
-                                            response.exception.message,
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                         */
+                                    } else Toast.makeText(
+                                        requireContext(),
+                                        response.exception.message,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
 
 
-                            }
-                            .setNegativeButton(getString(R.string.cancel)) { _, _ -> }
+                            }.setNegativeButton(getString(R.string.cancel)) { _, _ -> }
                         val dialog = dialogBuilder.create()
                         dialog.show()
 //                        val geoPoint = mapView1.projection.fromPixels(x.toInt(), y.toInt())

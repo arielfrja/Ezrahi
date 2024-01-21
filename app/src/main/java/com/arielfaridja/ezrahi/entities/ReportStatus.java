@@ -13,4 +13,15 @@ public enum ReportStatus {
     public int getValue() {
         return value;
     }
+
+    public static ReportStatus getByValue(int value) {
+        switch (value) {
+            case 1:
+                return REPORTED;
+            case 2:
+                return HANDLED;
+            default:
+                return REPORTED;
+        }
+    }
 }

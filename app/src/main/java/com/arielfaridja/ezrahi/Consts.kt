@@ -1,6 +1,6 @@
 package com.arielfaridja.ezrahi
 
-import com.arielfaridja.ezrahi.UI.ExtensionMethods.Companion.toInt
+import com.arielfaridja.ezrahi.ExtensionMethods.Companion.toInt
 import com.arielfaridja.ezrahi.entities.ReportType
 object Consts {
 

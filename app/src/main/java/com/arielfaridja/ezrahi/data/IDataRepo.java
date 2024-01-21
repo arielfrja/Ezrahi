@@ -53,6 +53,8 @@ public interface IDataRepo {
 
     void report_add(Report report, Callback callback);
 
+    MutableLiveData<HashMap<String, Report>> report_getAllByCurrentActivity();
+
     MutableLiveData<HashMap<String, ActUser>> user_getAllByCurrentActivity();
 
     User user_getCurrent();

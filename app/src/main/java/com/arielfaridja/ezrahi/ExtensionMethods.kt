@@ -1,4 +1,4 @@
-package com.arielfaridja.ezrahi.UI
+package com.arielfaridja.ezrahi
 
 class ExtensionMethods {
     companion object {

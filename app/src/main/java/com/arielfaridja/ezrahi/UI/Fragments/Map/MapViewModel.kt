@@ -37,12 +37,16 @@ class MapViewModel : ViewModel() {
 
     private val db = DataRepoFactory.getInstance()
     val users = MutableLiveData<Map<String, ActUser>>()
+    val reports = MutableLiveData<Map<String, Report>>()
     val currentUser = db.user_getCurrent()
     val currentActivity = db.activity_getCurrent()
 
     init {
         db.user_getAllByCurrentActivity().observeForever { dbUsers ->
             users.value = dbUsers
+        }
+        db.report_getAllByCurrentActivity().observeForever { dbReports ->
+            reports.value = dbReports
         }
     }
 //    private val mediator = MediatorLiveData<Map<String,ActUser>>()

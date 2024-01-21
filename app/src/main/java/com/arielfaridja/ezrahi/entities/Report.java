@@ -3,6 +3,7 @@ package com.arielfaridja.ezrahi.entities;
 import java.util.Date;
 
 public class Report {
+    private String id;
     private String description;
     private String title;
     private String actId;
@@ -16,6 +17,18 @@ public class Report {
         // Empty constructor
     }
 
+    public Report(String actId, User reporter, String title, String description, Latlng location, Date reportTime, ReportStatus reportStatus, ReportType reportType, String id) {
+        this.title = title;
+        this.description = description;
+        this.actId = actId;
+        this.reporter = reporter;
+        this.location = location;
+        this.reportTime = reportTime;
+        this.reportStatus = reportStatus;
+        this.reportType = reportType;
+        this.id = id;
+    }
+
     public Report(String actId, User reporter, String title, String description, Latlng location, Date reportTime, ReportStatus reportStatus, ReportType reportType) {
         this.title = title;
         this.description = description;
@@ -25,6 +38,7 @@ public class Report {
         this.reportTime = reportTime;
         this.reportStatus = reportStatus;
         this.reportType = reportType;
+
     }
 
     public String getActId() {
@@ -89,5 +103,13 @@ public class Report {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }
