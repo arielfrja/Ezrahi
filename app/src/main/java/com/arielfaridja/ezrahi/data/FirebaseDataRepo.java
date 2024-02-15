@@ -79,11 +79,12 @@ public class FirebaseDataRepo implements IDataRepo {
         data = new Data(context);
         if (user_isSignedIn()) user_setCurrent(mAuth.getCurrentUser().getUid());
         activity_getAllByUser(mAuth.getUid(), response -> {
-            data.currentUsersActivities.setValue(response.getActivities());
+            data.currentUsersActivities.postValue(response.getActivities());
             if (!data.currentActivity.getId().isEmpty()) {
                 setCurrentActivityUsersListener();
                 setCurrentActivityReportsListener();
                 setCurrentUsersListener();
+                setCurrentUsersActivitiesListener();
             }
         });
     }
@@ -175,6 +176,15 @@ public class FirebaseDataRepo implements IDataRepo {
             if (task.isSuccessful()) {
                 if (task.getResult().getUser().isEmailVerified()) {
                     this.user_get(task.getResult().getUser().getUid(), response -> {
+                        activity_getAllByUser(response.getUser().getId(), response2 -> {
+                            data.currentUsersActivities.postValue(response2.getActivities());
+                            if (!data.currentActivity.getId().isEmpty()) {
+                                setCurrentActivityUsersListener();
+                                setCurrentActivityReportsListener();
+                                setCurrentUsersListener();
+                                setCurrentUsersActivitiesListener();
+                            }
+                        });
                         User u = response.getUser();
                         user_saveCurrentToSP(u);
                         callback.onResponse(response);
@@ -516,11 +526,13 @@ public class FirebaseDataRepo implements IDataRepo {
                     case ADDED:
                         activity_get(actId, response -> {
                             data.currentUsersActivities.getValue().put(actId, response.getActivity());
+                            data.currentUsersActivities.postValue(data.currentUsersActivities.getValue());
                         });
                         break;
 
                     case REMOVED:
                         data.currentUsersActivities.getValue().remove(actId);
+                        data.currentUsersActivities.postValue(data.currentUsersActivities.getValue());
                         break;
 
                     case MODIFIED: //should not be happened

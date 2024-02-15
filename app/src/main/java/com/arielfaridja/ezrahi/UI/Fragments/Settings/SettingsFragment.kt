@@ -11,6 +11,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
     lateinit var activitiesList: ListPreference
     lateinit var model: SettingsViewModel
+
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 
         var mainActivity = activity as MainActivity
@@ -24,7 +26,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         model.activitiesList.observe(this) {
             var entries = ArrayList<CharSequence>()
             var entryValues = ArrayList<CharSequence>()
-            if (it.size > 0) {
+            if (it != null && it.size > 0) {
                 entries.clear()
                 entryValues.clear()
                 for (act in it) {

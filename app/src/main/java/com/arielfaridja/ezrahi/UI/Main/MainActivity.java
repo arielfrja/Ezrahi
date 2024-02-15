@@ -47,6 +47,11 @@ import com.google.android.material.navigation.NavigationView;
 public class MainActivity extends AppCompatActivity implements View.OnFocusChangeListener {
     User user;
     Activity currentActivity;
+
+    public NavController getNavController() {
+        return navController;
+    }
+
     NavController navController;
     SharedPreferences sharedPreferences;
     Boolean isReady = false;

@@ -16,6 +16,9 @@
         <action
             android:id="@+id/action_mapFragment_to_activityOverviewFragment"
             app:destination="@id/nav_activity_overview" />
+        <action
+            android:id="@+id/action_nav_map_to_nav_settings"
+            app:destination="@id/nav_settings" />
     </fragment>
     <fragment
         android:id="@+id/nav_activity_overview"

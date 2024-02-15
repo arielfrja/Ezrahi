@@ -57,7 +57,7 @@ class MapFragment : Fragment() {
     var user: User? = null
     private val usersMarkers = mutableMapOf<String, Marker>() // <user ID, Marker>
     private val reportsMarkers = mutableMapOf<String, Marker>()
-
+    private lateinit var dialog: AlertDialog
     private fun addUserMarker(user: ActUser) {
         var marker = Marker(map).apply {
             when (user.role) { //TODO: set by type
@@ -153,9 +153,10 @@ class MapFragment : Fragment() {
         }
 
         this.mapDefinition()
+        model.refresh()
         model.users.observe(viewLifecycleOwner, Observer { users ->
             for (u in users) {
-                if (!u.key.equals(model.currentUser!!.id)) if (usersMarkers.containsKey(u.key))
+                if (!u.key.equals(model.currentUser.id)) if (usersMarkers.containsKey(u.key))
 //                    if (u.value.location.latitude != usersMarkers[u.key]!!.position.latitude ||
 //                        u.value.location.longitude != usersMarkers[u.key]!!.position.longitude
 //                    )
@@ -180,8 +181,38 @@ class MapFragment : Fragment() {
         })
 
 
-
+        if (model.currentActivity.id.isNullOrBlank())
+            noActivityAssignedDialog()
         return view
+    }
+
+
+    private fun Fragment.noActivityAssignedDialog() {
+        val alertDialogBuilder = AlertDialog.Builder(requireContext())
+
+        // Set the dialog title and message
+        alertDialogBuilder.setTitle("No Activity Assigned")
+        alertDialogBuilder.setMessage("Please assign an activity.")
+
+        // Set the OK button
+        alertDialogBuilder.setPositiveButton("OK") { dialog, _ ->
+            // Navigate to the "settingsFragment" using the NavController
+            // Dismiss the dialog
+            dialog.dismiss()
+        }
+
+        // Set the dismiss action (if needed)
+        alertDialogBuilder.setOnDismissListener {
+            // This block will be executed when the dialog is dismissed
+            // You can add additional actions here if needed
+            (requireActivity() as MainActivity).navController.navigate(R.id.nav_settings)
+        }
+
+        if (dialog.isShowing)
+            dialog.dismiss()
+        dialog = alertDialogBuilder.create()
+        // Create and show the AlertDialog
+        dialog = alertDialogBuilder.show()
     }
 
     private fun modifyReportMarker(report: Report, marker: Marker?) {
@@ -274,7 +305,7 @@ class MapFragment : Fragment() {
             // Location services are not enabled
             // Show a dialog to the user asking them to enable location services
 
-            AlertDialog.Builder(requireActivity()).setTitle("Enable Location Services")
+            dialog = AlertDialog.Builder(requireActivity()).setTitle("Enable Location Services")
                 .setMessage("Location services are required for this app. Please enable location services.")
                 .setPositiveButton("Go to Settings") { _, _ ->
                     // Open the settings page to enable location services

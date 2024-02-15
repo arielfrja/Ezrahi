@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import com.arielfaridja.ezrahi.data.DataRepoFactory
 import com.arielfaridja.ezrahi.entities.Activity
 import com.arielfaridja.ezrahi.entities.User
-import kotlin.concurrent.thread
 
 class SettingsViewModel : ViewModel {
     // TODO: Implement the ViewModel
@@ -22,17 +21,21 @@ class SettingsViewModel : ViewModel {
         this.activity = activity
         liveDataUser = MutableLiveData(user)
 
+        dataRepo.activity_getAllByCurrentUser().observeForever { activities ->
+            if (!activities.isNullOrEmpty()) {
+                activitiesList.postValue(activities)
+            }
+        }
+
         dataRepo.activity_getAllByCurrentUser()
+
     }
 
     /***
      * a function to ake sure that if its take a while to update local activities list,
      * the model will be updated too.
      */
-    private fun listenActivitiesAdding() = thread {
-        while (dataRepo.activity_getAllByCurrentUser().value!!.isEmpty());
-        activitiesList.value = dataRepo.activity_getAllByCurrentUser().value
-    }.start()
+
 
     fun updateCurrentActivity(actId: String) {
         dataRepo.activity_setCurrent(actId)
