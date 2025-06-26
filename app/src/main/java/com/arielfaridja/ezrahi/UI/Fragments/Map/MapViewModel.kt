@@ -20,7 +20,7 @@ class MapViewModel : ViewModel() {
         description: String,
         location: GeoPoint?,
         type: ReportType = ReportType.GENERAL,
-        callback: Callback
+        callback: Callback<String>
     ) {
 
         db.report_add(

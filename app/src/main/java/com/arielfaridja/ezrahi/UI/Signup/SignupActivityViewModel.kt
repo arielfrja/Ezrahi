@@ -4,6 +4,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.arielfaridja.ezrahi.data.DataRepoFactory
 import com.arielfaridja.ezrahi.data.IDataRepo
+import com.arielfaridja.ezrahi.entities.Callback
 import com.arielfaridja.ezrahi.entities.Latlng
 import com.arielfaridja.ezrahi.entities.User
 import java.util.regex.Pattern
@@ -46,15 +47,17 @@ class SignupActivityViewModel : ViewModel() {
                 errorMessage.appendLine("F: $PHONE_EMPTY")
             } else {
                 var user = User("", firstName, lastName, phone, email, Latlng())
-                IDataRepo.auth_email_user_register(user, password) { response ->
-                    if (response.user != null) {
-                        user = response.user
-                        signedUp.value = true
-                    } else if (response.exception != null) {
-                        setTheException(response.exception)
+                IDataRepo.auth_email_user_register(user, password, object : Callback<User> {
+                    override fun onResponse(response: Callback.Response<User>) {
+                        val respUser = response.user
+                        if (respUser != null) {
+                            user = respUser
+                            signedUp.value = true
+                        } else if (response.exception != null) {
+                            setTheException(response.exception)
+                        }
                     }
-
-                }
+                })
             }
             if (!ok)
                 throw Exception(errorMessage.toString())

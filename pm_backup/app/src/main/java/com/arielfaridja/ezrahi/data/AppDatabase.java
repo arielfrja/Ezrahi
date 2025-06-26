@@ -11,7 +11,7 @@ import androidx.sqlite.db.SupportSQLiteOpenHelper;
 import com.arielfaridja.ezrahi.entities.ActUser;
 
 @Database(entities = {ActUser.class/*, ActPermission.class*/}, version = 0)
-@TypeConverters(value = typesConverter.class)
+    @TypeConverters(value = typesConverter.class)
 public class AppDatabase extends RoomDatabase {
 
     @NonNull

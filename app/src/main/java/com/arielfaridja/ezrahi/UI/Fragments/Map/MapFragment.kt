@@ -30,6 +30,8 @@ import com.arielfaridja.ezrahi.R
 import com.arielfaridja.ezrahi.UI.IconTextAdapter
 import com.arielfaridja.ezrahi.UI.Main.MainActivity
 import com.arielfaridja.ezrahi.entities.ActUser
+import com.arielfaridja.ezrahi.entities.Callback
+import com.arielfaridja.ezrahi.entities.Latlng
 import com.arielfaridja.ezrahi.entities.Report
 import com.arielfaridja.ezrahi.entities.ReportStatus
 import com.arielfaridja.ezrahi.entities.ReportType
@@ -78,21 +80,23 @@ class MapFragment : Fragment() {
 
 
     private fun addReportMarker(report: Report) {
+        val reportType = report.reportType ?: ReportType.GENERAL
+        val location = report.location ?: Latlng(0.0, 0.0)
+        val id = report.id ?: ""
         var marker = Marker(map).apply {
-            icon = reportTypeToIcon(report.reportType)
-            position = GeoPoint(report.location.latitude, report.location.longitude)
-            title = report.title
-            snippet = report.description
+            icon = reportTypeToIcon(reportType)
+            position = GeoPoint(location.latitude, location.longitude)
+            title = report.title ?: ""
+            snippet = report.description ?: ""
             alpha = when (report.reportStatus) {
                 ReportStatus.REPORTED -> 1f
                 ReportStatus.HANDLED -> .5f
                 null -> throw IllegalStateException("the report status cannot be null")
             }
-            //setTextIcon(user.firstName + " " + user.lastName)
             textLabelFontSize = 12
             setVisible(true)
         }
-        reportsMarkers.put(report.id, marker)
+        reportsMarkers[id] = marker
         map!!.overlayManager.add(marker)
         map!!.invalidate()
     }
@@ -217,10 +221,12 @@ class MapFragment : Fragment() {
 
     private fun modifyReportMarker(report: Report, marker: Marker?) {
         if (marker != null) {
-            marker.title = report.title
-            marker.snippet = report.description
-            marker.position = GeoPoint(report.location.latitude, report.location.longitude)
-            marker.icon = reportTypeToIcon(report.reportType)
+            val reportType = report.reportType ?: ReportType.GENERAL
+            val location = report.location ?: Latlng(0.0, 0.0)
+            marker.title = report.title ?: ""
+            marker.snippet = report.description ?: ""
+            marker.position = GeoPoint(location.latitude, location.longitude)
+            marker.icon = reportTypeToIcon(reportType)
             marker.alpha = when (report.reportStatus) {
                 ReportStatus.REPORTED -> 1f
                 ReportStatus.HANDLED -> .5f
@@ -229,14 +235,13 @@ class MapFragment : Fragment() {
         }
     }
 
-    private fun reportTypeToIcon(reportType: ReportType): Drawable? {
-        return when (reportType) {
+    private fun reportTypeToIcon(reportType: ReportType?): Drawable? {
+        return when (reportType ?: ReportType.GENERAL) {
             ReportType.GENERAL -> ResourcesCompat.getDrawable(
                 resources,
                 R.drawable.report_canvas,
                 null
             )
-
             ReportType.MEDICAL -> ResourcesCompat.getDrawable(
                 resources,
                 R.drawable.report_medical,
@@ -365,31 +370,34 @@ class MapFragment : Fragment() {
                                     title,
                                     description,
                                     location,
-                                    selectedIcon.toEnum<ReportType>()!!
-                                ) { response ->
-                                    if (response.message.startsWith(requireContext().getString(R.string.report_add_success))) {
-                                        //addReportMarker()
-                                        /*
-                                        marker.position = location
-                                        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                                        marker.title = title
-                                        marker.snippet =
-                                            "${requireContext().getString((iconSpinner.selectedItem as Triple<*, Int, *>).second)}:\n$description"
-                                        marker.icon = ResourcesCompat.getDrawable(
-                                            resources,
-                                            (iconSpinner.selectedItem as Triple<*, *, *>).first as Int,
-                                            null
-                                        )
+                                    selectedIcon.toEnum<ReportType>()!!,
+                                    object : Callback<String> {
+                                        override fun onResponse(response: Callback.Response<String>) {
+                                            if (response.message?.startsWith(requireContext().getString(R.string.report_add_success)) == true) {
+                                                //addReportMarker()
+                                                /*
+                                                marker.position = location
+                                                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                                                marker.title = title
+                                                marker.snippet =
+                                                    "${requireContext().getString((iconSpinner.selectedItem as Triple<*, Int, *>).second)}:\n$description"
+                                                marker.icon = ResourcesCompat.getDrawable(
+                                                    resources,
+                                                    (iconSpinner.selectedItem as Triple<*, *, *>).first as Int,
+                                                    null
+                                                )
 
-                                        mapView.overlays.add(marker)
-                                        mapView.invalidate()
-                                         */
-                                    } else Toast.makeText(
-                                        requireContext(),
-                                        response.exception.message,
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
+                                                mapView.overlays.add(marker)
+                                                mapView.invalidate()
+                                                 */
+                                            } else Toast.makeText(
+                                                requireContext(),
+                                                response.exception?.message ?: "Unknown error",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                )
 
 
                             }.setNegativeButton(getString(R.string.cancel)) { _, _ -> }
