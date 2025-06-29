@@ -30,5 +30,17 @@ class TypesConverter {
         fun latlngToString(latlng: Latlng?): String? {
             return latlng?.toString()
         }
+
+        @TypeConverter
+        @JvmStatic
+        fun fromIntList(list: ArrayList<Int>?): String? {
+            return list?.joinToString(",")
+        }
+
+        @TypeConverter
+        @JvmStatic
+        fun toIntList(data: String?): ArrayList<Int>? {
+            return if (data.isNullOrEmpty()) arrayListOf() else ArrayList(data.split(",").map { it.toInt() })
+        }
     }
 }

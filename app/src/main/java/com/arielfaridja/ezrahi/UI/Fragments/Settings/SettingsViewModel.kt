@@ -7,7 +7,7 @@ import com.arielfaridja.ezrahi.data.DataRepoFactory
 import com.arielfaridja.ezrahi.entities.Activity
 import com.arielfaridja.ezrahi.entities.User
 
-class SettingsViewModel : ViewModel {
+    class SettingsViewModel : ViewModel {
     // TODO: Implement the ViewModel
     lateinit var user: User
     lateinit var activity: Activity

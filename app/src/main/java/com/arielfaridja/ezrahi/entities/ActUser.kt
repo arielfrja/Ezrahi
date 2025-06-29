@@ -25,12 +25,14 @@ open class ActUser : User {
         this.role = role
     }
 
-    fun setUser(u: User) {
-        this.id = u.id
-        this.email = u.email
-        this.firstName = u.firstName
-        this.lastName = u.lastName
-        this.location = u.location
-        this.phone = u.phone
-    }
+    var user: com.arielfaridja.ezrahi.entities.User
+        get() = com.arielfaridja.ezrahi.entities.User(id, firstName, lastName, phone, email, location)
+        set(value) {
+            id = value.id
+            firstName = value.firstName
+            lastName = value.lastName
+            phone = value.phone
+            email = value.email
+            location = value.location
+        }
 }

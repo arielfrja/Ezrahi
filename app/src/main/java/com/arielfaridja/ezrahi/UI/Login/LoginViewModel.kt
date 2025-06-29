@@ -11,7 +11,8 @@ import com.arielfaridja.ezrahi.entities.Callback
 import com.arielfaridja.ezrahi.entities.User
 
 class LoginViewModel : ViewModel() {
-    val currentUser: MutableLiveData<*> = MutableLiveData<Any?>()
+    // תיקון טיפוס currentUser
+    val currentUser: MutableLiveData<User?> = MutableLiveData<User?>()
     var email = ""
     var password = ""
     var exception = MutableLiveData<Exception?>()

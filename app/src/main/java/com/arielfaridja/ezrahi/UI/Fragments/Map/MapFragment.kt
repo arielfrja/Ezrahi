@@ -91,7 +91,7 @@ class MapFragment : Fragment() {
             alpha = when (report.reportStatus) {
                 ReportStatus.REPORTED -> 1f
                 ReportStatus.HANDLED -> .5f
-                null -> throw IllegalStateException("the report status cannot be null")
+                ReportStatus.UNKNOWN -> .0f
             }
             textLabelFontSize = 12
             setVisible(true)
@@ -212,11 +212,10 @@ class MapFragment : Fragment() {
             (requireActivity() as MainActivity).navController.navigate(R.id.nav_settings)
         }
 
-        if (dialog.isShowing)
+        if (::dialog.isInitialized && dialog.isShowing)
             dialog.dismiss()
         dialog = alertDialogBuilder.create()
-        // Create and show the AlertDialog
-        dialog = alertDialogBuilder.show()
+        dialog.show()
     }
 
     private fun modifyReportMarker(report: Report, marker: Marker?) {
@@ -230,7 +229,7 @@ class MapFragment : Fragment() {
             marker.alpha = when (report.reportStatus) {
                 ReportStatus.REPORTED -> 1f
                 ReportStatus.HANDLED -> .5f
-                null -> throw IllegalStateException("the report status cannot be null")
+                ReportStatus.UNKNOWN -> .0f
             }
         }
     }
@@ -245,6 +244,16 @@ class MapFragment : Fragment() {
             ReportType.MEDICAL -> ResourcesCompat.getDrawable(
                 resources,
                 R.drawable.report_medical,
+                null
+            )
+            ReportType.UNKNOWN -> ResourcesCompat.getDrawable(
+                resources,
+                R.drawable.report_canvas,
+                null
+            )
+            else -> ResourcesCompat.getDrawable(
+                resources,
+                R.drawable.report_canvas,
                 null
             )
         }

@@ -16,7 +16,14 @@ class SettingsFragment : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 
         var mainActivity = activity as MainActivity
-        model = SettingsViewModel(mainActivity.user, Activity())
+        val user = mainActivity.user
+        if (user != null) {
+            model = SettingsViewModel(user, Activity())
+        } else {
+            // Handle the null user case appropriately (e.g., show error, fallback, etc.)
+            // For now, throw exception to avoid crash later
+            throw IllegalStateException("User is null in SettingsFragment")
+        }
         mainActivity.setToolbarFloating(false)
         setPreferencesFromResource(R.xml.root_preferences, rootKey)
         activitiesList = findPreference("currentActivity")!!

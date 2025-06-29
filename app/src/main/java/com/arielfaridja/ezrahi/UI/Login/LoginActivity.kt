@@ -84,7 +84,7 @@ class LoginActivity : AppCompatActivity(), Observer<User?> {
             var intent = Intent(this, SignupActivity::class.java)
             startActivity(intent)
         }
-        model.currentUser.observe(this, (this as Observer<Any>))
+        model.currentUser.observe(this, this)
         model.exception.observe(this) { e ->
             if (e != null) {
                 Toast.makeText(this@LoginActivity.applicationContext, e.message, Toast.LENGTH_LONG)

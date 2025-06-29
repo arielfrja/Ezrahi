@@ -24,6 +24,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.splashscreen.SplashScreen
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.FragmentContainerView
@@ -63,10 +64,10 @@ class MainActivity : AppCompatActivity(), View.OnFocusChangeListener {
 
     fun getIsReady(): Boolean = isReady
     fun setIsReady(isSignedIn: Boolean) { isReady = isSignedIn }
-    fun getUser(): User? = model.getUser()
+    fun getCurrentUser(): User? = model.getUser()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val splashScreen = SplashScreen.installSplashScreen(this)
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         initApp()
         splashScreen.setKeepOnScreenCondition { !isReady }

@@ -3,26 +3,26 @@ package com.arielfaridja.ezrahi.entities
 import java.util.Date
 
 class Report() {
-    var id: String? = null
-    var description: String? = null
-    var title: String? = null
-    var actId: String? = null
-    var reporter: User? = null
-    var location: Latlng? = null
-    var reportTime: Date? = null
-    var reportStatus: ReportStatus? = null
-    var reportType: ReportType? = null
+    var id: String = ""
+    var description: String = ""
+    var title: String = ""
+    var actId: String = ""
+    var reporter: User = User()
+    var location: Latlng = Latlng()
+    var reportTime: Date = Date()
+    var reportStatus: ReportStatus = ReportStatus.REPORTED
+    var reportType: ReportType = ReportType.UNKNOWN
 
     constructor(
-        actId: String?,
-        reporter: User?,
-        title: String?,
-        description: String?,
-        location: Latlng?,
-        reportTime: Date?,
-        reportStatus: ReportStatus?,
-        reportType: ReportType?,
-        id: String? = null
+        actId: String,
+        reporter: User,
+        title: String,
+        description: String,
+        location: Latlng,
+        reportTime: Date,
+        reportStatus: ReportStatus,
+        reportType: ReportType,
+        id: String = ""
     ) : this() {
         this.actId = actId
         this.reporter = reporter
