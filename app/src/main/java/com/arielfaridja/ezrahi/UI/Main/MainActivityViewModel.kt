@@ -2,6 +2,7 @@ package com.arielfaridja.ezrahi.UI.Main
 
 import android.content.Intent
 import android.content.SharedPreferences
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.arielfaridja.ezrahi.data.DataRepoFactory
@@ -16,10 +17,12 @@ class MainActivityViewModel : ViewModel() {
     private var isSignIn: MutableLiveData<Boolean> = MutableLiveData(null)
     private var currentActivity: MutableLiveData<Activity> = MutableLiveData(dataRepo.activity_getCurrent())
     private var user: User? = null
+    private var userLiveData: MutableLiveData<User?> = MutableLiveData(null)
 
     init {
         isSignIn.value = dataRepo.user_isSignedIn()
         user = dataRepo.user_getCurrent()
+        userLiveData.value = user
     }
 
     fun getIsSignIn(): MutableLiveData<Boolean> = isSignIn
@@ -29,7 +32,11 @@ class MainActivityViewModel : ViewModel() {
     fun getCurrentActivity(): MutableLiveData<Activity> = currentActivity
     fun getCurrentUsersActivities() = dataRepo.activity_getAllByCurrentUser()
     fun getUser(): User? = user
-    fun setUser(user: User) { this.user = user }
+    fun setUser(user: User) {
+        this.user = user
+        this.userLiveData.value = user
+    }
+    fun getUserLiveData(): MutableLiveData<User?> = userLiveData
 
     fun init(intent: Intent) {
         initUser(intent)
@@ -47,6 +54,7 @@ class MainActivityViewModel : ViewModel() {
                 intent.getDoubleExtra("longitude", 32.0)
             )
         )
+        userLiveData.value = user
     }
 
     fun isUserSignedIn() {
@@ -79,5 +87,6 @@ class MainActivityViewModel : ViewModel() {
         )
         user?.phone = sp.getString("Phone", "") ?: ""
         user?.email = sp.getString("Email", "") ?: ""
+        userLiveData.value = user
     }
 }

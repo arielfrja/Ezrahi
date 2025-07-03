@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.pm.ServiceInfo
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -148,7 +149,15 @@ class LocationTrackingService : Service() {
                 }
             }
             else -> {
-                startForeground(Companion.NOTIFICATION_ID, createNotification())
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    startForeground(
+                        Companion.NOTIFICATION_ID,
+                        createNotification(),
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                    )
+                } else {
+                    startForeground(Companion.NOTIFICATION_ID, createNotification())
+                }
                 locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
                 try {
                     locationManager.requestLocationUpdates(

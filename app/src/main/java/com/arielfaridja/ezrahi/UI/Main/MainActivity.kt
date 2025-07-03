@@ -1,10 +1,12 @@
 package com.arielfaridja.ezrahi.UI.Main
 
+import android.Manifest
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import android.view.Menu
@@ -23,6 +25,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.cardview.widget.CardView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.app.ActivityCompat
 import androidx.core.splashscreen.SplashScreen
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.GravityCompat
@@ -69,12 +72,33 @@ class MainActivity : AppCompatActivity(), View.OnFocusChangeListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        requestLocationPermissionsIfNeeded()
         initApp()
         splashScreen.setKeepOnScreenCondition { !isReady }
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         val thisActivity = this
         initModel(thisActivity)
         initContentViews()
+        // הפעלת השירות רק אם יש הרשאות
+        if (hasAllLocationPermissions()) {
+            startLocationService()
+        }
+    }
+
+    private fun requestLocationPermissionsIfNeeded() {
+        val permissions = mutableListOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+        if (android.os.Build.VERSION.SDK_INT >= 34) {
+            permissions.add(Manifest.permission.FOREGROUND_SERVICE_LOCATION)
+        }
+        val notGranted = permissions.filter {
+            ActivityCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+        if (notGranted.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, notGranted.toTypedArray(), 1001)
+        }
     }
 
     private fun initApp() {
@@ -99,7 +123,6 @@ class MainActivity : AppCompatActivity(), View.OnFocusChangeListener {
                 if (!aBoolean) {
                     goToLogin(thisActivity)
                 } else {
-                    startService(Intent(applicationContext, LocationTrackingService::class.java))
                     loadDataPref()
                     setIsReady(true)
                     if (model.getActivity() == null) {
@@ -178,6 +201,33 @@ class MainActivity : AppCompatActivity(), View.OnFocusChangeListener {
         ).setDrawerLayout(drawerLayout).build()
         NavigationUI.setupWithNavController(navView, navController)
         NavigationUI.setupWithNavController(toolbar, navController, appBarConfiguration)
+    }
+
+    private fun hasAllLocationPermissions(): Boolean {
+        val permissions = mutableListOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+        if (android.os.Build.VERSION.SDK_INT >= 34) {
+            permissions.add(Manifest.permission.FOREGROUND_SERVICE_LOCATION)
+        }
+        return permissions.all {
+            ActivityCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    private fun startLocationService() {
+        DataRepoFactory.getInstance(applicationContext)
+        startService(Intent(applicationContext, LocationTrackingService::class.java))
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1001) {
+            if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                startLocationService()
+            }
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

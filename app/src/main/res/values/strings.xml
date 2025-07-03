@@ -2,7 +2,7 @@
     <string name="app_name">Ezrahi</string>
     <string name="title_activity_signup">Signup Activity</string>
     <string name="users">Users</string>
-    <string name="reports">reports</string>
+    <string name="reports">Reports</string>
     <string name="routes">Routes</string>
     <!-- Preference Titles -->
 
@@ -11,16 +11,36 @@
     <!-- Sync Preferences -->
     <string name="current_user_pref" translatable="false">UserSharedPref</string>
     <string name="TrackingNotificationTitle">Location Tracking Service</string>
-    <string name="TrackingNotificationText">The location tracking service run in background</string>
-    <string name="don_t_have_an_account_yet">don\'t have an account yet?</string>
-    <string name="edit_button">edit button</string>
-    <string name="activity_name">activity Name</string>
-    <string name="Click_again_to_exit">Click again to exit</string>
+    <string name="TrackingNotificationText">The location tracking service runs in the background</string>
+    <string name="don_t_have_an_account_yet">Don\'t have an account yet?</string>
+    <string name="edit_button">Edit</string>
+    <string name="activity_name">Activity Name</string>
+    <string name="Click_again_to_exit">Press back again to exit</string>
     <string name="cancel">Cancel</string>
     <string name="Add">Add</string>
     <string name="add_marker">Add Marker</string>
-    <string name="cant_get_occurred_location_right_now">can\'t get occurred location right now</string>
+    <string name="cant_get_occurred_location_right_now">Can\'t get current location right now</string>
     <string name="general">General</string>
     <string name="medical">Medical</string>
-    <string name="report_add_success">Report Added successfully</string>
+    <string name="report_add_success">Report added successfully</string>
+    <!-- Added for map fragment accessibility -->
+    <string name="map_content_desc">Interactive map for navigation and reports</string>
+    <string name="toolbar_map">Map Toolbar</string>
+    <string name="my_location_btn_desc">Go to my location on the map</string>
+    <!-- Added for MapFragment dialogs -->
+    <string name="enable_gps">Enable GPS</string>
+    <string name="gps_not_enabled">GPS is not enabled. Do you want to enable it now?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="enable_location_services">Enable Location Services</string>
+    <string name="location_services_required">Location services are required for this app. Please enable location services in your device settings.</string>
+    <string name="go_to_settings">Go to Settings</string>
+    <string name="no_activity_assigned">No Activity Assigned</string>
+    <string name="please_assign_activity">Please assign an activity to continue.</string>
+    <string name="ok">OK</string>
+    <!-- Added missing strings for login screen -->
+    <string name="email_or_phone">Email or phone</string>
+    <string name="login">Login</string>
+    <string name="login_using_email">Login using email:</string>
+    <string name="password">Password</string>
 </resources>

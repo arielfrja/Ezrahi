@@ -1,10 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <string name="email_or_phone">email or phone</string>
-    <string name="login">Login</string>
-    <string name="login_using_email">login using email:</string>
-    <string name="password">password</string>
-
-
+    <!-- This file is intentionally left empty. All string resources moved to strings.xml -->
 </resources>
