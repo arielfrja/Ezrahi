@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Ezrahi - Project Checklist</title>
+
+    <!-- Bootstrap 5.3.7 RTL CSS via CDN (as requested) -->
+    <link crossorigin="anonymous"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.rtl.min.css"
+          integrity="sha384-Xbg45MqvDIk1e563NLpGEulpX6AvL404DP+/iCgW9eFa2BqztiwTexswJo2jLMue"
+          rel="stylesheet">
+
+    <!-- Custom Styles -->
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 960px;
+        }
+        h1, h2, h3, h4 {
+            font-weight: 300;
+        }
+        .intro-section h4 {
+            margin-top: 1.5rem;
+            color: #0d6efd;
+            font-weight: 400;
+        }
+        .intro-section ul, .intro-section ol {
+            padding-right: 2rem;
+        }
+        .stage-title {
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1.5rem;
+            color: #0d6efd;
+        }
+        .task-item {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+            padding: 1.25rem;
+            transition: all 0.2s ease-in-out;
+        }
+        .task-header .form-check-input {
+            width: 1.5em;
+            height: 1.5em;
+            margin-top: 0.2em;
+        }
+        .task-header {
+            display: flex;
+            align-items: flex-start;
+        }
+        .task-header label {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-right: 1rem; /* This will be handled correctly by RTL CSS */
+            cursor: pointer;
+        }
+        .task-details {
+            margin-top: 1rem;
+            padding-right: 3.5rem; /* This will be handled correctly by RTL CSS */
+            font-size: 0.95rem;
+            color: #495057;
+        }
+        .task-details strong {
+            color: #212529;
+        }
+        
+        /* Sub-task styling */
+        .sub-tasks-list {
+            list-style: none;
+            padding-right: 0;
+            margin-top: 0.75rem;
+        }
+        .sub-task {
+            padding: 0.25rem 0;
+        }
+        .sub-task .form-check-label {
+            color: #495057;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .sub-task .form-check-input:checked + .form-check-label {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+        
+        /* Style for completed tasks */
+        .task-item.completed {
+            background-color: #e9ecef;
+            opacity: 0.7;
+        }
+        .task-item.completed .task-header > label {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container my-5">
+    <header class="text-center mb-4">
+        <h1>תוכנית פיתוח מפורטת למערכת "Ezrahi"</h1>
+        <p class="lead"><strong>אסטרטגיה:</strong> Mobile-First, הקמה מהירה עם Firebase, שימוש
+            ב-osmdroid למפות, ומעבר הדרגתי ל-Backend ייעודי.</p>
+    </header>
+    <hr>
+
+    <!-- Introduction Section -->
+    <section class="intro-section mb-4">
+        <h2 class="stage-title">מבוא: קונספט המערכת, ייעוד ותפיסת הפעלה</h2>
+
+        <h4>1. הרעיון והצורך (The Concept and The Need)</h4>
+        <p>מערכת "Ezrahi" (אזרחי) נולדה מתוך זיהוי אתגר מרכזי בפעילויות שטח רחבות היקף, כגון טיולים
+            של תנועות נוער, בתי ספר או ארגונים. בפעילויות אלו, צוותים רבים (הדרכה, רפואה, לוגיסטיקה,
+            ביטחון) פזורים על פני שטח גיאוגרפי נרחב, לעיתים קרובות בתנאי קליטה מוגבלים. המצב הקיים
+            מתבסס על פתרונות חלקיים כמו קבוצות וואטסאפ או מכשירי קשר, אשר סובלים ממגבלות משמעותיות:
+            חוסר במודעות מצב גיאוגרפית, קושי בתקשורת עם גורמים לא מוכרים, והיעדר תהליך מובנה לדיווח
+            וטיפול באירועים.</p>
+        <p><strong>הפתרון המוצע</strong> הוא מערכת אחודה, מבוססת מובייל, המספקת לכלל אנשי הצוות
+            פלטפורמה משותפת לניהול, תקשורת ותיאום. המערכת הופכת כל סמארטפון לכלי מבצעי מתקדם, המאפשר
+            שליטה ובקרה בזמן אמת.</p>
+
+        <h4>2. ייעוד המערכת (The System's Purpose)</h4>
+        <p>ייעודה המרכזי של מערכת "Ezrahi" הוא <strong>להגביר באופן דרמטי את רמת הבטיחות, היעילות
+            והשליטה</strong> בפעילויות שטח, על ידי:</p>
+        <ul>
+            <li><strong>מתן תמונת מצב חיה:</strong> לאפשר למנהלים ולצוותים לדעת היכן נמצא כל אחד בכל
+                רגע נתון.
+            </li>
+            <li><strong>פישוט התקשורת:</strong> לאפשר תקשורת מהירה וממוקדת בין אנשי צוות, גם ללא
+                היכרות מוקדמת, על בסיס תפקיד ומיקום.
+            </li>
+            <li><strong>מיסוד תהליכי דיווח:</strong> לספק כלי פשוט ויעיל לדיווח על אירועים מהשטח
+                (מפגע בטיחותי, צורך רפואי) ולנהל את הטיפול בהם באופן שקוף.
+            </li>
+            <li><strong>הבטחת רציפות תפקודית:</strong> להמשיך ולתפקד גם בתנאי קליטה לקויים או בהיעדר
+                קליטה מוחלט, באמצעות יכולות אופליין מתקדמות.
+            </li>
+        </ul>
+
+        <h4>3. תפיסת ההפעלה (How It Works)</h4>
+        <p>המערכת פועלת על בסיס אפליקציית אנדרואיד המותקנת על מכשיריהם של כלל אנשי הצוות המשתתפים
+            בפעילות. תפיסת ההפעלה היא <strong>Mobile-First</strong>, כלומר, כל היכולות, החל מהקמת
+            הפעילות ועד לניהולה השוטף, זמינות ונוחות לשימוש ישירות מהטלפון הנייד.</p>
+        <p><strong>מחזור החיים של פעילות במערכת:</strong></p>
+        <ol>
+            <li><strong>הקמה (Setup):</strong> מנהל הפעילות פותח את האפליקציה ויוצר "פעילות" חדשה.
+                הוא מגדיר את שמה, תאריכיה, ומתחיל להוסיף את אנשי הצוות על ידי הזנת כתובות האימייל
+                שלהם. לכל איש צוות הוא מקצה תפקיד מוגדר (מדריך, חובש, וכו') ומעלה את מסלול הטיול
+                המתוכנן (קובץ GPX).
+            </li>
+            <li><strong>השתתפות (Participation):</strong> כל איש צוות שהוסף מקבל הזמנה, מתקין את
+                האפליקציה, מתחבר ובוחר להצטרף לפעילות הפעילה. מרגע זה, מיקומו מתחיל להיות משותף עם
+                שאר חברי הצוות.
+            </li>
+            <li><strong>תפעול בזמן אמת (Real-Time Operation):</strong>
+                <ul>
+                    <li><strong>צפייה:</strong> כל המשתמשים רואים על גבי מפה את מיקומם של חברי הצוות
+                        האחרים ואת המסלול המתוכנן.
+                    </li>
+                    <li><strong>תקשורת:</strong> ניתן לתקשר בהודעות טקסט עם כל איש צוות אחר (באופן
+                        פרטי) או בקבוצות דיון מוגדרות.
+                    </li>
+                    <li><strong>דיווח:</strong> כל משתמש יכול לדווח על אירוע בלחיצה על המפה. הדיווח
+                        מופיע מיידית אצל כל הגורמים הרלוונטיים.
+                    </li>
+                    <li><strong>ניהול:</strong> המנהל מנטר את ההתקדמות, מנהל את הדיווחים (משנה
+                        סטטוסים), ומתקשר עם הצוות לפי הצורך.
+                    </li>
+                </ul>
+            </li>
+            <li><strong>עבודה בתנאים מוגבלים (Offline Capability):</strong> האפליקציה בנויה לעבוד גם
+                ללא חיבור רציף לאינטרנט. היא שומרת מידע במטמון (מפות), מאפשרת עבודה עם מפות שהורדו
+                מראש, ואוגרת פעולות (הודעות, דיווחים) ושולחת אותן אוטומטית כשהקליטה חוזרת.
+            </li>
+            <li><strong>סיום (Conclusion):</strong> עם סיום מועד הפעילות שהוגדר, האפליקציה מפסיקה
+                באופן אוטומטי את שיתוף המיקום, תוך שמירה על פרטיות המשתמשים.
+            </li>
+        </ol>
+
+        <h4>4. מה המערכת אמורה לעשות (Core Functionality)</h4>
+        <ul>
+            <li><strong>ניהול פעילויות וצוותים:</strong> יצירת אירועים, הוספה והסרה של משתתפים,
+                והקצאת תפקידים והרשאות.
+            </li>
+            <li><strong>מעקב מיקום בזמן אמת:</strong> הצגת כלל חברי הצוות על גבי מפה דינמית (מבוססת
+                osmdroid).
+            </li>
+            <li><strong>ניהול מסלולים:</strong> העלאה והצגה של מסלולי טיול מתוכננים (GPX).</li>
+            <li><strong>תקשורת מובנית:</strong> מערכת צ'אט פנימית, פרטית וקבוצתית.</li>
+            <li><strong>דיווח וניהול אירועים:</strong> יצירה, תצוגה וניהול מחזור חיים של דיווחים
+                מהשטח.
+            </li>
+            <li><strong>התראות Push:</strong> שליחת התראות בזמן אמת על אירועים חשובים.</li>
+            <li><strong>תמיכה במצב אופליין:</strong> יכולת להמשיך ולתפקד באופן חלקי גם ללא קליטה.
+            </li>
+        </ul>
+    </section>
+
+    <hr>
+
+    <h2 class="text-center my-4">תוכנית פיתוח מפורטת</h2>
+
+    <!-- Stage 1 -->
+    <h2 class="stage-title">שלב 1: הקמת תשתית ומוצר מינימלי חיוני (MVP)</h2>
+    <p class="text-muted mb-4">המטרה בשלב זה היא ליצור גרסה ראשונה ושימושית, המאפשרת למנהל להקים
+        פעילות ולצוות להשתתף ולצפות במיקומים בזמן אמת, הכל מתוך אפליקציית המובייל.</p>
+    <div class="task-item" id="task-1-container">
+        <div class="task-header">
+            <input class="form-check-input main-task-checkbox" id="task-1" type="checkbox" value="">
+            <label class="form-check-label" for="task-1">1. בסיס המערכת - אימות וניהול
+                משתמשים</label>
+        </div>
+        <div class="task-details">
+            <div class="sub-tasks-list">
+                <div class="form-check sub-task"><input class="form-check-input" id="task-1-sub-1"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-1-sub-1"><strong>אימות משתמשים:</strong>
+                    מימוש מסכי הרשמה והתחברות באפליקציית האנדרואיד.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-1-sub-2"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-1-sub-2"><strong>אימות משתמשים:</strong>
+                    שילוב <strong>Firebase Authentication</strong> לניהול מאובטח של תהליכי ההרשמה,
+                    ההתחברות ואיפוס סיסמה.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-1-sub-3"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-1-sub-3"><strong>פרופיל והרשאות:</strong>
+                    עם ההרשמה, יצירת מסמך משתמש ב-<strong>Firebase Firestore</strong> שיכיל פרטים
+                    בסיסיים (שם, אימייל).</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-1-sub-4"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-1-sub-4"><strong>פרופיל והרשאות:</strong>
+                    הגדרת שדה `globalRole` (`admin`), המאפשר ניהול פעילויות, ותינתן ידנית.</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="task-item" id="task-2-container">
+        <div class="task-header">
+            <input class="form-check-input main-task-checkbox" id="task-2" type="checkbox" value="">
+            <label class="form-check-label" for="task-2">2. יכולות ניהול פעילות בסיסיות
+                (במובייל)</label>
+        </div>
+        <div class="task-details">
+            <div class="sub-tasks-list">
+                <div class="form-check sub-task"><input class="form-check-input" id="task-2-sub-1"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-2-sub-1"><strong>גישה לניהול:</strong>
+                    פיתוח סדרת מסכים בתוך האפליקציה שיהיו נגישים רק למשתמשי `admin`.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-2-sub-2"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-2-sub-2"><strong>ניהול פעילויות:</strong>
+                    מסך רשימת פעילויות עם כפתור "+" ליצירת פעילות חדשה.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-2-sub-3"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-2-sub-3"><strong>ניהול פעילויות:</strong>
+                    מסך יצירה/עריכה (שם, תיאור, תאריכים) השומר נתונים ב-Firestore.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-2-sub-4"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-2-sub-4"><strong>ניהול משתתפים:</strong>
+                    מסך ייעודי לניהול משתתפים בפעילות.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-2-sub-5"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-2-sub-5"><strong>ניהול משתתפים:</strong>
+                    הוספת משתתף לפי אימייל, הקצאת תפקיד (Enum), והסרתו מהפעילות.</label></div>
+            </div>
+        </div>
+    </div>
+    <div class="task-item" id="task-3-container">
+        <div class="task-header">
+            <input class="form-check-input main-task-checkbox" id="task-3" type="checkbox" value="">
+            <label class="form-check-label" for="task-3">3. תשתית מפה ומיקום חי</label>
+        </div>
+        <div class="task-details">
+            <div class="sub-tasks-list">
+                <div class="form-check sub-task"><input class="form-check-input" id="task-3-sub-1"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-3-sub-1"><strong>שילוב מפה:</strong>
+                    הטמעת ספריית <strong>osmdroid</strong> בפרויקט האנדרואיד.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-3-sub-2"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-3-sub-2"><strong>שילוב מפה:</strong>
+                    טעינת מפת בסיס מ-OpenStreetMap ושמירת אריחי מפה (tiles) במטמון (Cache).</label>
+                </div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-3-sub-3"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-3-sub-3"><strong>סנכרון מיקום:</strong>
+                    איסוף GPS, שליחתו ל-<strong>Firebase Realtime Database</strong> והאזנה לעדכונים.</label>
+                </div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-3-sub-4"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-3-sub-4"><strong>תצוגה חזותית:</strong>
+                    הצגת כל משתתף כאייקון (`Marker`) על המפה.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-3-sub-5"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-3-sub-5"><strong>תצוגה חזותית:</strong>
+                    שימוש באייקון מותאם אישית (`Custom Icon`) בהתאם לתפקיד המשתתף.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-3-sub-6"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-3-sub-6"><strong>תצוגה חזותית:</strong>
+                    לוגיקה לעדכון מיקום של `Marker` קיים (למניעת ריצודים ושיפור ביצועים).</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stage 2 -->
+    <h2 class="stage-title">שלב 2: הוספת יכולות תקשורת והקשר מבצעי</h2>
+    <p class="text-muted mb-4">המטרה: להעשיר את המערכת ביכולות תקשורת בסיסיות ובמידע מבצעי רלוונטי
+        על גבי המפה.</p>
+    <div class="task-item" id="task-4-container">
+        <div class="task-header">
+            <input class="form-check-input main-task-checkbox" id="task-4" type="checkbox" value="">
+            <label class="form-check-label" for="task-4">4. ניהול והצגת מסלולים</label>
+        </div>
+        <div class="task-details">
+            <div class="sub-tasks-list">
+                <div class="form-check sub-task"><input class="form-check-input" id="task-4-sub-1"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-4-sub-1"><strong>ניהול במובייל:</strong>
+                    במסך ניהול הפעילות, הוספת כפתור "העלה מסלול".</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-4-sub-2"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-4-sub-2"><strong>ניהול במובייל:</strong>
+                    הפעלת בורר הקבצים לבחירת קובץ GPX והעלאתו ל-<strong>Firebase
+                        Storage</strong>.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-4-sub-3"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-4-sub-3"><strong>תצוגת מסלול:</strong>
+                    הורדת קובץ ה-GPX ופיענוח (Parsing) שלו.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-4-sub-4"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-4-sub-4"><strong>תצוגת מסלול:</strong>
+                    יצירת שכבת קו (`Polyline`) של <strong>osmdroid</strong> להצגת המסלול על
+                    המפה.</label></div>
+            </div>
+        </div>
+    </div>
+    <div class="task-item" id="task-5-container">
+        <div class="task-header">
+            <input class="form-check-input main-task-checkbox" id="task-5" type="checkbox" value="">
+            <label class="form-check-label" for="task-5">5. תקשורת בסיסית (צ'אט)</label>
+        </div>
+        <div class="task-details">
+            <div class="sub-tasks-list">
+                <div class="form-check sub-task"><input class="form-check-input" id="task-5-sub-1"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-5-sub-1"><strong>פרטית
+                    (One-on-One):</strong> פיתוח מסך צ'אט סטנדרטי ותשתית Firestore לניהול
+                    שיחות.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-5-sub-2"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-5-sub-2"><strong>פרטית
+                    (One-on-One):</strong> אפשרות להתחיל שיחה חדשה על ידי לחיצה על אייקון של משתמש
+                    במפה.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-5-sub-3"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-5-sub-3"><strong>קבוצתית:</strong> מימוש
+                    ערוץ צ'אט מרכזי אחד ל"כלל הצוות" בכל פעילות.</label></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stage 3 -->
+    <h2 class="stage-title">שלב 3: יכולות ניהול אירועים ודיווח מהשטח</h2>
+    <p class="text-muted mb-4">המטרה: להפוך את האפליקציה לכלי פרואקטיבי לניהול אירועים בזמן אמת, עם
+        יכולות דיווח מלאות.</p>
+    <div class="task-item" id="task-6-container">
+        <div class="task-header">
+            <input class="form-check-input main-task-checkbox" id="task-6" type="checkbox" value="">
+            <label class="form-check-label" for="task-6">6. מערכת דיווחים</label>
+        </div>
+        <div class="task-details">
+            <div class="sub-tasks-list">
+                <div class="form-check sub-task"><input class="form-check-input" id="task-6-sub-1"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-6-sub-1"><strong>יצירת דיווח:</strong>
+                    מימוש `MapEventsReceiver` של <strong>osmdroid</strong> לזיהוי לחיצה ארוכה על
+                    המפה.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-6-sub-2"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-6-sub-2"><strong>יצירת דיווח:</strong>
+                    פתיחת דיאלוג ליצירת דיווח חדש (סוג, כותרת, תיאור) ושמירתו ב-Firestore.</label>
+                </div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-6-sub-3"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-6-sub-3"><strong>תצוגה וניהול:</strong>
+                    הצגת דיווח כאייקון ייעודי על המפה ולשונית "דיווחים" במסך הניהול.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-6-sub-4"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-6-sub-4"><strong>מחזור חיים:</strong>
+                    יכולת לשנות סטטוס דיווח (דווח, בטיפול, טופל) עם ביטוי חזותי על המפה.</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="task-item" id="task-7-container">
+        <div class="task-header">
+            <input class="form-check-input main-task-checkbox" id="task-7" type="checkbox" value="">
+            <label class="form-check-label" for="task-7">7. מערכת התראות</label>
+        </div>
+        <div class="task-details">
+            <div class="sub-tasks-list">
+                <div class="form-check sub-task"><input class="form-check-input" id="task-7-sub-1"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-7-sub-1"><strong>שילוב FCM:</strong>
+                    הטמעת ה-SDK של <strong>Firebase Cloud Messaging</strong> ורישום
+                    המכשירים.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-7-sub-2"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-7-sub-2"><strong>הפעלת התראות:</strong>
+                    מימוש לוגיקה (למשל Firebase Functions) לשליחת Push על דיווח חדש.</label></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stage 4 -->
+    <h2 class="stage-title">שלב 4: חיזוק אמינות, יכולות אופליין ושיפורים מתקדמים</h2>
+    <p class="text-muted mb-4">המטרה: הפיכת האפליקציה לאמינה גם בתנאי שטח קשים והרחבת יכולות
+        הניהול.</p>
+    <div class="task-item" id="task-8-container">
+        <div class="task-header">
+            <input class="form-check-input main-task-checkbox" id="task-8" type="checkbox" value="">
+            <label class="form-check-label" for="task-8">8. תמיכה מורחבת במצב אופליין</label>
+        </div>
+        <div class="task-details">
+            <div class="sub-tasks-list">
+                <div class="form-check sub-task"><input class="form-check-input" id="task-8-sub-1"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-8-sub-1"><strong>מפות אופליין:</strong>
+                    מסך לבחירת אזור מלבני והורדת אריחי מפה (tiles) לאחסון המקומי.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-8-sub-2"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-8-sub-2"><strong>מפות אופליין:</strong>
+                    הגדרת <strong>osmdroid</strong> לטעינת מפות מהאחסון המקומי בעדיפות
+                    ראשונה.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-8-sub-3"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-8-sub-3"><strong>תור פעולות:</strong>
+                    מימוש מנגנון מקומי (למשל SQLite) לשמירת פעולות שנוצרו ללא חיבור.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-8-sub-4"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-8-sub-4"><strong>תור פעולות:</strong>
+                    מנגנון סנכרון אוטומטי שישלח את הפעולות שבתור עם חזרת התקשורת.</label></div>
+            </div>
+        </div>
+    </div>
+    <div class="task-item" id="task-9-container">
+        <div class="task-header">
+            <input class="form-check-input main-task-checkbox" id="task-9" type="checkbox" value="">
+            <label class="form-check-label" for="task-9">9. בקרות פרטיות וניהול מתקדם</label>
+        </div>
+        <div class="task-details">
+            <div class="sub-tasks-list">
+                <div class="form-check sub-task"><input class="form-check-input" id="task-9-sub-1"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-9-sub-1"><strong>Geofence
+                    (אופציונלי):</strong> אפשרות למנהל לצייר גבולות גיאוגרפיים ולשלוח התראות על
+                    יציאה מהם.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-9-sub-2"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-9-sub-2"><strong>ניהול תפקידים מותאם
+                    אישית:</strong> הרחבת מסכי הניהול ליצירת תפקידים חדשים עם שם ואייקון.</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stage 5 -->
+    <h2 class="stage-title">שלב 5: מעבר לתשתית עצמאית והרחבות עתידיות</h2>
+    <p class="text-muted mb-4">המטרה: הבטחת יכולת צמיחה (Scalability) ויצירת פלטפורמה גמישה להוספת
+        יכולות מורכבות בעתיד.</p>
+    <div class="task-item" id="task-10-container">
+        <div class="task-header">
+            <input class="form-check-input main-task-checkbox" id="task-10" type="checkbox"
+                   value="">
+            <label class="form-check-label" for="task-10">10. פיתוח הדרגתי של Backend ייעודי
+                (.NET)</label>
+        </div>
+        <div class="task-details">
+            <div class="sub-tasks-list">
+                <div class="form-check sub-task"><input class="form-check-input" id="task-10-sub-1"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-10-sub-1"><strong>מיגרציית
+                    ישויות:</strong> בניית שרת .NET ו-DB עצמאיים והעברת לוגיקת ניהול
+                    מ-Firestore.</label></div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-10-sub-2"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-10-sub-2"><strong>מיגרציית זמן
+                    אמת:</strong> החלפת Firebase Realtime DB ב-WebSockets (למשל SignalR) למיקום
+                    וצ'אט.</label></div>
+            </div>
+        </div>
+    </div>
+    <div class="task-item" id="task-11-container">
+        <div class="task-header">
+            <input class="form-check-input main-task-checkbox" id="task-11" type="checkbox"
+                   value="">
+            <label class="form-check-label" for="task-11">11. פיתוח ממשק ניהול Web</label>
+        </div>
+        <div class="task-details">
+            <div class="sub-tasks-list">
+                <div class="form-check sub-task"><input class="form-check-input" id="task-11-sub-1"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-11-sub-1"><strong>שכפול יכולות:</strong>
+                    בניית ממשק Web עם כל יכולות הניהול מהמובייל, בחוויה נוחה למסך גדול.</label>
+                </div>
+                <div class="form-check sub-task"><input class="form-check-input" id="task-11-sub-2"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-11-sub-2"><strong>יכולות
+                    מתקדמות:</strong> הוספת דשבורדים, ניתוח נתונים וניהול הרשאות מורכב יותר
+                    ב-Web.</label></div>
+            </div>
+        </div>
+    </div>
+    <div class="task-item" id="task-12-container">
+        <div class="task-header">
+            <input class="form-check-input main-task-checkbox" id="task-12" type="checkbox"
+                   value="">
+            <label class="form-check-label" for="task-12">12. תמיכה עתידית ברשת משנית (LoRa)</label>
+        </div>
+        <div class="task-details">
+            <div class="sub-tasks-list">
+                <div class="form-check sub-task"><input class="form-check-input" id="task-12-sub-1"
+                                                        type="checkbox"><label
+                        class="form-check-label" for="task-12-sub-1">תכנון ופיתוח תשתית תוכנה וחומרה
+                    לתמיכה בתקשורת אלטרנטיבית (שלב מתקדם).</label></div>
+            </div>
+        </div>
+    </div>
+</div> <!-- /container -->
+
+<!-- JavaScript Logic -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const storageKeyPrefix = 'ezrahi_checklist_v3_'; // Updated prefix for new structure
+        const mainTaskCheckboxes = document.querySelectorAll('.main-task-checkbox');
+        const subTaskCheckboxes = document.querySelectorAll('.sub-task .form-check-input');
+
+        // --- UI Update Functions ---
+
+        function updateMainTaskUI(mainCheckbox) {
+            const container = mainCheckbox.closest('.task-item');
+            if (mainCheckbox.checked) {
+                container.classList.add('completed');
+            } else {
+                container.classList.remove('completed');
+            }
+        }
+
+        // --- State Management Functions ---
+
+        function saveState(checkbox) {
+            try {
+                localStorage.setItem(storageKeyPrefix + checkbox.id, checkbox.checked);
+            } catch (e) {
+                console.error("Could not save state to localStorage.", e);
+            }
+        }
+
+        function loadState() {
+            // Load all checkboxes' state
+            document.querySelectorAll('.form-check-input').forEach(checkbox => {
+                try {
+                    const savedState = localStorage.getItem(storageKeyPrefix + checkbox.id);
+                    if (savedState === 'true') {
+                        checkbox.checked = true;
+                    } else if (savedState === 'false') {
+                        checkbox.checked = false;
+                    }
+                } catch (e) {
+                     console.error("Could not load state from localStorage.", e);
+                }
+            });
+
+            // Update UI based on loaded state
+            mainTaskCheckboxes.forEach(updateMainTaskUI);
+        }
+
+        // --- Event Handlers ---
+
+        function handleMainTaskChange(event) {
+            const mainCheckbox = event.target;
+            const container = mainCheckbox.closest('.task-item');
+            const subTasks = container.querySelectorAll('.sub-task .form-check-input');
+
+            // Update all sub-tasks to match the main task
+            subTasks.forEach(subTask => {
+                if (subTask.checked !== mainCheckbox.checked) {
+                    subTask.checked = mainCheckbox.checked;
+                    saveState(subTask); // Save each sub-task's state
+                }
+            });
+
+            updateMainTaskUI(mainCheckbox);
+            saveState(mainCheckbox);
+        }
+
+        function handleSubTaskChange(event) {
+            const subCheckbox = event.target;
+            const container = subCheckbox.closest('.task-item');
+            const mainCheckbox = container.querySelector('.main-task-checkbox');
+            const allSubTasks = container.querySelectorAll('.sub-task .form-check-input');
+
+            // Check if all sub-tasks are checked
+            const allChecked = Array.from(allSubTasks).every(sub => sub.checked);
+
+            // Update main task checkbox based on sub-tasks' status
+            if (mainCheckbox.checked !== allChecked) {
+                mainCheckbox.checked = allChecked;
+                updateMainTaskUI(mainCheckbox);
+                saveState(mainCheckbox);
+            }
+
+            // Save the state of the sub-task that was changed
+            saveState(subCheckbox);
+        }
+
+        // --- Attach Event Listeners ---
+
+        mainTaskCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', handleMainTaskChange);
+        });
+
+        subTaskCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', handleSubTaskChange);
+        });
+
+        // --- Initial Load ---
+        loadState();
+    });
+</script>
+</body>
+</html>
