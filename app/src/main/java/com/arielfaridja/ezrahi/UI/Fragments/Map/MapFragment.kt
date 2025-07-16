@@ -22,17 +22,21 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.preference.PreferenceManager
 import com.arielfaridja.ezrahi.Consts
 import com.arielfaridja.ezrahi.ExtensionMethods.Companion.toEnum
 import com.arielfaridja.ezrahi.R
 import com.arielfaridja.ezrahi.UI.IconTextAdapter
 import com.arielfaridja.ezrahi.UI.Main.MainActivity
-import com.arielfaridja.ezrahi.entities.*
+import com.arielfaridja.ezrahi.entities.ActUser
+import com.arielfaridja.ezrahi.entities.Callback
+import com.arielfaridja.ezrahi.entities.Latlng
+import com.arielfaridja.ezrahi.entities.Report
+import com.arielfaridja.ezrahi.entities.ReportStatus
+import com.arielfaridja.ezrahi.entities.ReportType
+import com.arielfaridja.ezrahi.entities.User
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
 import org.osmdroid.api.IMapController
-import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
@@ -99,7 +103,7 @@ class MapFragment : Fragment() {
     }
 
     private fun showLocationPermissionRationale() {
-        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.enable_location_services))
             .setMessage(getString(R.string.location_services_required))
             .setPositiveButton(getString(R.string.go_to_settings)) { _, _ ->
@@ -208,7 +212,11 @@ class MapFragment : Fragment() {
                             if (response.message?.startsWith(requireContext().getString(R.string.report_add_success)) == true) {
                                 // Marker will be added via observer
                             } else {
-                                Toast.makeText(requireContext(), response.exception?.message ?: "Unknown error", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(requireContext(),
+                                    response.exception?.message
+                                        ?: getString(R.string.unknown_error),
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         }
                     }

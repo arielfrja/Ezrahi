@@ -6,10 +6,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.pm.ServiceInfo
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -48,10 +48,10 @@ class LocationTrackingService : Service() {
 
     private fun createNotification(): Notification {
         val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationChannel = NotificationChannel(
-                Companion.NOTIFICATOIN_CHANNEL_ID,
+                NOTIFICATOIN_CHANNEL_ID,
                 notificationTitle,
                 NotificationManager.IMPORTANCE_DEFAULT
             )
@@ -73,7 +73,7 @@ class LocationTrackingService : Service() {
 
         val notificationBuilder = NotificationCompat.Builder(
             this,
-            Companion.NOTIFICATOIN_CHANNEL_ID
+            NOTIFICATOIN_CHANNEL_ID
         )
             .setContentTitle(notificationTitle)
             .setContentText(notificationText)
@@ -81,7 +81,7 @@ class LocationTrackingService : Service() {
             .setAutoCancel(false)
             .setOngoing(true)
             .setContentIntent(pendingIntent)
-            .addAction(R.drawable.ic_launcher_foreground, "STOP", sPendingIntent)
+            .addAction(R.drawable.ic_launcher_foreground, getString(R.string.stop), sPendingIntent)
         return notificationBuilder.build()
     }
 
@@ -100,7 +100,7 @@ class LocationTrackingService : Service() {
         super.onCreate()
         notificationTitle = getString(R.string.TrackingNotificationTitle)
         notificationText = getString(R.string.TrackingNotificationText)
-        locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -151,12 +151,12 @@ class LocationTrackingService : Service() {
             else -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     startForeground(
-                        Companion.NOTIFICATION_ID,
+                        NOTIFICATION_ID,
                         createNotification(),
                         ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
                     )
                 } else {
-                    startForeground(Companion.NOTIFICATION_ID, createNotification())
+                    startForeground(NOTIFICATION_ID, createNotification())
                 }
                 locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
                 try {

@@ -22,7 +22,7 @@ class StartupActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        sharedPreferences = getSharedPreferences("UserSharedPref", MODE_PRIVATE)
+        sharedPreferences = getSharedPreferences(getString(R.string.user_shared_pref), MODE_PRIVATE)
         mAuth = FirebaseAuth.getInstance()
     }
 

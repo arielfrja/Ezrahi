@@ -24,7 +24,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             if (user != null) {
                 model = SettingsViewModel(user, Activity())
                 setPreferencesFromResource(R.xml.root_preferences, rootKey)
-                activitiesList = findPreference("currentActivity")!!
+                activitiesList = findPreference(getString(R.string.current_activity))!!
                 activitiesList.entries = arrayOf("")
                 activitiesList.entryValues = arrayOf("")
                 activitiesList.isEnabled = false

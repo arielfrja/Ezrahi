@@ -2,7 +2,6 @@ package com.arielfaridja.ezrahi.UI.Main
 
 import android.content.Intent
 import android.content.SharedPreferences
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.arielfaridja.ezrahi.data.DataRepoFactory
@@ -44,11 +43,11 @@ class MainActivityViewModel : ViewModel() {
 
     fun initUser(intent: Intent) {
         user = User(
-            intent.getStringExtra("id") ?: "",
-            intent.getStringExtra("firstName") ?: "",
-            intent.getStringExtra("lastName") ?: "",
-            intent.getStringExtra("phone") ?: "",
-            intent.getStringExtra("email") ?: "",
+            intent.getStringExtra(getString(R.string.id)) ?: "",
+            intent.getStringExtra(getString(R.string.first_name)) ?: "",
+            intent.getStringExtra(getString(R.string.last_name)) ?: "",
+            intent.getStringExtra(getString(R.string.phone)) ?: "",
+            intent.getStringExtra(getString(R.string.email)) ?: "",
             Latlng(
                 intent.getDoubleExtra("latitude", 34.0),
                 intent.getDoubleExtra("longitude", 32.0)
@@ -58,10 +57,7 @@ class MainActivityViewModel : ViewModel() {
     }
 
     fun isUserSignedIn() {
-        if (!dataRepo.user_isSignedIn())
-            isSignIn.value = false
-        else
-            isSignIn.value = true
+        isSignIn.value = dataRepo.user_isSignedIn()
     }
 
     fun loadActivityDataFromSP(sp: SharedPreferences) {

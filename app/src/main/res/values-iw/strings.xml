@@ -22,4 +22,13 @@
     <string name="medical">רפואי</string>
     <string name="cant_get_occurred_location_right_now">לא ניתן לשיג מיקום מדוייק ברגע זה</string>
     <string name="report_add_success">הדיווח נוסף בהצלחה</string>
+    <string name="unknown_error">שגיאה לא ידועה</string>
+    <string name="stop">עצור</string>
+    <string name="set_post_signed_up_action">הגדר פעולה לאחר הרשמה</string>
+    <string name="user_shared_pref">UserSharedPref</string>
+    <string name="id">מזהה</string>
+    <string name="first_name">שם פרטי</string>
+    <string name="last_name">שם משפחה</string>
+    <string name="phone">טלפון</string>
+    <string name="email">אימייל</string>
 </resources>

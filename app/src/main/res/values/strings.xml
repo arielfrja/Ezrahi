@@ -43,4 +43,13 @@
     <string name="login">Login</string>
     <string name="login_using_email">Login using email:</string>
     <string name="password">Password</string>
+    <string name="unknown_error">Unknown error</string>
+    <string name="stop">STOP</string>
+    <string name="set_post_signed_up_action">set post signed up action</string>
+    <string name="user_shared_pref">UserSharedPref</string>
+    <string name="id">id</string>
+    <string name="first_name">firstName</string>
+    <string name="last_name">lastName</string>
+    <string name="phone">phone</string>
+    <string name="email">email</string>
 </resources>
