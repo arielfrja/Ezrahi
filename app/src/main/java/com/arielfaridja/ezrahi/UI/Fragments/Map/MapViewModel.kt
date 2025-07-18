@@ -1,6 +1,6 @@
 package com.arielfaridja.ezrahi.UI.Fragments.Map
 
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import com.arielfaridja.ezrahi.data.DataRepoFactory
 import com.arielfaridja.ezrahi.entities.ActUser
@@ -13,8 +13,22 @@ import com.arielfaridja.ezrahi.entities.ReportType
 import com.arielfaridja.ezrahi.entities.User
 import org.osmdroid.util.GeoPoint
 import java.util.Date
+import java.util.HashMap
 
 class MapViewModel : ViewModel() {
+    private val db = DataRepoFactory.getInstance()
+
+    // Directly expose LiveData from the repository
+    val users: LiveData<HashMap<String, ActUser>> = db.user_getAllByCurrentActivity()
+    val reports: LiveData<HashMap<String, Report>> = db.report_getAllByCurrentActivity()
+
+    // Expose non-live data directly
+    val currentUser: User
+        get() = db.user_getCurrent()
+
+    val currentActivity: Activity
+        get() = db.activity_getCurrent()
+
     fun addReport(
         title: String,
         description: String,
@@ -22,48 +36,16 @@ class MapViewModel : ViewModel() {
         type: ReportType = ReportType.GENERAL,
         callback: Callback<String>
     ) {
-
-        db.report_add(
-            Report(
-                /* actId = */ currentActivity.id,
-                /* reporter = */ db.user_getCurrent(),
-                /* title = */ title,
-                /* description = */ description,
-                /* location = */ Latlng(location!!.latitude, location.longitude),
-                /* reportTime = */ Date(System.currentTimeMillis()),
-                /* reportStatus = */ ReportStatus.REPORTED,
-                /* reportType = */ type
-            ), callback
+        val report = Report(
+            actId = currentActivity.id,
+            reporter = currentUser,
+            title = title,
+            description = description,
+            location = Latlng(location!!.latitude, location.longitude),
+            reportTime = Date(System.currentTimeMillis()),
+            reportStatus = ReportStatus.REPORTED,
+            reportType = type
         )
+        db.report_add(report, callback)
     }
-
-    private val db = DataRepoFactory.getInstance()
-    val users = MutableLiveData<Map<String, ActUser>>()
-    val reports = MutableLiveData<Map<String, Report>>()
-    lateinit var currentUser: User
-    lateinit var currentActivity: Activity
-
-    init {
-        db.user_getAllByCurrentActivity().observeForever { dbUsers ->
-            users.value = dbUsers
-        }
-        db.report_getAllByCurrentActivity().observeForever { dbReports ->
-            reports.value = dbReports
-        }
-        refresh()
-    }
-
-    fun refresh() {
-        currentUser = db.user_getCurrent()
-        currentActivity = db.activity_getCurrent()
-    }
-//    private val mediator = MediatorLiveData<Map<String,ActUser>>()
-//    init {
-//        mediator.addSource(db.user_getAllByCurrentActivity()
-//        ) {
-//                dbUsers -> users.value = dbUsers
-//        }
-//    }
-
-    // TODO: Implement the ViewModel
 }

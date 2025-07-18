@@ -10,8 +10,7 @@ import com.arielfaridja.ezrahi.UI.Main.MainActivity
 import com.arielfaridja.ezrahi.entities.Activity
 
 class SettingsFragment : PreferenceFragmentCompat() {
-
-    lateinit var activitiesList: ListPreference
+    var activitiesList: ListPreference? = null
     lateinit var model: SettingsViewModel
 
 
@@ -24,30 +23,39 @@ class SettingsFragment : PreferenceFragmentCompat() {
             if (user != null) {
                 model = SettingsViewModel(user, Activity())
                 setPreferencesFromResource(R.xml.root_preferences, rootKey)
-                activitiesList = findPreference(getString(R.string.current_activity))!!
-                activitiesList.entries = arrayOf("")
-                activitiesList.entryValues = arrayOf("")
-                activitiesList.isEnabled = false
-                model.activitiesList.observe(this) {
-                    var entries = ArrayList<CharSequence>()
-                    var entryValues = ArrayList<CharSequence>()
-                    if (it != null && it.size > 0) {
-                        entries.clear()
-                        entryValues.clear()
-                        for (act in it) {
-                            entries.add(act.value.name)
-                            entryValues.add(act.key)
+                val foundPreference = findPreference<ListPreference>("current_activity")
+                if (foundPreference != null) {
+                    
+                    activitiesList = foundPreference
+                    // Set initial placeholder
+                    activitiesList?.entries = arrayOf("No activities available")
+                    activitiesList?.entryValues = arrayOf("")
+                    activitiesList?.isEnabled = false
+                    model.activitiesList.observe(viewLifecycleOwner) { itList ->
+                        if (itList != null && itList.isNotEmpty()) {
+                            val entries = ArrayList<CharSequence>()
+                            val entryValues = ArrayList<CharSequence>()
+                            for (act in itList) {
+                                entries.add(act.value.name)
+                                entryValues.add(act.key)
+                            }
+                            activitiesList?.entries = entries.toTypedArray()
+                            activitiesList?.entryValues = entryValues.toTypedArray()
+                            activitiesList?.isEnabled = true
+                        } else {
+                            // No activities: show placeholder and disable
+                            activitiesList?.entries = arrayOf("No activities available")
+                            activitiesList?.entryValues = arrayOf("")
+                            activitiesList?.isEnabled = false
                         }
-                        activitiesList.entries = entries.toArray(arrayOf(""))
-                        activitiesList.entryValues = entryValues.toArray(arrayOf(""))
-                        activitiesList.isEnabled = true
                     }
-                }
-                activitiesList.setOnPreferenceChangeListener { preference, newValue ->
-                    var actId: String = newValue as String
-                    model.updateCurrentActivity(actId)
-
-                    return@setOnPreferenceChangeListener true
+                    activitiesList?.setOnPreferenceChangeListener { _, newValue ->
+                        val actId = newValue as String
+                        model.updateCurrentActivity(actId)
+                        true
+                    }
+                } else {
+                    // Handle missing preference gracefully, e.g., log or show a message
                 }
             } else {
                 // Show loading or error state

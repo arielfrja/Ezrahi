@@ -69,7 +69,6 @@ class MapFragment : Fragment() {
         setupMyLocationButton()
         setupMap()
         observeViewModel()
-        model.refresh()
         if (model.currentActivity.id.isNullOrBlank()) showNoActivityAssignedDialog()
         return view
     }
@@ -241,7 +240,7 @@ class MapFragment : Fragment() {
 
     // region ViewModel Observers
     private fun observeViewModel() {
-        model.users.observe(viewLifecycleOwner, Observer { users ->
+        model.users.observe(viewLifecycleOwner) { users ->
             users.forEach { (id, user) ->
                 if (id != model.currentUser.id) {
                     if (usersMarkers.containsKey(id)) {
@@ -251,8 +250,8 @@ class MapFragment : Fragment() {
                     }
                 }
             }
-        })
-        model.reports.observe(viewLifecycleOwner, Observer { reports ->
+        }
+        model.reports.observe(viewLifecycleOwner) { reports ->
             val deletedKeys = reportsMarkers.keys.subtract(reports.keys)
             reports.forEach { (id, report) ->
                 if (reportsMarkers.containsKey(id)) {
@@ -265,7 +264,7 @@ class MapFragment : Fragment() {
                 reportsMarkers[key]?.remove(map)
                 reportsMarkers.remove(key)
             }
-        })
+        }
     }
     // endregion
 
