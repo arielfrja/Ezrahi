@@ -1,6 +1,4 @@
-feat: Defer LocationTrackingService start until after login
+feat: Update string resources and add empty array for preferences
 
-Moves the initialization of the LocationTrackingService from MainActivity's
-onCreate to after successful user login. This ensures that the service
-only starts when user data is available and authenticated, preventing
-potential issues with uninitialized data.
+Updates various string resources in English and Hebrew.
+Adds an empty string array resource for ListPreference default values.
