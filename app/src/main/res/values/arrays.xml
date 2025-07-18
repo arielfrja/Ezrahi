@@ -1,4 +1,9 @@
 <resources>
     <!-- Reply Preference -->
-
+    <string-array name="empty_entries">
+        <item>No activities available</item>
+    </string-array>
+    <string-array name="empty_values">
+        <item></item>
+    </string-array>
 </resources>

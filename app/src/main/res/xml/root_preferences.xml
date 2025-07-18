@@ -1,5 +1,10 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <ListPreference
-        android:key="currentActivity"
-        android:title="select activity" />
+        android:key="current_activity"
+        android:title="@string/current_activity"
+        android:summary="@string/choose_your_current_activity"
+        android:entries="@array/empty_entries"
+        android:entryValues="@array/empty_values"
+        android:defaultValue=""
+        android:enabled="false" />
 </PreferenceScreen>

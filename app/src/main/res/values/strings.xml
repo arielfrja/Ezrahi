@@ -52,4 +52,9 @@
     <string name="last_name">lastName</string>
     <string name="phone">phone</string>
     <string name="email">email</string>
+    <string name="user_avatar">User avatar</string>
+    <string name="select_activity">select_activity</string>
+
+    <string name="current_activity">Current Activity</string>
+    <string name="choose_your_current_activity">Choose your current activity</string>
 </resources>

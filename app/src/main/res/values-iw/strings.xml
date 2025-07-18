@@ -1,27 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">אזרחי</string>
-    <string name="users">משתמשים</string>
-    <string name="login">התחבר</string>
-    <string name="login_using_email">התחבר באמצעות אימייל</string>
-    <string name="password">סיסמה</string>
-    <string name="email_or_phone">אימייל או סיסמה</string>
-    <string name="TrackingNotificationText">שירות איתור המיקום רץ ברקע</string>
-    <string name="TrackingNotificationTitle">שירות איתור המיקום</string>
-    <string name="reports">דיווחים</string>
-    <string name="cancel">ביטול</string>
-    <string name="routes">מסלולים</string>
-    <string name="don_t_have_an_account_yet">עדיין אין לך משתמש?</string>
-    <string name="Click_again_to_exit">לחץ שוב ליציאה</string>
-    <string name="Add">הוסף</string>
-    <string name="add_marker">הוסף סמן</string>
     <string name="title_activity_signup">מסך הרשמה</string>
-    <string name="edit_button">כפתור עריכה</string>
+    <string name="users">משתמשים</string>
+    <string name="reports">דיווחים</string>
+    <string name="routes">מסלולים</string>
+
+    <!-- Preference Titles -->
+
+    <!-- Messages Preferences -->
+
+    <!-- Sync Preferences -->
+    <string name="current_user_pref" translatable="false">UserSharedPref</string>
+    <string name="TrackingNotificationTitle">שירות מעקב מיקום</string>
+    <string name="TrackingNotificationText">שירות מעקב המיקום פועל ברקע</string>
+    <string name="don_t_have_an_account_yet">עדיין אין לך חשבון?</string>
+    <string name="edit_button">ערוך</string>
     <string name="activity_name">שם הפעילות</string>
+    <string name="Click_again_to_exit">לחץ שוב כדי לצאת</string>
+    <string name="cancel">ביטול</string>
+    <string name="Add">הוסף</string>
+    <string name="add_marker">הוסף סימון</string>
+    <string name="cant_get_occurred_location_right_now">לא ניתן לאתר מיקום כעת</string>
     <string name="general">כללי</string>
     <string name="medical">רפואי</string>
-    <string name="cant_get_occurred_location_right_now">לא ניתן לשיג מיקום מדוייק ברגע זה</string>
     <string name="report_add_success">הדיווח נוסף בהצלחה</string>
+
+    <!-- Added for map fragment accessibility -->
+    <string name="map_content_desc">מפה אינטראקטיבית לניווט ודיווחים</string>
+    <string name="toolbar_map">סרגל מפה</string>
+    <string name="my_location_btn_desc">עבור למיקומי הנוכחי במפה</string>
+
+    <!-- Added for MapFragment dialogs -->
+    <string name="enable_gps">הפעל GPS</string>
+    <string name="gps_not_enabled">ה-GPS אינו מופעל. האם להפעיל אותו כעת?</string>
+    <string name="yes">כן</string>
+    <string name="no">לא</string>
+    <string name="enable_location_services">הפעל שירותי מיקום</string>
+    <string name="location_services_required">נדרש להפעיל שירותי מיקום עבור יישום זה. אנא אפשר שירותי מיקום בהגדרות המכשיר.</string>
+    <string name="go_to_settings">עבור להגדרות</string>
+    <string name="no_activity_assigned">לא הוקצתה פעילות</string>
+    <string name="please_assign_activity">אנא הקצה פעילות כדי להמשיך.</string>
+    <string name="ok">אישור</string>
+
+    <!-- Added missing strings for login screen -->
+    <string name="email_or_phone">אימייל או טלפון</string>
+    <string name="login">התחברות</string>
+    <string name="login_using_email">התחבר באמצעות אימייל:</string>
+    <string name="password">סיסמה</string>
     <string name="unknown_error">שגיאה לא ידועה</string>
     <string name="stop">עצור</string>
     <string name="set_post_signed_up_action">הגדר פעולה לאחר הרשמה</string>
@@ -31,4 +57,9 @@
     <string name="last_name">שם משפחה</string>
     <string name="phone">טלפון</string>
     <string name="email">אימייל</string>
+    <string name="user_avatar">תמונת משתמש</string>
+    <string name="select_activity">בחר פעילות</string>
+
+    <string name="current_activity">הפעילות הנוכחית</string>
+    <string name="choose_your_current_activity">בחר את הפעילות הנוכחית שלך</string>
 </resources>
