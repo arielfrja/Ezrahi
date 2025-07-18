@@ -35,3 +35,7 @@ google-services.json
 
 /fireabasedata/
 /firebase-emulator.bat
+
+# Logs directory
+logs/
+
