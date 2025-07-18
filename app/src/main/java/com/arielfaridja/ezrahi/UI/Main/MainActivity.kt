@@ -79,10 +79,7 @@ class MainActivity : AppCompatActivity(), View.OnFocusChangeListener {
         val thisActivity = this
         initModel(thisActivity)
         initContentViews()
-        // הפעלת השירות רק אם יש הרשאות
-        if (hasAllLocationPermissions()) {
-            startLocationService()
-        }
+        
     }
 
     private fun requestLocationPermissionsIfNeeded() {
@@ -127,6 +124,9 @@ class MainActivity : AppCompatActivity(), View.OnFocusChangeListener {
                     setIsReady(true)
                     if (model.getActivity() == null) {
                         showDialog(thisActivity)
+                    }
+                    if (hasAllLocationPermissions()) {
+                        startLocationService()
                     }
                 }
             }
@@ -217,8 +217,10 @@ class MainActivity : AppCompatActivity(), View.OnFocusChangeListener {
     }
 
     private fun startLocationService() {
-        DataRepoFactory.getInstance(applicationContext)
-        startService(Intent(applicationContext, LocationTrackingService::class.java))
+        if(model.getIsSignIn().value == true){
+            DataRepoFactory.getInstance(applicationContext)
+            startService(Intent(applicationContext, LocationTrackingService::class.java))
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
