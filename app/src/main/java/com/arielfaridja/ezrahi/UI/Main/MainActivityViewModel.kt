@@ -43,11 +43,11 @@ class MainActivityViewModel : ViewModel() {
 
     fun initUser(intent: Intent) {
         user = User(
-            intent.getStringExtra(getString(R.string.id)) ?: "",
-            intent.getStringExtra(getString(R.string.first_name)) ?: "",
-            intent.getStringExtra(getString(R.string.last_name)) ?: "",
-            intent.getStringExtra(getString(R.string.phone)) ?: "",
-            intent.getStringExtra(getString(R.string.email)) ?: "",
+            intent.getStringExtra("id") ?: "",
+            intent.getStringExtra("first_name") ?: "",
+            intent.getStringExtra("last_name") ?: "",
+            intent.getStringExtra("phone") ?: "",
+            intent.getStringExtra("email") ?: "",
             Latlng(
                 intent.getDoubleExtra("latitude", 34.0),
                 intent.getDoubleExtra("longitude", 32.0)
@@ -59,6 +59,7 @@ class MainActivityViewModel : ViewModel() {
     fun isUserSignedIn() {
         isSignIn.value = dataRepo.user_isSignedIn()
     }
+
 
     fun loadActivityDataFromSP(sp: SharedPreferences) {
         val actId = sp.getString("actId", "") ?: ""

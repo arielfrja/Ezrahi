@@ -426,7 +426,7 @@ class FirebaseDataRepo(val context: Context) : IDataRepo {
     }
 
     private fun user_saveCurrentToSP(u: User) {
-        val sp = context.getSharedPreferences(context.getString(R.string.current_user_pref), Context.MODE_PRIVATE)
+        val sp = context.getSharedPreferences("UserSharedPref", Context.MODE_PRIVATE)
         val editor = sp.edit()
         editor.putString("Email", u.email)
         editor.putString("FirstName", u.firstName)
