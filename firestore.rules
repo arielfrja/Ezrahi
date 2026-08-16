@@ -12,6 +12,31 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/events/$(eventId)/participants/$(request.auth.uid));
     }
 
+    // 0. Legacy app collections (Users / Activities / ActUsers / Reports)
+    match /Users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /Activities/{activityId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+
+    match /ActUsers/{actUserId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+
+    match /Reports/{reportId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn();
+    }
+
     // 1. Events collection
     match /events/{eventId} {
       // Anyone logged in can read an event or join

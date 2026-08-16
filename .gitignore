@@ -39,3 +39,19 @@ google-services.json
 # Logs directory
 logs/
 
+# Kotlin build cache
+.kotlin/
+
+# Temp / stray files
+commit_message.txt
+package-lock.json
+
+# IDE
+.vscode/
+
+# Legacy backup
+pm_backup/
+
+# Roadmap duplicate (use modernization-roadmap.md)
+roadmap.md
+

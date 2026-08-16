@@ -10,6 +10,7 @@ import androidx.preference.PreferenceManager
 import androidx.room.Room
 import com.arielfaridja.ezrahi.R
 import com.arielfaridja.ezrahi.entities.*
+import com.arielfaridja.ezrahi.util.CrashLogger
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -102,8 +103,13 @@ class FirebaseDataRepo(val context: Context) : IDataRepo {
                 if (mAuth.uid != null) {
                     user_get(mAuth.uid!!, object : Callback<User> {
                         override fun onResponse(response: Callback.Response<User>) {
-                            currentUser = response.user!!
-                            user_saveCurrentToSP(currentUser)
+                            val user = response.user
+                            if (user != null) {
+                                currentUser = user
+                                user_saveCurrentToSP(currentUser)
+                            } else {
+                                Log.e(TAG, "loadUserFromSP: user_get returned null user", response.exception)
+                            }
                         }
                     })
                 }
@@ -256,6 +262,8 @@ class FirebaseDataRepo(val context: Context) : IDataRepo {
             if (task.isSuccessful) {
                 callback.onResponse(Callback.Response(docSnapshotToUser(task.result)))
             } else {
+                Log.e(TAG, "user_get failed for uid=$uId", task.exception)
+                CrashLogger.log("user_get failed uid=$uId", task.exception ?: RuntimeException("unknown"))
                 callback.onResponse(Callback.Response(task.exception))
             }
         }
@@ -297,7 +305,7 @@ class FirebaseDataRepo(val context: Context) : IDataRepo {
                     val reporterId = docRef.getString("ReporterId") ?: ""
                     val geoPoint = docRef.getGeoPoint("Location")
                     val location = if (geoPoint != null) Latlng(geoPoint) else Latlng(0.0, 0.0)
-                    val reportTime = docRef.getTimestamp("ReportTime")?.toDate() ?: Date()
+                    val reportTime = docRef.getTimestamp("Time")?.toDate() ?: Date()
                     val status = ReportStatus.getByValue(docRef.getDouble("Status")?.toInt() ?: -1)
                     val type = ReportType.getByValue(docRef.getDouble("Type")?.toInt() ?: -1)
                     val r = Report(
@@ -449,10 +457,12 @@ class FirebaseDataRepo(val context: Context) : IDataRepo {
                 for (doc in value.documentChanges) {
                     when (doc.type) {
                         DocumentChange.Type.ADDED -> {
-                            // TODO: handle added
+                            val report = docSnapshotToReport(doc.document)
+                            report?.let { data.currentActivityReports.value?.put(doc.document.id, it) }
                         }
                         DocumentChange.Type.MODIFIED -> {
-                            // TODO: handle modified
+                            val report = docSnapshotToReport(doc.document)
+                            report?.let { data.currentActivityReports.value?.put(doc.document.id, it) }
                         }
                         DocumentChange.Type.REMOVED -> {
                             data.currentActivityReports.value?.remove(doc.document.id)
@@ -462,6 +472,25 @@ class FirebaseDataRepo(val context: Context) : IDataRepo {
                 data.currentActivityReports.postValue(HashMap(data.currentActivityReports.value ?: hashMapOf()))
             }
         }
+    }
+
+    private fun docSnapshotToReport(doc: DocumentSnapshot): Report? {
+        val reporterId = doc.getString("ReporterId") ?: return null
+        val geoPoint = doc.getGeoPoint("Location")
+        val location = if (geoPoint != null) Latlng(geoPoint) else Latlng(0.0, 0.0)
+        val reportTime = doc.getTimestamp("Time")?.toDate() ?: Date()
+        val status = ReportStatus.getByValue(doc.getDouble("Status")?.toInt() ?: -1)
+        val type = ReportType.getByValue(doc.getDouble("Type")?.toInt() ?: -1)
+        return Report(
+            doc.getString("ActId") ?: "",
+            data.currentActivityUsers.value?.get(reporterId)?.user ?: User(),
+            doc.getString("Title") ?: "",
+            doc.getString("Description") ?: "",
+            location,
+            reportTime,
+            status,
+            type
+        )
     }
 
     private fun setCurrentActivityUsersListener() {
