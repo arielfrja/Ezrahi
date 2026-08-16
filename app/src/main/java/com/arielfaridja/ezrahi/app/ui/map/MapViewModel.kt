@@ -1,4 +1,4 @@
-package com.arielfaridja.ezrahi.ui.map
+package com.arielfaridja.ezrahi.app.ui.map
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

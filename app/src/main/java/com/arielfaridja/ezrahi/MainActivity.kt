@@ -46,9 +46,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.arielfaridja.ezrahi.ui.auth.AuthScreen
-import com.arielfaridja.ezrahi.ui.map.MapScreen
-import com.arielfaridja.ezrahi.ui.theme.EzrahiTheme
+import com.arielfaridja.ezrahi.app.ui.auth.AuthScreen
+import com.arielfaridja.ezrahi.app.ui.map.MapScreen
+import com.arielfaridja.ezrahi.app.ui.theme.EzrahiTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 

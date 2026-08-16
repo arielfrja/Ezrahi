@@ -1,4 +1,4 @@
-package com.arielfaridja.ezrahi.ui.theme
+package com.arielfaridja.ezrahi.app.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*

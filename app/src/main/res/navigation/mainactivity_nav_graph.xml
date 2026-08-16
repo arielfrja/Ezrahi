@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainactivity_nav_graph"
+    app:startDestination="@id/nav_map">
+
+    <action
+        android:id="@+id/toActivityOverview"
+        app:destination="@id/nav_activity_overview" />
+    <fragment
+        android:id="@+id/nav_map"
+        android:name="com.arielfaridja.ezrahi.UI.Fragments.Map.MapFragment"
+        android:label="map"
+        tools:layout="@layout/fragment_map">
+        <action
+            android:id="@+id/action_mapFragment_to_activityOverviewFragment"
+            app:destination="@id/nav_activity_overview" />
+        <action
+            android:id="@+id/action_nav_map_to_nav_settings"
+            app:destination="@id/nav_settings" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_activity_overview"
+        android:name="com.arielfaridja.ezrahi.UI.Fragments.ActivityOverview.ActivityOverviewFragment"
+        android:label="fragment_activity_overview"
+        tools:layout="@layout/fragment_activity_overview"></fragment>
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="com.arielfaridja.ezrahi.UI.Fragments.Settings.SettingsFragment"
+        android:label="SettingsFragment" />
+</navigation>

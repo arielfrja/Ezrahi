@@ -22,27 +22,51 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_v2_round"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:theme="@style/Theme.Ezrahi"
+        android:usesCleartextTraffic="true">
+
+        <!-- Legacy Location Foreground Service -->
+        <service
+            android:name=".LocationTrackingService"
+            android:enabled="true"
+            android:exported="true"
+            android:foregroundServiceType="location" />
+
+        <!-- Modern Location Foreground Service -->
+        <service
+            android:name=".service.LocationTrackingService"
+            android:foregroundServiceType="location"
+            android:exported="false" />
 
         <activity
-            android:name=".MainActivity"
+            android:name=".UI.Signup.SignupActivity"
             android:exported="true"
-            android:theme="@android:style/Theme.Material.Light.NoActionBar">
+            android:label="@string/title_activity_signup"
+            android:noHistory="true"
+            android:theme="@style/Theme.Ezrahi" />
+        <activity
+            android:name=".UI.Login.LoginActivity"
+            android:exported="false"
+            android:noHistory="true" />
+        <activity
+            android:name=".UI.Main.MainActivity"
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@style/Theme.Ezrahi.SplashScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".UI.StartupActivity"
+            android:exported="true" />
 
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCbl5s9FdUS_2AswBRaXsCLCBr4h8iQjWE" />
-
-        <!-- Location Foreground Service -->
-        <service
-            android:name=".service.LocationTrackingService"
-            android:foregroundServiceType="location"
-            android:exported="false" />
+        <!-- Modern Compose activity (wired in Phase 5) -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
 
     </application>
 </manifest>

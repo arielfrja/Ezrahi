@@ -1,4 +1,4 @@
-package com.arielfaridja.ezrahi.ui.map
+package com.arielfaridja.ezrahi.app.ui.map
 
 import android.Manifest
 import android.content.Context

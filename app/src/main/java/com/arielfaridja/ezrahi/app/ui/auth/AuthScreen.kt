@@ -1,4 +1,4 @@
-package com.arielfaridja.ezrahi.ui.auth
+package com.arielfaridja.ezrahi.app.ui.auth
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
