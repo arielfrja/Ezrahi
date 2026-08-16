@@ -1,12 +1,14 @@
 package com.arielfaridja.ezrahi.data.repository
 
 import com.arielfaridja.ezrahi.data.local.*
+import com.arielfaridja.ezrahi.data.mapper.FieldReportMapper
 import com.arielfaridja.ezrahi.domain.model.*
 import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -159,5 +161,24 @@ class EzrahiRepositoryImpl @Inject constructor(
             timestamp = System.currentTimeMillis()
         )
         sendMessage(sosMessage).getOrThrow()
+    }
+
+    private val reportsFlow = MutableStateFlow<List<FieldReport>>(emptyList())
+
+    override fun getReports(actId: String): Flow<List<FieldReport>> {
+        firestore.collection("Reports").whereEqualTo("ActId", actId)
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot != null) {
+                    val reports = snapshot.documents.mapNotNull { FieldReportMapper.fromSnapshot(it) }
+                    reportsFlow.value = reports
+                }
+            }
+        return reportsFlow
+    }
+
+    override suspend fun addReport(report: FieldReport): Result<String> = runCatching {
+        val docRef = firestore.collection("Reports").document(report.id.ifEmpty { firestore.collection("Reports").document().id })
+        docRef.set(FieldReportMapper.toWriteMap(report)).await()
+        docRef.id
     }
 }

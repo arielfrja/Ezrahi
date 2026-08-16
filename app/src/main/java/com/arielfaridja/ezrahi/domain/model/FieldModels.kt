@@ -60,3 +60,46 @@ data class FieldMessage(
     val isEmergency: Boolean = false,
     val timestamp: Long = System.currentTimeMillis()
 )
+
+// 7. Report status (maps to legacy ReportStatus values: 1/2/-1)
+enum class FieldReportStatus(val value: Int) {
+    REPORTED(1),
+    HANDLED(2),
+    UNKNOWN(-1);
+
+    companion object {
+        fun getByValue(value: Int): FieldReportStatus = when (value) {
+            1 -> REPORTED
+            2 -> HANDLED
+            else -> UNKNOWN
+        }
+    }
+}
+
+// 8. Report type (maps to legacy ReportType values: 0/1/-1)
+enum class FieldReportType(val value: Int) {
+    GENERAL(0),
+    MEDICAL(1),
+    UNKNOWN(-1);
+
+    companion object {
+        fun getByValue(value: Int): FieldReportType = when (value) {
+            0 -> GENERAL
+            1 -> MEDICAL
+            else -> UNKNOWN
+        }
+    }
+}
+
+// 9. Field report (formerly "Report") - e.g. an incident or observation at a location
+data class FieldReport(
+    val id: String = "",
+    val actId: String = "",
+    val reporterId: String = "",
+    val title: String = "",
+    val description: String = "",
+    val location: GeoPoint = GeoPoint(),
+    val reportTime: Long = System.currentTimeMillis(),
+    val status: FieldReportStatus = FieldReportStatus.REPORTED,
+    val type: FieldReportType = FieldReportType.GENERAL
+)

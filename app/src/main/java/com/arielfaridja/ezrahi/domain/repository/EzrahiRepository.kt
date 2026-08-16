@@ -10,4 +10,6 @@ interface EzrahiRepository {
     suspend fun updateLocation(eventId: String, userId: String, location: GeoPoint): Result<Unit>
     suspend fun sendMessage(message: FieldMessage): Result<Unit>
     suspend fun sendSOS(eventId: String, senderId: String, senderName: String, location: GeoPoint): Result<Unit>
+    fun getReports(actId: String): Flow<List<FieldReport>>
+    suspend fun addReport(report: FieldReport): Result<String>
 }
