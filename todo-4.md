@@ -36,14 +36,14 @@ Transmit GPS coordinates in the background while guides hike — even with scree
 
 ### Task 4.3: Background location runtime handling
 Implement a two-stage permission flow in the **modern** `MapScreen` (the Compose app will be the launcher in Phase 5; the code lands now and is exercised then):
-- [ ] Add `android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` to `app/src/main/AndroidManifest.xml` (debug too if needed).
-- [ ] In `MapScreen`, after FINE/COARSE/POST_NOTIFICATIONS are granted, request `ACCESS_BACKGROUND_LOCATION`:
+- [x] Add `android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` to `app/src/main/AndroidManifest.xml` (debug too if needed).
+- [x] In `MapScreen`, after FINE/COARSE/POST_NOTIFICATIONS are granted, request `ACCESS_BACKGROUND_LOCATION`:
   - Android 10 (API 29): include in a second `rememberLauncherForActivityResult(RequestMultiplePermissions)` launch → dialog appears.
   - Android 11+ (API 30+): no dialog possible — check `checkSelfPermission`; if missing, launch `Settings.ACTION_APPLICATION_DETAILS_SETTINGS` with the app package URI so the user can enable "Allow all the time".
   - Guard: don't block the FGS start if background permission is denied (FGS is exempt; just skip the settings redirect).
-- [ ] Battery optimization exemption: after foreground grant, check `PowerManager.isIgnoringBatteryOptimizations(context.packageName)`; if false, launch `ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` (package URI) to prompt exemption (non-blocking).
-- [ ] Add a small helper (e.g. `LocationPermissionHelper` object) so the logic is reusable/testable and not buried in the composable.
-- [ ] Only start the FGS after the *foreground* permissions are granted (already the case) — background/battery steps are non-blocking follow-ups.
+- [x] Battery optimization exemption: after foreground grant, check `PowerManager.isIgnoringBatteryOptimizations(context.packageName)`; if false, launch `ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` (package URI) to prompt exemption (non-blocking).
+- [x] Add a small helper (e.g. `LocationPermissionHelper` object) so the logic is reusable/testable and not buried in the composable.
+- [x] Only start the FGS after the *foreground* permissions are granted (already the case) — background/battery steps are non-blocking follow-ups.
 
 ### Task 4.4: Runtime smoke test (legacy path — the one that runs today)
 - [ ] Launch legacy app → login → open map → confirm the tracking notification appears ("Ezrahi Field Tracking Active").
@@ -59,12 +59,12 @@ Implement a two-stage permission flow in the **modern** `MapScreen` (the Compose
 ## Definition of Done (Phase 4)
 - [x] Manifest permissions verified (all present).
 - [x] Modern service verified against spec.
-- [ ] Battery-optimization exemption permission + request flow added (modern `MapScreen`).
-- [ ] `ACCESS_BACKGROUND_LOCATION` two-stage runtime flow added (Android 10 dialog / Android 11+ settings redirect).
-- [ ] Helper extracted (`LocationPermissionHelper`), logic non-blocking, FGS start unaffected.
+- [x] Battery-optimization exemption permission + request flow added (modern `MapScreen`).
+- [x] `ACCESS_BACKGROUND_LOCATION` two-stage runtime flow added (Android 10 dialog / Android 11+ settings redirect).
+- [x] Helper extracted (`LocationPermissionHelper`), logic non-blocking, FGS start unaffected.
 - [ ] Legacy runtime smoke test: notification shows on map open; updates flow in background.
-- [ ] `sh gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
-- [ ] Background-location/battery-opt decision recorded for PO (modern path ready; legacy path untouched).
+- [x] `sh gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- [x] Background-location/battery-opt decision recorded for PO (modern path ready; legacy path untouched).
 
 ## Next
 - [ ] Create `todo-5.md` for Phase 5 (Single-Activity + Compose UI migration) after Phase 4 gate passes.

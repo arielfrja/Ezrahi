@@ -22,6 +22,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.arielfaridja.ezrahi.app.util.LocationPermissionHelper
 import com.arielfaridja.ezrahi.service.LocationTrackingService
 import com.google.firebase.auth.FirebaseAuth
 import org.osmdroid.config.Configuration
@@ -49,10 +50,51 @@ fun MapScreen(
     val auth = FirebaseAuth.getInstance()
 
     var permissionsGranted by remember { mutableStateOf(false) }
+
+    lateinit var requestSecondaryPermissions: (Context) -> Unit
+    lateinit var requestBatteryOptimizationExemption: (Context) -> Unit
+
+    val backgroundPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) requestBatteryOptimizationExemption(context)
+    }
+
+    val appSettingsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { _ ->
+        if (!LocationPermissionHelper.backgroundLocationGranted(context)) {
+            requestBatteryOptimizationExemption(context)
+        }
+    }
+
+    val batteryOptimizationLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { _ -> }
+
+    requestBatteryOptimizationExemption = { ctx ->
+        if (!LocationPermissionHelper.isIgnoringBatteryOptimizations(ctx)) {
+            batteryOptimizationLauncher.launch(LocationPermissionHelper.batteryOptimizationRequestIntent(ctx))
+        }
+    }
+
+    requestSecondaryPermissions = { ctx ->
+        if (LocationPermissionHelper.backgroundLocationGranted(ctx)) {
+            requestBatteryOptimizationExemption(ctx)
+        } else if (LocationPermissionHelper.backgroundLocationCanBePrompted()) {
+            backgroundPermissionLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        } else {
+            appSettingsLauncher.launch(LocationPermissionHelper.appSettingsIntent(ctx))
+        }
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         permissionsGranted = permissions.values.all { it }
+        if (permissionsGranted) {
+            requestSecondaryPermissions(context)
+        }
     }
 
     LaunchedEffect(eventId) {
