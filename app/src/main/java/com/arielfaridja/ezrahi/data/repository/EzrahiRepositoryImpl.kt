@@ -8,7 +8,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -163,17 +162,43 @@ class EzrahiRepositoryImpl @Inject constructor(
         sendMessage(sosMessage).getOrThrow()
     }
 
-    private val reportsFlow = MutableStateFlow<List<FieldReport>>(emptyList())
-
     override fun getReports(actId: String): Flow<List<FieldReport>> {
         firestore.collection("Reports").whereEqualTo("ActId", actId)
             .addSnapshotListener { snapshot, _ ->
                 if (snapshot != null) {
-                    val reports = snapshot.documents.mapNotNull { FieldReportMapper.fromSnapshot(it) }
-                    reportsFlow.value = reports
+                    val reports = snapshot.documents.mapNotNull { doc ->
+                        val report = FieldReportMapper.fromSnapshot(doc) ?: return@mapNotNull null
+                        ReportLocalEntity(
+                            id = report.id,
+                            actId = report.actId,
+                            reporterId = report.reporterId,
+                            title = report.title,
+                            description = report.description,
+                            latitude = report.location.latitude,
+                            longitude = report.location.longitude,
+                            reportTime = report.reportTime,
+                            status = report.status.value,
+                            type = report.type.value
+                        )
+                    }
+                    scope.launch { dao.insertReports(reports) }
                 }
             }
-        return reportsFlow
+        return dao.observeReports(actId).map { list ->
+            list.map {
+                FieldReport(
+                    id = it.id,
+                    actId = it.actId,
+                    reporterId = it.reporterId,
+                    title = it.title,
+                    description = it.description,
+                    location = GeoPoint(it.latitude, it.longitude),
+                    reportTime = it.reportTime,
+                    status = FieldReportStatus.getByValue(it.status),
+                    type = FieldReportType.getByValue(it.type)
+                )
+            }
+        }
     }
 
     override suspend fun addReport(report: FieldReport): Result<String> = runCatching {

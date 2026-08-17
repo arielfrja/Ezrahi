@@ -38,3 +38,17 @@ data class MessageLocalEntity(
     val isEmergency: Boolean,
     val timestamp: Long
 )
+
+@Entity(tableName = "cached_reports")
+data class ReportLocalEntity(
+    @PrimaryKey val id: String,
+    val actId: String,
+    val reporterId: String,
+    val title: String,
+    val description: String,
+    val latitude: Double,
+    val longitude: Double,
+    val reportTime: Long,
+    val status: Int,
+    val type: Int
+)

@@ -25,19 +25,19 @@ Build an offline-first data layer so the app retains cached events, participants
 - [x] `EventLocalEntity`, `ParticipantLocalEntity`, `MessageLocalEntity` present (match roadmap).
 - [x] `EzrahiDao` queries/inserts present.
 - [x] `EzrahiDatabase` + `DatabaseModule` present.
-- [ ] Add `ReportLocalEntity` (`@Entity(tableName = "cached_reports")`): id PK, actId, reporterId, title, description, latitude, longitude, reportTime, status, type — mirrors `FieldReport`.
-- [ ] Add DAO: `observeReports(actId): Flow<List<ReportLocalEntity>>` + `insertReports(List<ReportLocalEntity>)` (REPLACE on conflict).
+- [x] Add `ReportLocalEntity` (`@Entity(tableName = "cached_reports")`): id PK, actId, reporterId, title, description, latitude, longitude, reportTime, status, type — mirrors `FieldReport`. → **done**.
+- [x] Add DAO: `observeReports(actId): Flow<List<ReportLocalEntity>>` + `insertReports(List<ReportLocalEntity>)` (REPLACE on conflict). → **done**.
 
 ## Task 3.2: Offline-first repository — extend for reports
-- [ ] `EzrahiRepositoryImpl.getReports(actId)`: add a Firestore listener that writes report snapshots into Room (`insertReports`), then **emit from Room** (`dao.observeReports(actId)` → `FieldReport`) instead of the single shared `MutableStateFlow`.
-- [ ] Remove the per-instance shared `reportsFlow`; verify no other consumers depend on it (only `getReports` used it).
-- [ ] `addReport` stays as-is (writes Firestore); consider local insert on success for optimistic UI (optional, Phase 5+).
+- [x] `EzrahiRepositoryImpl.getReports(actId)`: add a Firestore listener that writes report snapshots into Room (`insertReports`), then **emit from Room** (`dao.observeReports(actId)` → `FieldReport`) instead of the single shared `MutableStateFlow`. → **done**.
+- [x] Remove the per-instance shared `reportsFlow`; verify no other consumers depend on it (only `getReports` used it). → **done** (dead `reportsFlow` + `MutableStateFlow` import removed).
+- [ ] `addReport` stays as-is (writes Firestore); consider local insert on success for optimistic UI (optional, Phase 5+). → **deferred** (optional, Phase 5+).
 
 ## Task 3.3: Verify offline-first behavior
-- [ ] Confirm event/participant/message flows already read from Room first (they do — `dao.observe*().map {...}`).
-- [ ] Confirm Room writes happen via `CoroutineScope(Dispatchers.IO)` in the impl.
-- [ ] Decide legacy `AppDatabase` handling: keep both DBs during migration, or fold legacy `ActUser`/`ActPermission` caching into `EzrahiDatabase`. **Recommend: keep separate until Phase 5** (legacy `FirebaseDataRepo` owns it); note in docs.
-- [ ] Build + smoke test: launch app, open map, add a report → verify it appears (and ideally survives a disconnect if tested).
+- [x] Confirm event/participant/message flows already read from Room first (they do — `dao.observe*().map {...}`).
+- [x] Confirm Room writes happen via `CoroutineScope(Dispatchers.IO)` in the impl.
+- [ ] Decide legacy `AppDatabase` handling: keep both DBs during migration, or fold legacy `ActUser`/`ActPermission` caching into `EzrahiDatabase`. **Recommend: keep separate until Phase 5** (legacy `FirebaseDataRepo` owns it); note in docs. → **decision: keep separate until Phase 5**.
+- [x] Build + smoke test: launch app, open map, add a report → verify it appears (and ideally survives a disconnect if tested). → **passed** (map → report → marker appears).
 
 ## Constraints / Notes
 - **Keep build green + app running.** Legacy `FirebaseDataRepo` (which manages its own `AppDatabase`) is untouched by Phase 3 changes — only the modern `EzrahiRepositoryImpl`/`EzrahiDao` gain report caching.
@@ -46,12 +46,12 @@ Build an offline-first data layer so the app retains cached events, participants
 - Roadmap Phase 3 does **not** mention reports/messages-route-caching beyond messages; reports caching here is the "report work" continuation from Phase 1.
 
 ## Definition of Done (Phase 3)
-- [ ] `ReportLocalEntity` + `observeReports`/`insertReports` in Room.
-- [ ] `getReports()` is offline-first (Room-backed flow, Firestore writes into Room).
-- [ ] Shared `MutableStateFlow` bug removed (per-actId flows).
-- [ ] `EzrahiDatabase` version bumped (2) with destructive fallback.
-- [ ] `sh gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
-- [ ] Smoke test: map → add report → marker appears.
+- [x] `ReportLocalEntity` + `observeReports`/`insertReports` in Room.
+- [x] `getReports()` is offline-first (Room-backed flow, Firestore writes into Room).
+- [x] Shared `MutableStateFlow` bug removed (per-actId flows).
+- [x] `EzrahiDatabase` version bumped (2) with destructive fallback.
+- [x] `sh gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- [x] Smoke test: map → add report → marker appears.
 
 ## Next
 - [ ] Create `todo-4.md` for Phase 4 (Permissions & Background Location) after Phase 3 gate passes.

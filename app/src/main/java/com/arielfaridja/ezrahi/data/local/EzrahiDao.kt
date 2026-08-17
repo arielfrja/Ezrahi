@@ -26,4 +26,11 @@ interface EzrahiDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: MessageLocalEntity)
+
+    // Reports
+    @Query("SELECT * FROM cached_reports WHERE actId = :actId ORDER BY reportTime ASC")
+    fun observeReports(actId: String): Flow<List<ReportLocalEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertReports(reports: List<ReportLocalEntity>)
 }

@@ -4,8 +4,8 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [EventLocalEntity::class, ParticipantLocalEntity::class, MessageLocalEntity::class],
-    version = 1,
+    entities = [EventLocalEntity::class, ParticipantLocalEntity::class, MessageLocalEntity::class, ReportLocalEntity::class],
+    version = 2,
     exportSchema = false
 )
 abstract class EzrahiDatabase : RoomDatabase() {
