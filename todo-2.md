@@ -31,18 +31,18 @@ Replace manual `DataRepoFactory.getInstance()` calls with automated Hilt DI, and
 - [x] `di/FirebaseModule.kt` provides `FirebaseAuth`, `FirebaseFirestore`, `FirebaseStorage` as singletons.
 
 ## Task 2.4: Bind the legacy `IDataRepo`/`FirebaseDataRepo` via Hilt
-- [ ] Add `@Inject constructor(@ApplicationContext context: Context)` to `FirebaseDataRepo` (it currently takes `Context`; needs the qualifier).
-- [ ] Add `@Binds` in `di/RepositoryModule.kt` (or a new `di/DataRepoModule.kt`): `abstract fun bindDataRepo(impl: FirebaseDataRepo): IDataRepo`.
-- [ ] Decide strategy for `DataRepoFactory` (see Constraints): either keep as a thin Hilt-backed bridge or delete after consumers migrate.
+- [x] Add `@Inject constructor(@ApplicationContext context: Context)` to `FirebaseDataRepo` (it currently takes `Context`; needs the qualifier). → **done**: `@Singleton class FirebaseDataRepo @Inject constructor(@ApplicationContext val context: Context)`.
+- [x] Add `@Binds` in `di/RepositoryModule.kt` (or a new `di/DataRepoModule.kt`): `abstract fun bindDataRepo(impl: FirebaseDataRepo): IDataRepo`. → **done**.
+- [x] Decide strategy for `DataRepoFactory` (see Constraints): either keep as a thin Hilt-backed bridge or delete after consumers migrate. → **done**: `DataRepoFactory` is now an `@EntryPoint` facade (`DataRepoEntryPoint`) pulling `IDataRepo` from the Hilt singleton graph; legacy `getInstance()` API preserved (no consumer changes needed).
 
 ## Task 2.5: Migrate legacy `DataRepoFactory` consumers toward injection
-- [ ] **Decision needed:** legacy UI (19 files) will be **replaced by Compose in Phase 5**. Migrating all 10 legacy consumers to `@HiltViewModel`/`@AndroidEntryPoint` now is throwaway work. Recommended: migrate only what Phase 5 reuses; defer the rest.
-- [ ] If migrated now: convert `LoginViewModel`, `MainActivityViewModel`, `SignupActivityViewModel`, `SettingsViewModel`, `MapViewModel`, `ActivityOverviewViewModel` to `@HiltViewModel` with `@Inject constructor` (note: `SettingsViewModel`/`ActivityOverviewViewModel` take runtime args → use `SavedStateHandle` or assisted injection).
-- [ ] If migrated now: add `@AndroidEntryPoint` to `StartupActivity`, legacy `MainActivity`, `LoginActivity`, `SignupActivity`, legacy `LocationTrackingService`, fragments.
+- [x] **Decision needed:** legacy UI (19 files) will be **replaced by Compose in Phase 5**. Migrating all 10 legacy consumers to `@HiltViewModel`/`@AndroidEntryPoint` now is throwaway work. Recommended: migrate only what Phase 5 reuses; defer the rest. → **Decision: defer**. `DataRepoFactory` now routes through Hilt, so legacy consumers get the same singleton without being rewritten.
+- [ ] If migrated now: convert `LoginViewModel`, `MainActivityViewModel`, `SignupActivityViewModel`, `SettingsViewModel`, `MapViewModel`, `ActivityOverviewViewModel` to `@HiltViewModel` with `@Inject constructor` (note: `SettingsViewModel`/`ActivityOverviewViewModel` take runtime args → use `SavedStateHandle` or assisted injection). → **DEFERRED to Phase 5**.
+- [ ] If migrated now: add `@AndroidEntryPoint` to `StartupActivity`, legacy `MainActivity`, `LoginActivity`, `SignupActivity`, legacy `LocationTrackingService`, fragments. → **DEFERRED to Phase 5**.
 
 ## Task 2.6: Resolve duplicate classes
-- [ ] `LocationTrackingService`: unify on the modern `service/` version (has `@AndroidEntryPoint` + `@Inject`); remove/alias legacy one **only when legacy UI is gone (Phase 5)** — legacy MainActivity currently starts it.
-- [ ] `MainActivity`: keep legacy launcher until Phase 5; modern one is already `@AndroidEntryPoint` and stays unexported.
+- [ ] `LocationTrackingService`: unify on the modern `service/` version (has `@AndroidEntryPoint` + `@Inject`); remove/alias legacy one **only when legacy UI is gone (Phase 5)** — legacy MainActivity currently starts it. → **deferred to Phase 5**.
+- [ ] `MainActivity`: keep legacy launcher until Phase 5; modern one is already `@AndroidEntryPoint` and stays unexported. → **deferred to Phase 5**.
 
 ## Constraints / Notes
 - **Keep build green + app running.** Legacy UI is the live launcher and drives tests; deleting/replacing it is Phase 5 work. Phase 2 should mostly *enable* DI for the modern path and the data layer, not rewrite the legacy UI.
@@ -54,11 +54,11 @@ Replace manual `DataRepoFactory.getInstance()` calls with automated Hilt DI, and
 - **Runtime smoke test required** for any DI change: DI graph errors surface at runtime (not compile time) — test app launch after each Hilt change.
 
 ## Definition of Done (Phase 2)
-- [ ] `FirebaseDataRepo` Hilt-injectable (`@Inject constructor(@ApplicationContext ...)`) and bound as `IDataRepo`.
-- [ ] Modern path fully injectable (already true: repo, ViewModel, service, activity).
-- [ ] `DataRepoFactory` either Hilt-backed or explicitly scheduled for removal (no dangling plan).
-- [ ] `sh gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
-- [ ] App launches + user smoke-tests legacy flow (login → map → report → overview → settings) after the change.
+- [x] `FirebaseDataRepo` Hilt-injectable (`@Inject constructor(@ApplicationContext ...)`) and bound as `IDataRepo`.
+- [x] Modern path fully injectable (already true: repo, ViewModel, service, activity).
+- [x] `DataRepoFactory` either Hilt-backed or explicitly scheduled for removal (no dangling plan). → Hilt-backed `@EntryPoint` facade; removal scheduled with legacy UI (Phase 5).
+- [x] `sh gradlew :app:assembleDebug` → BUILD SUCCESSFUL.
+- [x] App launches + user smoke-tests legacy flow (login → map → report → overview → settings) after the change. → **passed**.
 
 ## Next
 - [ ] Create `todo-3.md` for Phase 3 (Offline-First Room data layer) — note Phase 3 items 3.1–3.4 are **already scaffolded** (Room entities, DAO, repo impl, bindings exist); verify + extend for reports/messages/events.

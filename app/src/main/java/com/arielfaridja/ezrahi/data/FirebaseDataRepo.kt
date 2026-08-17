@@ -16,10 +16,14 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.*
 import com.google.gson.Gson
+import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONArray
 import java.util.*
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class FirebaseDataRepo(val context: Context) : IDataRepo {
+@Singleton
+class FirebaseDataRepo @Inject constructor(@ApplicationContext val context: Context) : IDataRepo {
     private val mAuth: FirebaseAuth = FirebaseAuth.getInstance()
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
     private val users: CollectionReference = db.collection("Users")
