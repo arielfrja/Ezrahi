@@ -234,6 +234,8 @@ class MainActivity : AppCompatActivity(), View.OnFocusChangeListener {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.searchbar_actions, menu)
+        val searchItem = menu.findItem(R.id.app_bar_search)
+        searchView = searchItem.actionView as SearchView
         return true
     }
 
