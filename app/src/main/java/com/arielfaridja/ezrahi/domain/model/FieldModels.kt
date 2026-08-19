@@ -10,6 +10,21 @@ enum class UserRole {
     MEMBER        // חניך / משתתף - Regular participant
 }
 
+// 1b. Dynamic role option (loaded from Firestore settings; UI is not hardcoded to the enum)
+data class RoleOption(
+    val name: String,
+    val label: String,
+    val isStaff: Boolean = true
+)
+
+// 1c. External messenger definition (loaded from Firestore settings;
+//     urlTemplate uses {handle} placeholder, e.g. https://wa.me/{handle})
+data class MessengerOption(
+    val id: String,
+    val label: String,
+    val urlTemplate: String
+)
+
 // 2. Location coordinates
 data class GeoPoint(
     val latitude: Double = 0.0,
@@ -34,7 +49,8 @@ data class EventParticipant(
     val role: UserRole = UserRole.MEMBER,
     val currentLocation: GeoPoint? = null,
     val isOnline: Boolean = true,
-    val lastSeenTimestamp: Long = System.currentTimeMillis()
+    val lastSeenTimestamp: Long = System.currentTimeMillis(),
+    val messengers: Map<String, String> = emptyMap()
 )
 
 // 5. The primary Field Event (Formerly "Activity")

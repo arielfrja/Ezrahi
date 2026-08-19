@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Settings
@@ -54,10 +55,15 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.arielfaridja.ezrahi.app.ui.auth.AuthScreen
 import com.arielfaridja.ezrahi.app.ui.auth.SignUpScreen
+import com.arielfaridja.ezrahi.app.ui.chat.ChannelThreadScreen
+import com.arielfaridja.ezrahi.app.ui.chat.ChatListScreen
 import com.arielfaridja.ezrahi.app.ui.dial.QuickDialScreen
+import com.arielfaridja.ezrahi.app.ui.direct.DirectListScreen
+import com.arielfaridja.ezrahi.app.ui.direct.DirectThreadScreen
 import com.arielfaridja.ezrahi.app.ui.events.EventPickerScreen
 import com.arielfaridja.ezrahi.app.ui.map.MapScreen
 import com.arielfaridja.ezrahi.app.ui.management.EventManagementScreen
+import com.arielfaridja.ezrahi.app.ui.settings.SettingsScreen
 import com.arielfaridja.ezrahi.app.util.EventPrefs
 import com.arielfaridja.ezrahi.app.ui.theme.EzrahiTheme
 import com.google.firebase.auth.FirebaseAuth
@@ -89,6 +95,7 @@ private data class DrawerDestination(
 
 private val drawerDestinations = listOf(
     DrawerDestination("Map", Icons.Default.Place, "map"),
+    DrawerDestination("Messages", Icons.Default.Email, "messages"),
     DrawerDestination("Speed Dial", Icons.Default.Phone, "speed_dial"),
     DrawerDestination("Activity Overview", Icons.AutoMirrored.Filled.List, "activity_overview"),
     DrawerDestination("Settings", Icons.Default.Settings, "settings")
@@ -147,9 +154,9 @@ fun EzrahiNavApp() {
                         selected = isSelected,
                         onClick = {
                             scope.launch { drawerState.close() }
-                            if (destination.route == "map") {
+                            if (destination.route == "map" || destination.route == "messages") {
                                 if (currentEventId != null) {
-                                    navController.navigate("map/$currentEventId") {
+                                    navController.navigate("${destination.route}/$currentEventId") {
                                         popUpTo(navController.graph.findStartDestination().id) {
                                             saveState = true
                                         }
@@ -222,10 +229,48 @@ fun EzrahiNavApp() {
             }
             composable("messages/{eventId}") { backStackEntry ->
                 val eventId = backStackEntry.arguments?.getString("eventId") ?: ""
-                PlaceholderScreen(
-                    title = "Messages",
-                    subtitle = "Messages for event: $eventId (Work in Progress)",
-                    onOpenDrawer = { scope.launch { drawerState.open() } }
+                ChatListScreen(
+                    eventId = eventId,
+                    onOpenDrawer = { scope.launch { drawerState.open() } },
+                    onNewDirect = {
+                        navController.navigate("direct_list/$eventId") {
+                            launchSingleTop = true
+                        }
+                    },
+                    onOpenChannel = { channelName ->
+                        navController.navigate("channel_thread/$eventId/$channelName")
+                    },
+                    onOpenThread = { otherId ->
+                        navController.navigate("direct_thread/$eventId/$otherId")
+                    }
+                )
+            }
+            composable("channel_thread/{eventId}/{channelName}") { backStackEntry ->
+                val eventId = backStackEntry.arguments?.getString("eventId") ?: ""
+                val channelName = backStackEntry.arguments?.getString("channelName") ?: "ALL"
+                ChannelThreadScreen(
+                    eventId = eventId,
+                    channelName = channelName,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("direct_list/{eventId}") { backStackEntry ->
+                val eventId = backStackEntry.arguments?.getString("eventId") ?: ""
+                DirectListScreen(
+                    eventId = eventId,
+                    onBack = { navController.popBackStack() },
+                    onOpenThread = { otherId ->
+                        navController.navigate("direct_thread/$eventId/$otherId")
+                    }
+                )
+            }
+            composable("direct_thread/{eventId}/{otherId}") { backStackEntry ->
+                val eventId = backStackEntry.arguments?.getString("eventId") ?: ""
+                val otherId = backStackEntry.arguments?.getString("otherId") ?: ""
+                DirectThreadScreen(
+                    eventId = eventId,
+                    otherUserId = otherId,
+                    onBack = { navController.popBackStack() }
                 )
             }
             composable("speed_dial") {
@@ -241,9 +286,8 @@ fun EzrahiNavApp() {
                 )
             }
             composable("settings") {
-                PlaceholderScreen(
-                    title = "Settings",
-                    subtitle = "Settings (Work in Progress)",
+                SettingsScreen(
+                    eventId = currentEventId,
                     onOpenDrawer = { scope.launch { drawerState.open() } }
                 )
             }

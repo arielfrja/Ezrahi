@@ -2,9 +2,12 @@ package com.arielfaridja.ezrahi.app.ui.management
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.arielfaridja.ezrahi.app.util.defaultRoleOptions
 import com.arielfaridja.ezrahi.domain.model.EventParticipant
 import com.arielfaridja.ezrahi.domain.model.FieldEvent
 import com.arielfaridja.ezrahi.domain.model.FieldReport
+import com.arielfaridja.ezrahi.domain.model.MessengerOption
+import com.arielfaridja.ezrahi.domain.model.RoleOption
 import com.arielfaridja.ezrahi.domain.model.UserRole
 import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -21,6 +24,8 @@ data class EventManagementUiState(
     val event: FieldEvent? = null,
     val participants: List<EventParticipant> = emptyList(),
     val reports: List<FieldReport> = emptyList(),
+    val roleOptions: List<RoleOption> = defaultRoleOptions(),
+    val messengerOptions: List<MessengerOption> = emptyList(),
     val isManager: Boolean = false,
     val isLoading: Boolean = true,
     val statusMessage: String? = null
@@ -59,6 +64,16 @@ class EventManagementViewModel @Inject constructor(
         viewModelScope.launch {
             repository.getReports(eventId).collect { list ->
                 _uiState.update { it.copy(reports = list) }
+            }
+        }
+        viewModelScope.launch {
+            repository.getRoleOptions().collect { options ->
+                _uiState.update { it.copy(roleOptions = options) }
+            }
+        }
+        viewModelScope.launch {
+            repository.getMessengerOptions().collect { options ->
+                _uiState.update { it.copy(messengerOptions = options) }
             }
         }
     }

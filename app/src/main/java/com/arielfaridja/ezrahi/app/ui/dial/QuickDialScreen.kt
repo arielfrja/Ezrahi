@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.arielfaridja.ezrahi.app.util.roleLabel
 import com.arielfaridja.ezrahi.domain.model.EventParticipant
 import com.arielfaridja.ezrahi.domain.model.UserRole
 
@@ -173,13 +174,4 @@ private fun staffOrder(role: UserRole): Int = when (role) {
     UserRole.SWEEP_GUIDE -> 3
     UserRole.LOGISTICS -> 4
     UserRole.MEMBER -> 5
-}
-
-private fun roleLabel(role: UserRole): String = when (role) {
-    UserRole.MANAGER -> "Manager / מנהל פעילות"
-    UserRole.LEAD_GUIDE -> "Lead Guide / מוביל"
-    UserRole.MEDIC -> "Medic / חובש"
-    UserRole.SWEEP_GUIDE -> "Sweep Guide / מאסף"
-    UserRole.LOGISTICS -> "Logistics / לוגיסטיקה"
-    UserRole.MEMBER -> "Participant / משתתף"
 }

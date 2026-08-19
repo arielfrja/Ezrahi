@@ -23,7 +23,8 @@ data class ParticipantLocalEntity(
     val latitude: Double,
     val longitude: Double,
     val isOnline: Boolean,
-    val lastSeenTimestamp: Long
+    val lastSeenTimestamp: Long,
+    val messengersJson: String = "{}"
 )
 
 @Entity(tableName = "cached_messages")

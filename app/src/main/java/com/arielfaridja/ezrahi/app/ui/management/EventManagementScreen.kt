@@ -1,5 +1,7 @@
 package com.arielfaridja.ezrahi.app.ui.management
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -50,23 +52,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.arielfaridja.ezrahi.app.util.roleLabel
 import com.arielfaridja.ezrahi.domain.model.EventParticipant
 import com.arielfaridja.ezrahi.domain.model.FieldReport
 import com.arielfaridja.ezrahi.domain.model.FieldReportType
+import com.arielfaridja.ezrahi.domain.model.MessengerOption
 import com.arielfaridja.ezrahi.domain.model.UserRole
-
-private val allRoles = listOf(
-    UserRole.MANAGER,
-    UserRole.LEAD_GUIDE,
-    UserRole.SWEEP_GUIDE,
-    UserRole.MEDIC,
-    UserRole.LOGISTICS,
-    UserRole.MEMBER
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,6 +82,9 @@ fun EventManagementScreen(
     var roleFilter by remember { mutableStateOf<UserRole?>(null) }
     var editingParticipant by remember { mutableStateOf<EventParticipant?>(null) }
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    val roleOptions = state.roleOptions.mapNotNull { option ->
+        runCatching { UserRole.valueOf(option.name) }.getOrNull()
+    }
 
     LaunchedEffect(state.statusMessage) {
         state.statusMessage?.let {
@@ -174,7 +173,8 @@ fun EventManagementScreen(
                             item(key = "participants-filter") {
                                 RoleFilterRow(
                                     selected = roleFilter,
-                                    onSelect = { roleFilter = it }
+                                    onSelect = { roleFilter = it },
+                                    roles = roleOptions
                                 )
                             }
                             val filtered = state.participants.filter {
@@ -184,6 +184,7 @@ fun EventManagementScreen(
                                 ParticipantRow(
                                     participant = participant,
                                     canEditRoles = state.isManager,
+                                    messengerOptions = state.messengerOptions,
                                     onEditRequest = { editingParticipant = participant }
                                 )
                             }
@@ -224,7 +225,7 @@ fun EventManagementScreen(
         val currentEventId = eventId ?: return@let
         RoleEditDialog(
             participant = participant,
-            availableRoles = allRoles,
+            availableRoles = roleOptions,
             onConfirm = { role ->
                 viewModel.assignRole(currentEventId, participant.userId, role)
                 editingParticipant = null
@@ -282,7 +283,11 @@ private fun EventCard(
 }
 
 @Composable
-private fun RoleFilterRow(selected: UserRole?, onSelect: (UserRole?) -> Unit) {
+private fun RoleFilterRow(
+    selected: UserRole?,
+    onSelect: (UserRole?) -> Unit,
+    roles: List<UserRole>
+) {
     Row(
         modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -292,11 +297,11 @@ private fun RoleFilterRow(selected: UserRole?, onSelect: (UserRole?) -> Unit) {
             onClick = { onSelect(null) },
             label = { Text("All") }
         )
-        allRoles.forEach { role ->
+        roles.forEach { role ->
             FilterChip(
                 selected = selected == role,
                 onClick = { onSelect(role) },
-                label = { Text(roleShortLabel(role)) }
+                label = { Text(roleLabel(role)) }
             )
         }
     }
@@ -306,36 +311,60 @@ private fun RoleFilterRow(selected: UserRole?, onSelect: (UserRole?) -> Unit) {
 private fun ParticipantRow(
     participant: EventParticipant,
     canEditRoles: Boolean,
+    messengerOptions: List<MessengerOption>,
     onEditRequest: () -> Unit
 ) {
+    val context = LocalContext.current
     Card(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = participant.fullName.ifBlank { participant.userId },
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = participant.phoneNumber,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Text(
-                text = roleLabel(participant.role),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-            if (canEditRoles) {
-                IconButton(onClick = onEditRequest) {
-                    Icon(
-                        Icons.Default.Edit,
-                        contentDescription = "Change role of ${participant.fullName}"
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = participant.fullName.ifBlank { participant.userId },
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium
                     )
+                    Text(
+                        text = participant.phoneNumber,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Text(
+                    text = roleLabel(participant.role),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                if (canEditRoles) {
+                    IconButton(onClick = onEditRequest) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Change role of ${participant.fullName}"
+                        )
+                    }
+                }
+            }
+            val available = messengerOptions.filter { option ->
+                participant.messengers[option.id]?.isNotBlank() == true
+            }
+            if (available.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    available.forEach { option ->
+                        val handle = participant.messengers[option.id] ?: ""
+                        TextButton(
+                            onClick = {
+                                val url = option.urlTemplate.replace("{handle}", handle)
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                )
+                            }
+                        ) {
+                            Text(option.label)
+                        }
+                    }
                 }
             }
         }
@@ -466,24 +495,6 @@ private fun ReportRow(report: FieldReport) {
             }
         }
     }
-}
-
-private fun roleShortLabel(role: UserRole): String = when (role) {
-    UserRole.MANAGER -> "Manager"
-    UserRole.LEAD_GUIDE -> "Lead"
-    UserRole.MEDIC -> "Medic"
-    UserRole.SWEEP_GUIDE -> "Sweep"
-    UserRole.LOGISTICS -> "Logistics"
-    UserRole.MEMBER -> "Member"
-}
-
-private fun roleLabel(role: UserRole): String = when (role) {
-    UserRole.MANAGER -> "Manager / מנהל פעילות"
-    UserRole.LEAD_GUIDE -> "Lead Guide / מוביל"
-    UserRole.MEDIC -> "Medic / חובש"
-    UserRole.SWEEP_GUIDE -> "Sweep Guide / מאסף"
-    UserRole.LOGISTICS -> "Logistics / לוגיסטיקה"
-    UserRole.MEMBER -> "Participant / משתתף"
 }
 
 private fun reportTypeLabel(type: FieldReportType): String = when (type) {

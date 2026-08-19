@@ -49,6 +49,15 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------
+    // 3. Settings (dynamic role options, future app settings).
+    //    Readable by signed-in users; managed via admin tooling only.
+    // ---------------------------------------------------------------
+    match /settings/{docId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------
     // 2. Events
     // ---------------------------------------------------------------
     match /events/{eventId} {
@@ -65,6 +74,23 @@ service cloud.firestore {
         // A user can create/overwrite/delete their OWN document; the event
         // manager may also write (e.g. assign/change participant roles)
         allow write: if isSignedIn() && (request.auth.uid == userId || isEventManager(eventId));
+      }
+
+      // 2.2 Direct messages: one sub-collection per participant pair.
+      //     Pair id = sorted "uidA_uidB"; only the two participants may
+      //     read or write it.
+      match /direct/{pairId} {
+        function isPairMember() {
+          return pairId.split("_").hasAny([request.auth.uid]);
+        }
+        allow read: if isSignedIn() && canAccessEvent(eventId) && isPairMember();
+        allow write: if false;
+        match /messages/{messageId} {
+          allow read: if isSignedIn() && canAccessEvent(eventId) && isPairMember();
+          allow create: if isSignedIn() && isPairMember() &&
+            request.resource.data.senderId == request.auth.uid;
+          allow update, delete: if false;
+        }
       }
 
       // 2.2 Messages sub-collection

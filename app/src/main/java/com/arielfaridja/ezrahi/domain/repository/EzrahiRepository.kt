@@ -12,6 +12,13 @@ interface EzrahiRepository {
     suspend fun updateLocation(eventId: String, userId: String, location: GeoPoint): Result<Unit>
     suspend fun updateParticipantRole(eventId: String, userId: String, role: UserRole): Result<Unit>
     suspend fun updateEventName(eventId: String, name: String): Result<Unit>
+    fun getRoleOptions(): Flow<List<RoleOption>>
+    fun getMessengerOptions(): Flow<List<MessengerOption>>
+    fun getMyMessengers(eventId: String, userId: String): Flow<Map<String, String>>
+    suspend fun updateMyMessengers(eventId: String, userId: String, messengers: Map<String, String>): Result<Unit>
+    fun getDirectMessages(eventId: String, myUserId: String, otherUserId: String): Flow<List<FieldMessage>>
+    suspend fun getDirectLastMessage(eventId: String, myUserId: String, otherUserId: String): String?
+    suspend fun sendDirectMessage(eventId: String, myUserId: String, myName: String, otherUserId: String, text: String): Result<Unit>
     suspend fun sendMessage(message: FieldMessage): Result<Unit>
     suspend fun sendSOS(eventId: String, senderId: String, senderName: String, location: GeoPoint): Result<Unit>
     fun getReports(actId: String): Flow<List<FieldReport>>

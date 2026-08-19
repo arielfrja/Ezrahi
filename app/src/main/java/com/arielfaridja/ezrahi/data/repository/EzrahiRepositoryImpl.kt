@@ -1,11 +1,14 @@
 package com.arielfaridja.ezrahi.data.repository
 
+import android.util.Log
 import com.arielfaridja.ezrahi.data.local.*
 import com.arielfaridja.ezrahi.data.mapper.FieldReportMapper
+import com.arielfaridja.ezrahi.app.util.defaultRoleOptions
 import com.arielfaridja.ezrahi.domain.model.*
 import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -22,13 +25,21 @@ class EzrahiRepositoryImpl @Inject constructor(
     private val dao: EzrahiDao
 ) : EzrahiRepository {
 
+    companion object {
+        private const val TAG = "EzrahiRepo"
+    }
+
     private val scope = CoroutineScope(Dispatchers.IO)
+
+    private fun logListenerError(query: String, error: Exception) {
+        Log.w(TAG, "listener '$query' failed: ${error.message} (serving cached data)", error)
+    }
 
     override fun getEvents(): Flow<List<FieldEvent>> = callbackFlow {
         val registration = firestore.collection("events")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    logListenerError("events", error)
                     return@addSnapshotListener
                 }
                 if (snapshot != null) {
@@ -121,7 +132,7 @@ class EzrahiRepositoryImpl @Inject constructor(
         val registration = firestore.collection("events").document(eventId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    logListenerError("events/$eventId", error)
                     return@addSnapshotListener
                 }
                 if (snapshot != null && snapshot.exists()) {
@@ -153,7 +164,7 @@ class EzrahiRepositoryImpl @Inject constructor(
         val registration = firestore.collection("events").document(eventId).collection("participants")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    logListenerError("events/$eventId/participants", error)
                     return@addSnapshotListener
                 }
                 if (snapshot != null) {
@@ -167,7 +178,10 @@ class EzrahiRepositoryImpl @Inject constructor(
                             latitude = doc.getDouble("latitude") ?: 0.0,
                             longitude = doc.getDouble("longitude") ?: 0.0,
                             isOnline = doc.getBoolean("isOnline") ?: true,
-                            lastSeenTimestamp = doc.getLong("lastSeenTimestamp") ?: System.currentTimeMillis()
+                            lastSeenTimestamp = doc.getLong("lastSeenTimestamp") ?: System.currentTimeMillis(),
+                            messengersJson = (doc.get("messengers") as? Map<*, *>)
+                                ?.let { org.json.JSONObject(it).toString() }
+                                ?: "{}"
                         )
                     }
                     scope.launch { dao.insertParticipants(list) }
@@ -190,7 +204,7 @@ class EzrahiRepositoryImpl @Inject constructor(
             .orderBy("timestamp")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    logListenerError("events/$eventId/messages", error)
                     return@addSnapshotListener
                 }
                 if (snapshot != null) {
@@ -245,6 +259,144 @@ class EzrahiRepositoryImpl @Inject constructor(
             .update("name", name).await()
     }
 
+    override fun getRoleOptions(): Flow<List<RoleOption>> = callbackFlow {
+        val docRef = firestore.collection("settings").document("roles")
+        val registration = docRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                logListenerError("settings/roles", error)
+                trySend(defaultRoleOptions())
+                return@addSnapshotListener
+            }
+            if (snapshot != null && snapshot.exists()) {
+                val raw = snapshot.get("options")
+                val list = (raw as? List<*>)?.mapNotNull { item ->
+                    val map = item as? Map<*, *> ?: return@mapNotNull null
+                    val name = map["name"] as? String ?: return@mapNotNull null
+                    val label = map["label"] as? String ?: name
+                    val isStaff = (map["isStaff"] as? Boolean) ?: true
+                    RoleOption(name, label, isStaff)
+                }
+                if (!list.isNullOrEmpty()) trySend(list) else trySend(defaultRoleOptions())
+            } else {
+                trySend(defaultRoleOptions())
+            }
+        }
+        awaitClose { registration.remove() }
+    }
+
+    override fun getMessengerOptions(): Flow<List<MessengerOption>> = callbackFlow {
+        val docRef = firestore.collection("settings").document("messengers")
+        val registration = docRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                logListenerError("settings/messengers", error)
+                trySend(defaultMessengerOptions())
+                return@addSnapshotListener
+            }
+            if (snapshot != null && snapshot.exists()) {
+                val raw = snapshot.get("options")
+                val list = (raw as? List<*>)?.mapNotNull { item ->
+                    val map = item as? Map<*, *> ?: return@mapNotNull null
+                    val id = map["id"] as? String ?: return@mapNotNull null
+                    val label = map["label"] as? String ?: id
+                    val template = map["urlTemplate"] as? String ?: return@mapNotNull null
+                    MessengerOption(id, label, template)
+                }
+                if (!list.isNullOrEmpty()) trySend(list) else trySend(defaultMessengerOptions())
+            } else {
+                trySend(defaultMessengerOptions())
+            }
+        }
+        awaitClose { registration.remove() }
+    }
+
+    override fun getMyMessengers(eventId: String, userId: String): Flow<Map<String, String>> = callbackFlow {
+        val docRef = firestore.collection("events").document(eventId)
+            .collection("participants").document(userId)
+        val registration = docRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                logListenerError("events/$eventId/participants/$userId (my messengers)", error)
+                return@addSnapshotListener
+            }
+            val messengers = (snapshot?.get("messengers") as? Map<*, *>)
+                ?.filterKeys { it is String }
+                ?.mapKeys { it.key as String }
+                ?.mapValues { it.value as? String ?: "" }
+                ?.filterValues { it.isNotBlank() }
+                ?: emptyMap()
+            trySend(messengers)
+        }
+        awaitClose { registration.remove() }
+    }
+
+    override suspend fun updateMyMessengers(eventId: String, userId: String, messengers: Map<String, String>): Result<Unit> = runCatching {
+        firestore.collection("events").document(eventId)
+            .collection("participants").document(userId)
+            .update("messengers", messengers.filterValues { it.isNotBlank() }).await()
+    }
+
+    override fun getDirectMessages(eventId: String, myUserId: String, otherUserId: String): Flow<List<FieldMessage>> = callbackFlow {
+        val pairId = directPairId(myUserId, otherUserId)
+        val registration = firestore.collection("events").document(eventId)
+            .collection("direct").document(pairId).collection("messages")
+            .orderBy("timestamp")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    logListenerError("events/$eventId/direct/$pairId/messages", error)
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    val list = snapshot.documents.map { doc ->
+                        FieldMessage(
+                            id = doc.id,
+                            eventId = eventId,
+                            senderId = doc.getString("senderId") ?: "",
+                            senderName = doc.getString("senderName") ?: "",
+                            senderRole = runCatching { UserRole.valueOf(doc.getString("senderRole") ?: "") }
+                                .getOrDefault(UserRole.MEMBER),
+                            messageText = doc.getString("messageText") ?: "",
+                            timestamp = doc.getLong("timestamp") ?: System.currentTimeMillis()
+                        )
+                    }
+                    trySend(list.sortedBy { it.timestamp })
+                }
+            }
+        awaitClose { registration.remove() }
+    }
+
+    override suspend fun getDirectLastMessage(eventId: String, myUserId: String, otherUserId: String): String? = runCatching {
+        val pairId = directPairId(myUserId, otherUserId)
+        firestore.collection("events").document(eventId)
+            .collection("direct").document(pairId).collection("messages")
+            .orderBy("timestamp", Query.Direction.DESCENDING).limit(1)
+            .get().await().documents.firstOrNull()?.getString("messageText")
+    }.getOrNull()
+
+    override suspend fun sendDirectMessage(
+        eventId: String,
+        myUserId: String,
+        myName: String,
+        otherUserId: String,
+        text: String
+    ): Result<Unit> = runCatching {
+        val pairId = directPairId(myUserId, otherUserId)
+        val messageId = firestore.collection("events").document().id
+        firestore.collection("events").document(eventId)
+            .collection("direct").document(pairId).collection("messages")
+            .document(messageId).set(
+                mapOf(
+                    "senderId" to myUserId,
+                    "senderName" to myName,
+                    "senderRole" to "MEMBER",
+                    "messageText" to text.trim(),
+                    "timestamp" to System.currentTimeMillis()
+                )
+            ).await()
+            Unit
+    }.onFailure { error ->
+        Log.w(TAG, "sendDirectMessage(event=$eventId, other=$otherUserId) failed", error)
+    }
+
     override suspend fun sendMessage(message: FieldMessage): Result<Unit> = runCatching {
         firestore.collection("events").document(message.eventId)
             .collection("messages").document(message.id.ifEmpty { firestore.collection("events").document().id })
@@ -270,7 +422,7 @@ class EzrahiRepositoryImpl @Inject constructor(
         val registration = firestore.collection("Reports").whereEqualTo("ActId", actId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    close(error)
+                    logListenerError("Reports?ActId=$actId", error)
                     return@addSnapshotListener
                 }
                 if (snapshot != null) {
@@ -337,7 +489,11 @@ class EzrahiRepositoryImpl @Inject constructor(
         role = runCatching { UserRole.valueOf(role) }.getOrDefault(UserRole.MEMBER),
         currentLocation = GeoPoint(latitude, longitude, lastSeenTimestamp),
         isOnline = isOnline,
-        lastSeenTimestamp = lastSeenTimestamp
+        lastSeenTimestamp = lastSeenTimestamp,
+        messengers = runCatching {
+            val obj = org.json.JSONObject(messengersJson)
+            obj.keys().asSequence().associateWith { obj.getString(it) }
+        }.getOrDefault(emptyMap())
     )
 
     private fun MessageLocalEntity.toFieldMessage() = FieldMessage(
@@ -351,6 +507,13 @@ class EzrahiRepositoryImpl @Inject constructor(
         isEmergency = isEmergency,
         timestamp = timestamp
     )
+
+    private fun defaultMessengerOptions(): List<MessengerOption> = listOf(
+        MessengerOption("whatsapp", "WhatsApp", "https://wa.me/{handle}"),
+        MessengerOption("telegram", "Telegram", "https://t.me/{handle}")
+    )
+
+    private fun directPairId(a: String, b: String) = listOf(a, b).sorted().joinToString("_")
 
     private fun ReportLocalEntity.toFieldReport() = FieldReport(
         id = id,
