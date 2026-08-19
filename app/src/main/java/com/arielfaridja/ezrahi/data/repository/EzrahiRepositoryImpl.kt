@@ -4,10 +4,13 @@ import com.arielfaridja.ezrahi.data.local.*
 import com.arielfaridja.ezrahi.data.mapper.FieldReportMapper
 import com.arielfaridja.ezrahi.domain.model.*
 import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -21,6 +24,100 @@ class EzrahiRepositoryImpl @Inject constructor(
 ) : EzrahiRepository {
 
     private val scope = CoroutineScope(Dispatchers.IO)
+
+    override fun getEvents(): Flow<List<FieldEvent>> {
+        firestore.collection("events")
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot != null) {
+                    val list = snapshot.documents.mapNotNull { doc ->
+                        if (!doc.exists()) return@mapNotNull null
+                        EventLocalEntity(
+                            id = doc.id,
+                            name = doc.getString("name") ?: "",
+                            managerId = doc.getString("managerId") ?: "",
+                            managerContact = doc.getString("managerContact") ?: "",
+                            gpxRouteUrl = doc.getString("gpxRouteUrl"),
+                            isLive = doc.getBoolean("isLive") ?: true
+                        )
+                    }
+                    scope.launch { dao.insertEvents(list) }
+                }
+            }
+
+        return dao.observeEvents().map { list ->
+            list.map {
+                FieldEvent(
+                    id = it.id,
+                    name = it.name,
+                    managerId = it.managerId,
+                    managerContact = it.managerContact,
+                    gpxRouteUrl = it.gpxRouteUrl,
+                    isLive = it.isLive
+                )
+            }
+        }
+    }
+
+    override fun getUserEvents(userId: String): Flow<List<FieldEvent>> = callbackFlow {
+        val eventsById = mutableMapOf<String, FieldEvent>()
+        var managedIds = emptySet<String>()
+        var participantIds = emptySet<String>()
+        val pendingFetch = mutableSetOf<String>()
+
+        fun emitMerged() {
+            val ids = managedIds + participantIds
+            trySend(ids.mapNotNull { eventsById[it] }.sortedBy { it.name })
+        }
+
+        fun fetchEvents(ids: Set<String>) {
+            val missing = ids.filter { it !in eventsById && it !in pendingFetch }
+            if (missing.isEmpty()) return
+            pendingFetch.addAll(missing)
+            firestore.collection("events")
+                .whereIn(FieldPath.documentId(), missing)
+                .get()
+                .addOnSuccessListener { snap ->
+                    pendingFetch.removeAll(missing)
+                    snap.documents.forEach { doc ->
+                        eventsById[doc.id] = FieldEvent(
+                            id = doc.id,
+                            name = doc.getString("name") ?: "",
+                            managerId = doc.getString("managerId") ?: "",
+                            managerContact = doc.getString("managerContact") ?: "",
+                            gpxRouteUrl = doc.getString("gpxRouteUrl"),
+                            isLive = doc.getBoolean("isLive") ?: true
+                        )
+                    }
+                    emitMerged()
+                }
+                .addOnFailureListener { pendingFetch.removeAll(missing) }
+        }
+
+        val managedListener = firestore.collection("events")
+            .whereEqualTo("managerId", userId)
+            .addSnapshotListener { snap, _ ->
+                if (snap != null) {
+                    managedIds = snap.documents.mapNotNull { it.id }.toSet()
+                    fetchEvents(managedIds)
+                    emitMerged()
+                }
+            }
+
+        val participantListener = firestore.collectionGroup("participants")
+            .whereEqualTo(FieldPath.documentId(), "participants/$userId")
+            .addSnapshotListener { snap, _ ->
+                if (snap != null) {
+                    participantIds = snap.documents.mapNotNull { it.reference.parent.parent?.id }.toSet()
+                    fetchEvents(participantIds)
+                    emitMerged()
+                }
+            }
+
+        awaitClose {
+            managedListener.remove()
+            participantListener.remove()
+        }
+    }
 
     override fun getEventUpdates(eventId: String): Flow<FieldEvent?> {
         // 1. Listen to Firestore and cache locally
@@ -205,5 +302,16 @@ class EzrahiRepositoryImpl @Inject constructor(
         val docRef = firestore.collection("Reports").document(report.id.ifEmpty { firestore.collection("Reports").document().id })
         docRef.set(FieldReportMapper.toWriteMap(report)).await()
         docRef.id
+    }
+
+    override suspend fun registerUser(profile: UserProfile): Result<Unit> = runCatching {
+        val data = mapOf(
+            "Email" to profile.email,
+            "FirstName" to profile.firstName,
+            "LastName" to profile.lastName,
+            "Phone" to profile.phoneNumber,
+            "LastUpdate" to com.google.firebase.Timestamp.now()
+        )
+        firestore.collection("Users").document(profile.id).set(data).await()
     }
 }

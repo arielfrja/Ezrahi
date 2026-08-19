@@ -1,7 +1,9 @@
 package com.arielfaridja.ezrahi.util
 
+import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
@@ -49,6 +51,41 @@ object CrashLogger {
             persistText(sw.toString())
         } catch (t: Throwable) {
             Log.e(TAG, "failed to persist log", t)
+        }
+    }
+
+    /** Append a timestamped step marker to Download/ezrahi/ezrahi_events.txt */
+    fun logEvent(message: String) {
+        if (!installed) return
+        try {
+            val line = "[${timestamp()}] $message\n"
+            val resolver = appContext.contentResolver
+            val collection = MediaStore.Downloads.EXTERNAL_CONTENT_URI
+            val selection = "${MediaStore.Downloads.DISPLAY_NAME} = ?"
+            val args = arrayOf("ezrahi_events.txt")
+            var uri: Uri? = null
+            resolver.query(collection, arrayOf(MediaStore.Downloads._ID), selection, args, null)?.use { c ->
+                if (c.moveToFirst()) uri = ContentUris.withAppendedId(collection, c.getLong(0))
+            }
+            if (uri == null) {
+                val values = ContentValues().apply {
+                    put(MediaStore.Downloads.DISPLAY_NAME, "ezrahi_events.txt")
+                    put(MediaStore.Downloads.MIME_TYPE, "text/plain")
+                    put(MediaStore.Downloads.RELATIVE_PATH, "${Environment.DIRECTORY_DOWNLOADS}/$DIR_NAME")
+                    put(MediaStore.Downloads.IS_PENDING, 1)
+                }
+                uri = resolver.insert(collection, values)
+                    ?: throw IllegalStateException("no uri from MediaStore")
+                resolver.openOutputStream(uri)?.use { it.write(line.toByteArray()) }
+                values.clear()
+                values.put(MediaStore.Downloads.IS_PENDING, 0)
+                resolver.update(uri, values, null, null)
+            } else {
+                resolver.openOutputStream(uri, "wa")?.use { it.write(line.toByteArray()) }
+            }
+            Log.i(TAG, "event logged: $message")
+        } catch (t: Throwable) {
+            Log.e(TAG, "failed to log event", t)
         }
     }
 

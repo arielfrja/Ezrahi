@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Settings
@@ -28,12 +26,19 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,8 +52,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.arielfaridja.ezrahi.app.ui.auth.AuthScreen
+import com.arielfaridja.ezrahi.app.ui.auth.SignUpScreen
+import com.arielfaridja.ezrahi.app.ui.events.EventPickerScreen
 import com.arielfaridja.ezrahi.app.ui.map.MapScreen
+import com.arielfaridja.ezrahi.app.util.EventPrefs
 import com.arielfaridja.ezrahi.app.ui.theme.EzrahiTheme
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
@@ -76,8 +85,6 @@ private data class DrawerDestination(
 )
 
 private val drawerDestinations = listOf(
-    DrawerDestination("Map", Icons.Default.Map, "map"),
-    DrawerDestination("Chat", Icons.AutoMirrored.Filled.Chat, "messages"),
     DrawerDestination("Speed Dial", Icons.Default.Phone, "speed_dial"),
     DrawerDestination("Activity Overview", Icons.AutoMirrored.Filled.List, "activity_overview"),
     DrawerDestination("Settings", Icons.Default.Settings, "settings")
@@ -92,8 +99,30 @@ fun EzrahiNavApp() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
+    val auth = FirebaseAuth.getInstance()
+    var isSignedIn by remember { mutableStateOf(auth.currentUser != null) }
+    DisposableEffect(Unit) {
+        val listener = FirebaseAuth.AuthStateListener {
+            isSignedIn = it.currentUser != null
+        }
+        auth.addAuthStateListener(listener)
+        onDispose { auth.removeAuthStateListener(listener) }
+    }
+
+    LaunchedEffect(isSignedIn) {
+        if (isSignedIn) {
+            val current = navController.currentDestination?.route
+            if (current == "auth" || current == "signup") {
+                navController.navigate("events") {
+                    popUpTo("auth") { inclusive = true }
+                }
+            }
+        }
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
+        gesturesEnabled = drawerState.isOpen || drawerState.targetValue == DrawerValue.Open,
         drawerContent = {
             ModalDrawerSheet {
                 Column(modifier = Modifier.fillMaxWidth()) {
@@ -129,17 +158,44 @@ fun EzrahiNavApp() {
     ) {
         NavHost(navController = navController, startDestination = "auth") {
             composable("auth") {
-                AuthScreen(onAuthSuccess = {
-                    navController.navigate("map/demo_event_123") {
-                        popUpTo("auth") { inclusive = true }
+                AuthScreen(
+                    onAuthSuccess = {
+                        navController.navigate("events") {
+                            popUpTo("auth") { inclusive = true }
+                        }
+                    },
+                    onNavigateToSignUp = {
+                        navController.navigate("signup")
                     }
-                })
+                )
+            }
+            composable("signup") {
+                SignUpScreen(
+                    onSignUpSuccess = {
+                        navController.navigate("events") {
+                            popUpTo("auth") { inclusive = true }
+                        }
+                    },
+                    onNavigateToLogin = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+            composable("events") {
+                val context = LocalContext.current
+                EventPickerScreen(
+                    onSelectEvent = { eventId ->
+                        EventPrefs.saveLastEventId(context, eventId)
+                        navController.navigate("map/$eventId") {
+                            popUpTo("events") { inclusive = true }
+                        }
+                    }
+                )
             }
             composable("map/{eventId}") { backStackEntry ->
                 val eventId = backStackEntry.arguments?.getString("eventId") ?: ""
                 MapScreen(
                     eventId = eventId,
-                    onNavigateToMessages = { navController.navigate("messages/$eventId") },
                     onOpenDrawer = { scope.launch { drawerState.open() } }
                 )
             }
@@ -173,6 +229,10 @@ fun EzrahiNavApp() {
                 )
             }
         }
+    }
+
+    BackHandler(enabled = drawerState.isOpen) {
+        scope.launch { drawerState.close() }
     }
 }
 

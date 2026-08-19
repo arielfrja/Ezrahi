@@ -51,23 +51,23 @@
             android:noHistory="true" />
         <activity
             android:name=".UI.Main.MainActivity"
-            android:exported="true"
+            android:exported="false"
             android:noHistory="true"
-            android:theme="@style/Theme.Ezrahi.SplashScreen">
+            android:theme="@style/Theme.Ezrahi.SplashScreen" />
+        <activity
+            android:name=".UI.StartupActivity"
+            android:exported="true" />
+
+        <!-- Modern Compose activity (launcher) -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".UI.StartupActivity"
-            android:exported="true" />
-
-        <!-- Modern Compose activity (wired in Phase 5) -->
-        <activity
-            android:name=".MainActivity"
-            android:exported="false"
-            android:theme="@android:style/Theme.Material.Light.NoActionBar" />
 
     </application>
 </manifest>

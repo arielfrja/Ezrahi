@@ -14,7 +14,10 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun AuthScreen(onAuthSuccess: () -> Unit) {
+fun AuthScreen(
+    onAuthSuccess: () -> Unit,
+    onNavigateToSignUp: () -> Unit
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -69,17 +72,9 @@ fun AuthScreen(onAuthSuccess: () -> Unit) {
                             isLoading = false
                             onAuthSuccess()
                         }
-                        .addOnFailureListener {
-                            // If user doesn't exist, create an account automatically for demo/testing
-                            FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
-                                .addOnSuccessListener {
-                                    isLoading = false
-                                    onAuthSuccess()
-                                }
-                                .addOnFailureListener { err ->
-                                    isLoading = false
-                                    errorMessage = err.localizedMessage
-                                }
+                        .addOnFailureListener { err ->
+                            isLoading = false
+                            errorMessage = err.localizedMessage
                         }
                 }
             },
@@ -91,6 +86,10 @@ fun AuthScreen(onAuthSuccess: () -> Unit) {
             } else {
                 Text("Login / כניסה למערכת")
             }
+        }
+
+        TextButton(onClick = onNavigateToSignUp, modifier = Modifier.fillMaxWidth()) {
+            Text("No account? Sign up / אין חשבון? הירשם")
         }
     }
 }

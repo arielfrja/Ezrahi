@@ -10,8 +10,14 @@ interface EzrahiDao {
     @Query("SELECT * FROM cached_events WHERE id = :eventId")
     fun observeEvent(eventId: String): Flow<EventLocalEntity?>
 
+    @Query("SELECT * FROM cached_events")
+    fun observeEvents(): Flow<List<EventLocalEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEvent(event: EventLocalEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertEvents(events: List<EventLocalEntity>)
 
     // Participants
     @Query("SELECT * FROM cached_participants WHERE eventId = :eventId")
