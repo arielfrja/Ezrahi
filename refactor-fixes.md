@@ -11,7 +11,7 @@
 | # | Item | Status | Where |
 |---|---|---|---|
 | F1 | Quick-Dial Screen (`QuickDialFragment`) | 🟢 DONE (`app/ui/dial/`, staff grouped by role, `ACTION_DIAL`, commit `ed41729`) | `todo-fix-2.md` |
-| F2 | Event Management Screen (`ActivityOverviewFragment`) | 🟢 DONE (`app/ui/management/`, tabs: Details/Crew/Reports, role filter + combobox role editing, manager rename; rules allow manager participant writes; commit pending) | `todo-fix-3.md` |
+| F2 | Event Management Screen (`ActivityOverviewFragment`) | 🟢 DONE (`app/ui/management/`, tabs: Details/Crew/Reports, role filter + combobox role editing, manager rename; rules allow manager participant writes; commit `e49493e`) | `todo-fix-3.md` |
 | F3 | GPX Route Parser + Polyline Renderer | 🔵 TODO | `todo-fix-5.md` |
 | F4 | Structured Field Reports & Checkpoints | 🟢 DONE (Phase 5: long-press → Add Marker dialog → `Reports`; SOS FAB removed by PO decision, `triggerSOS` dormant) | `todo-fix-1` series |
 | F5 | Full User Registration (name/email/phone → `Users/{uid}`) | 🟢 DONE (Phase 5 signup + `registerUser`) | Phase 5 |
