@@ -11,7 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -25,9 +24,13 @@ class EzrahiRepositoryImpl @Inject constructor(
 
     private val scope = CoroutineScope(Dispatchers.IO)
 
-    override fun getEvents(): Flow<List<FieldEvent>> {
-        firestore.collection("events")
-            .addSnapshotListener { snapshot, _ ->
+    override fun getEvents(): Flow<List<FieldEvent>> = callbackFlow {
+        val registration = firestore.collection("events")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
                 if (snapshot != null) {
                     val list = snapshot.documents.mapNotNull { doc ->
                         if (!doc.exists()) return@mapNotNull null
@@ -43,18 +46,12 @@ class EzrahiRepositoryImpl @Inject constructor(
                     scope.launch { dao.insertEvents(list) }
                 }
             }
-
-        return dao.observeEvents().map { list ->
-            list.map {
-                FieldEvent(
-                    id = it.id,
-                    name = it.name,
-                    managerId = it.managerId,
-                    managerContact = it.managerContact,
-                    gpxRouteUrl = it.gpxRouteUrl,
-                    isLive = it.isLive
-                )
-            }
+        val job = launch {
+            dao.observeEvents().collect { trySend(it.map { it.toFieldEvent() }) }
+        }
+        awaitClose {
+            registration.remove()
+            job.cancel()
         }
     }
 
@@ -119,10 +116,14 @@ class EzrahiRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getEventUpdates(eventId: String): Flow<FieldEvent?> {
+    override fun getEventUpdates(eventId: String): Flow<FieldEvent?> = callbackFlow {
         // 1. Listen to Firestore and cache locally
-        firestore.collection("events").document(eventId)
-            .addSnapshotListener { snapshot, _ ->
+        val registration = firestore.collection("events").document(eventId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
                 if (snapshot != null && snapshot.exists()) {
                     val event = EventLocalEntity(
                         id = snapshot.id,
@@ -137,23 +138,24 @@ class EzrahiRepositoryImpl @Inject constructor(
             }
 
         // 2. Emit from local Room database (Offline-First)
-        return dao.observeEvent(eventId).map { local ->
-            local?.let {
-                FieldEvent(
-                    id = it.id,
-                    name = it.name,
-                    managerId = it.managerId,
-                    managerContact = it.managerContact,
-                    gpxRouteUrl = it.gpxRouteUrl,
-                    isLive = it.isLive
-                )
+        val job = launch {
+            dao.observeEvent(eventId).collect { local ->
+                trySend(local?.toFieldEvent())
             }
+        }
+        awaitClose {
+            registration.remove()
+            job.cancel()
         }
     }
 
-    override fun getParticipants(eventId: String): Flow<List<EventParticipant>> {
-        firestore.collection("events").document(eventId).collection("participants")
-            .addSnapshotListener { snapshot, _ ->
+    override fun getParticipants(eventId: String): Flow<List<EventParticipant>> = callbackFlow {
+        val registration = firestore.collection("events").document(eventId).collection("participants")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
                 if (snapshot != null) {
                     val list = snapshot.documents.map { doc ->
                         ParticipantLocalEntity(
@@ -172,25 +174,25 @@ class EzrahiRepositoryImpl @Inject constructor(
                 }
             }
 
-        return dao.observeParticipants(eventId).map { list ->
-            list.map {
-                EventParticipant(
-                    userId = it.userId,
-                    fullName = it.fullName,
-                    phoneNumber = it.phoneNumber,
-                    role = runCatching { UserRole.valueOf(it.role) }.getOrDefault(UserRole.MEMBER),
-                    currentLocation = GeoPoint(it.latitude, it.longitude, it.lastSeenTimestamp),
-                    isOnline = it.isOnline,
-                    lastSeenTimestamp = it.lastSeenTimestamp
-                )
+        val job = launch {
+            dao.observeParticipants(eventId).collect { list ->
+                trySend(list.map { it.toEventParticipant() })
             }
+        }
+        awaitClose {
+            registration.remove()
+            job.cancel()
         }
     }
 
-    override fun getMessages(eventId: String): Flow<List<FieldMessage>> {
-        firestore.collection("events").document(eventId).collection("messages")
+    override fun getMessages(eventId: String): Flow<List<FieldMessage>> = callbackFlow {
+        val registration = firestore.collection("events").document(eventId).collection("messages")
             .orderBy("timestamp")
-            .addSnapshotListener { snapshot, _ ->
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
                 if (snapshot != null) {
                     snapshot.documentChanges.forEach { change ->
                         val doc = change.document
@@ -210,20 +212,14 @@ class EzrahiRepositoryImpl @Inject constructor(
                 }
             }
 
-        return dao.observeMessages(eventId).map { list ->
-            list.map {
-                FieldMessage(
-                    id = it.id,
-                    eventId = it.eventId,
-                    senderId = it.senderId,
-                    senderName = it.senderName,
-                    senderRole = runCatching { UserRole.valueOf(it.senderRole) }.getOrDefault(UserRole.MEMBER),
-                    targetRole = it.targetRole?.let { roleStr -> runCatching { UserRole.valueOf(roleStr) }.getOrNull() },
-                    messageText = it.messageText,
-                    isEmergency = it.isEmergency,
-                    timestamp = it.timestamp
-                )
+        val job = launch {
+            dao.observeMessages(eventId).collect { list ->
+                trySend(list.map { it.toFieldMessage() })
             }
+        }
+        awaitClose {
+            registration.remove()
+            job.cancel()
         }
     }
 
@@ -259,9 +255,13 @@ class EzrahiRepositoryImpl @Inject constructor(
         sendMessage(sosMessage).getOrThrow()
     }
 
-    override fun getReports(actId: String): Flow<List<FieldReport>> {
-        firestore.collection("Reports").whereEqualTo("ActId", actId)
-            .addSnapshotListener { snapshot, _ ->
+    override fun getReports(actId: String): Flow<List<FieldReport>> = callbackFlow {
+        val registration = firestore.collection("Reports").whereEqualTo("ActId", actId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
                 if (snapshot != null) {
                     val reports = snapshot.documents.mapNotNull { doc ->
                         val report = FieldReportMapper.fromSnapshot(doc) ?: return@mapNotNull null
@@ -281,20 +281,15 @@ class EzrahiRepositoryImpl @Inject constructor(
                     scope.launch { dao.insertReports(reports) }
                 }
             }
-        return dao.observeReports(actId).map { list ->
-            list.map {
-                FieldReport(
-                    id = it.id,
-                    actId = it.actId,
-                    reporterId = it.reporterId,
-                    title = it.title,
-                    description = it.description,
-                    location = GeoPoint(it.latitude, it.longitude),
-                    reportTime = it.reportTime,
-                    status = FieldReportStatus.getByValue(it.status),
-                    type = FieldReportType.getByValue(it.type)
-                )
+
+        val job = launch {
+            dao.observeReports(actId).collect { list ->
+                trySend(list.map { it.toFieldReport() })
             }
+        }
+        awaitClose {
+            registration.remove()
+            job.cancel()
         }
     }
 
@@ -314,4 +309,47 @@ class EzrahiRepositoryImpl @Inject constructor(
         )
         firestore.collection("Users").document(profile.id).set(data).await()
     }
+
+    private fun EventLocalEntity.toFieldEvent() = FieldEvent(
+        id = id,
+        name = name,
+        managerId = managerId,
+        managerContact = managerContact,
+        gpxRouteUrl = gpxRouteUrl,
+        isLive = isLive
+    )
+
+    private fun ParticipantLocalEntity.toEventParticipant() = EventParticipant(
+        userId = userId,
+        fullName = fullName,
+        phoneNumber = phoneNumber,
+        role = runCatching { UserRole.valueOf(role) }.getOrDefault(UserRole.MEMBER),
+        currentLocation = GeoPoint(latitude, longitude, lastSeenTimestamp),
+        isOnline = isOnline,
+        lastSeenTimestamp = lastSeenTimestamp
+    )
+
+    private fun MessageLocalEntity.toFieldMessage() = FieldMessage(
+        id = id,
+        eventId = eventId,
+        senderId = senderId,
+        senderName = senderName,
+        senderRole = runCatching { UserRole.valueOf(senderRole) }.getOrDefault(UserRole.MEMBER),
+        targetRole = targetRole?.let { roleStr -> runCatching { UserRole.valueOf(roleStr) }.getOrNull() },
+        messageText = messageText,
+        isEmergency = isEmergency,
+        timestamp = timestamp
+    )
+
+    private fun ReportLocalEntity.toFieldReport() = FieldReport(
+        id = id,
+        actId = actId,
+        reporterId = reporterId,
+        title = title,
+        description = description,
+        location = GeoPoint(latitude, longitude),
+        reportTime = reportTime,
+        status = FieldReportStatus.getByValue(status),
+        type = FieldReportType.getByValue(type)
+    )
 }
