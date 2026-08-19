@@ -2,60 +2,88 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ---------------------------------------------------------------
     // Helper functions
+    // ---------------------------------------------------------------
     function isSignedIn() {
       return request.auth != null;
     }
 
+    // The requesting user has a participant document in the event
     function isEventParticipant(eventId) {
       return isSignedIn() &&
         exists(/databases/$(database)/documents/events/$(eventId)/participants/$(request.auth.uid));
     }
 
-    // 0. Legacy app collections (Users / Activities / ActUsers / Reports)
+    // The requesting user manages the event
+    function isEventManager(eventId) {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/events/$(eventId)).data.managerId == request.auth.uid;
+    }
+
+    // Participants AND managers may access event content (participant list,
+    // live locations, messages). Managers are not necessarily participants.
+    function canAccessEvent(eventId) {
+      return isSignedIn() && (isEventParticipant(eventId) || isEventManager(eventId));
+    }
+
+    // ---------------------------------------------------------------
+    // 0. User profiles: users manage only their own profile document
+    //    (document id == Firebase Auth uid; written by registerUser)
+    // ---------------------------------------------------------------
     match /Users/{userId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && request.auth.uid == userId;
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create, update: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if false;
     }
 
-    match /Activities/{activityId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
-    }
-
-    match /ActUsers/{actUserId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
-    }
-
+    // ---------------------------------------------------------------
+    // 1. Reports (legacy top-level collection, still the app's live
+    //    report path; documents carry ActId -> eventId). Signed-in users
+    //    may read reports and create reports under their own ReporterId.
+    // ---------------------------------------------------------------
     match /Reports/{reportId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.ReporterId == request.auth.uid;
+      allow update, delete: if false;
     }
 
-    // 1. Events collection
+    // ---------------------------------------------------------------
+    // 2. Events
+    // ---------------------------------------------------------------
     match /events/{eventId} {
-      // Anyone logged in can read an event or join
+      // Anyone logged in can read an event or create one
       allow read: if isSignedIn();
       allow create: if isSignedIn();
-      allow update, delete: if isSignedIn() && resource.data.managerId == request.auth.uid;
+      // Only the manager may modify/delete an event
+      allow update, delete: if isEventManager(eventId);
 
-      // 2. Participants sub-collection (Live Location Tracking)
+      // 2.1 Participants sub-collection (Live Location Tracking)
       match /participants/{userId} {
-        allow read: if isEventParticipant(eventId);
-        // A user can only overwrite their OWN coordinates
+        // Participants and managers may read all participant locations
+        allow read: if canAccessEvent(eventId);
+        // A user can only create/overwrite/delete their OWN document
         allow write: if isSignedIn() && request.auth.uid == userId;
       }
 
-      // 3. Messages sub-collection
+      // 2.2 Messages sub-collection
       match /messages/{messageId} {
-        allow read: if isEventParticipant(eventId);
+        allow read: if canAccessEvent(eventId);
+        // Only an event participant can send, and only their own messages
         allow create: if isEventParticipant(eventId) && request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if false;
       }
+    }
+
+    // ---------------------------------------------------------------
+    // 3. Collection-group access (event picker: getUserEvents queries
+    //    collectionGroup("participants")). Firestore requires a
+    //    {path=**} rule for collection-group queries. A user may only
+    //    list participant documents that belong to them — i.e. the
+    //    events they joined.
+    // ---------------------------------------------------------------
+    match /{path=**}/participants/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
     }
   }
 }
