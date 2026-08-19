@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DrawerValue
@@ -53,6 +54,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.arielfaridja.ezrahi.app.ui.auth.AuthScreen
 import com.arielfaridja.ezrahi.app.ui.auth.SignUpScreen
+import com.arielfaridja.ezrahi.app.ui.dial.QuickDialScreen
 import com.arielfaridja.ezrahi.app.ui.events.EventPickerScreen
 import com.arielfaridja.ezrahi.app.ui.map.MapScreen
 import com.arielfaridja.ezrahi.app.util.EventPrefs
@@ -85,6 +87,7 @@ private data class DrawerDestination(
 )
 
 private val drawerDestinations = listOf(
+    DrawerDestination("Map", Icons.Default.Place, "map"),
     DrawerDestination("Speed Dial", Icons.Default.Phone, "speed_dial"),
     DrawerDestination("Activity Overview", Icons.AutoMirrored.Filled.List, "activity_overview"),
     DrawerDestination("Settings", Icons.Default.Settings, "settings")
@@ -101,6 +104,7 @@ fun EzrahiNavApp() {
 
     val auth = FirebaseAuth.getInstance()
     var isSignedIn by remember { mutableStateOf(auth.currentUser != null) }
+    var currentEventId by remember { mutableStateOf<String?>(null) }
     DisposableEffect(Unit) {
         val listener = FirebaseAuth.AuthStateListener {
             isSignedIn = it.currentUser != null
@@ -142,12 +146,27 @@ fun EzrahiNavApp() {
                         selected = isSelected,
                         onClick = {
                             scope.launch { drawerState.close() }
-                            navController.navigate(destination.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                            if (destination.route == "map") {
+                                if (currentEventId != null) {
+                                    navController.navigate("map/$currentEventId") {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                    }
+                                } else {
+                                    navController.navigate("events") {
+                                        launchSingleTop = true
+                                    }
                                 }
-                                launchSingleTop = true
-                                restoreState = true
+                            } else {
+                                navController.navigate(destination.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
@@ -185,6 +204,7 @@ fun EzrahiNavApp() {
                 val context = LocalContext.current
                 EventPickerScreen(
                     onSelectEvent = { eventId ->
+                        currentEventId = eventId
                         EventPrefs.saveLastEventId(context, eventId)
                         navController.navigate("map/$eventId") {
                             popUpTo("events") { inclusive = true }
@@ -208,9 +228,8 @@ fun EzrahiNavApp() {
                 )
             }
             composable("speed_dial") {
-                PlaceholderScreen(
-                    title = "Speed Dial",
-                    subtitle = "Speed dial (Work in Progress)",
+                QuickDialScreen(
+                    eventId = currentEventId,
                     onOpenDrawer = { scope.launch { drawerState.open() } }
                 )
             }

@@ -6,6 +6,23 @@
 
 ---
 
+## ✅ Progress Tracker
+
+| # | Item | Status | Where |
+|---|---|---|---|
+| F1 | Quick-Dial Screen (`QuickDialFragment`) | 🔵 TODO | `todo-fix-2.md` |
+| F2 | Event Management Screen (`ActivityOverviewFragment`) | 🔵 TODO | `todo-fix-3.md` |
+| F3 | GPX Route Parser + Polyline Renderer | 🔵 TODO | `todo-fix-5.md` |
+| F4 | Structured Field Reports & Checkpoints | 🟢 DONE (Phase 5: long-press → Add Marker dialog → `Reports`; SOS FAB removed by PO decision, `triggerSOS` dormant) | `todo-fix-1` series |
+| F5 | Full User Registration (name/email/phone → `Users/{uid}`) | 🟢 DONE (Phase 5 signup + `registerUser`) | Phase 5 |
+| F6 | Role-Based Messaging Channels | 🔵 TODO | `todo-fix-4.md` |
+| B1 | Firestore SnapshotListener Leaks | 🟢 DONE (`callbackFlow`/`awaitClose` on all 7 listeners, commit `30984f5`) | `todo-fix-1.md` |
+| B2 | Android 14+ FGS Crash | 🟢 DONE (Phase 4: `FOREGROUND_SERVICE_LOCATION` declared + API 34 `startForeground` branch + POST_NOTIFICATIONS flow) | Phase 4 |
+| B3 | Room Type Handling | 🟢 N/A — all Room fields are primitives; no converters needed | — |
+| B4 | Runtime Location Permissions in Compose | 🟢 DONE (Phase 4 + MapScreen: fine/coarse/background/battery + consent dialogs) | Phase 4 |
+
+---
+
 ## 1. CRITICAL AUDIT: WHAT WAS COMPROMISED OR MISSED
 A thorough audit of the modernization output indicates that while the high-level framework (Compose, Room, Hilt) was initiated, the implementation is **incomplete, contains severe functional regressions, and drops core features from the original Ezrahi specification**.
 
