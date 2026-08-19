@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">Ezrahi</string>
-    <string name="title_activity_signup">Signup Activity</string>
     <string name="users">Users</string>
     <string name="reports">Reports</string>
     <string name="routes">Routes</string>
@@ -35,7 +34,6 @@
     <string name="enable_location_services">Enable Location Services</string>
     <string name="location_services_required">Location services are required for this app. Please enable location services in your device settings.</string>
     <string name="go_to_settings">Go to Settings</string>
-    <string name="no_activity_assigned">No Activity Assigned</string>
     <string name="please_assign_activity">Please assign an activity to continue.</string>
     <string name="ok">OK</string>
     <!-- Added missing strings for login screen -->

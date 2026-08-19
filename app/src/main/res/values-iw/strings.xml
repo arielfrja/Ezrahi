@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">אזרחי</string>
-    <string name="title_activity_signup">מסך הרשמה</string>
     <string name="users">משתמשים</string>
     <string name="reports">דיווחים</string>
     <string name="routes">מסלולים</string>
@@ -39,7 +38,6 @@
     <string name="enable_location_services">הפעל שירותי מיקום</string>
     <string name="location_services_required">נדרש להפעיל שירותי מיקום עבור יישום זה. אנא אפשר שירותי מיקום בהגדרות המכשיר.</string>
     <string name="go_to_settings">עבור להגדרות</string>
-    <string name="no_activity_assigned">לא הוקצתה פעילות</string>
     <string name="please_assign_activity">אנא הקצה פעילות כדי להמשיך.</string>
     <string name="ok">אישור</string>
 

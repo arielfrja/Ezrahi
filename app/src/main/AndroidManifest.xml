@@ -26,37 +26,11 @@
         android:theme="@style/Theme.Ezrahi"
         android:usesCleartextTraffic="true">
 
-        <!-- Legacy Location Foreground Service -->
-        <service
-            android:name=".LocationTrackingService"
-            android:enabled="true"
-            android:exported="true"
-            android:foregroundServiceType="location" />
-
-        <!-- Modern Location Foreground Service -->
+        <!-- Location Foreground Service -->
         <service
             android:name=".service.LocationTrackingService"
             android:foregroundServiceType="location"
             android:exported="false" />
-
-        <activity
-            android:name=".UI.Signup.SignupActivity"
-            android:exported="true"
-            android:label="@string/title_activity_signup"
-            android:noHistory="true"
-            android:theme="@style/Theme.Ezrahi" />
-        <activity
-            android:name=".UI.Login.LoginActivity"
-            android:exported="false"
-            android:noHistory="true" />
-        <activity
-            android:name=".UI.Main.MainActivity"
-            android:exported="false"
-            android:noHistory="true"
-            android:theme="@style/Theme.Ezrahi.SplashScreen" />
-        <activity
-            android:name=".UI.StartupActivity"
-            android:exported="true" />
 
         <!-- Modern Compose activity (launcher) -->
         <activity

@@ -1,7 +1,5 @@
 package com.arielfaridja.ezrahi.di
 
-import com.arielfaridja.ezrahi.data.FirebaseDataRepo
-import com.arielfaridja.ezrahi.data.IDataRepo
 import com.arielfaridja.ezrahi.data.repository.EzrahiRepositoryImpl
 import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
 import dagger.Binds
@@ -19,10 +17,4 @@ abstract class RepositoryModule {
     abstract fun bindEzrahiRepository(
         impl: EzrahiRepositoryImpl
     ): EzrahiRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindDataRepo(
-        impl: FirebaseDataRepo
-    ): IDataRepo
 }
