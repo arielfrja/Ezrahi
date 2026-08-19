@@ -234,6 +234,17 @@ class EzrahiRepositoryImpl @Inject constructor(
             .update(data).await()
     }
 
+    override suspend fun updateParticipantRole(eventId: String, userId: String, role: UserRole): Result<Unit> = runCatching {
+        firestore.collection("events").document(eventId)
+            .collection("participants").document(userId)
+            .update("role", role.name).await()
+    }
+
+    override suspend fun updateEventName(eventId: String, name: String): Result<Unit> = runCatching {
+        firestore.collection("events").document(eventId)
+            .update("name", name).await()
+    }
+
     override suspend fun sendMessage(message: FieldMessage): Result<Unit> = runCatching {
         firestore.collection("events").document(message.eventId)
             .collection("messages").document(message.id.ifEmpty { firestore.collection("events").document().id })

@@ -55,3 +55,8 @@ pm_backup/
 # Roadmap duplicate (use modernization-roadmap.md)
 roadmap.md
 
+# Development / test sandbox: scratch scripts, experiments, and throwaway
+# test code that must never be committed. Anything development-related that
+# is not meant for the repo goes here.
+.sandbox/
+

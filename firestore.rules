@@ -62,8 +62,9 @@ service cloud.firestore {
       match /participants/{userId} {
         // Participants and managers may read all participant locations
         allow read: if canAccessEvent(eventId);
-        // A user can only create/overwrite/delete their OWN document
-        allow write: if isSignedIn() && request.auth.uid == userId;
+        // A user can create/overwrite/delete their OWN document; the event
+        // manager may also write (e.g. assign/change participant roles)
+        allow write: if isSignedIn() && (request.auth.uid == userId || isEventManager(eventId));
       }
 
       // 2.2 Messages sub-collection

@@ -57,6 +57,7 @@ import com.arielfaridja.ezrahi.app.ui.auth.SignUpScreen
 import com.arielfaridja.ezrahi.app.ui.dial.QuickDialScreen
 import com.arielfaridja.ezrahi.app.ui.events.EventPickerScreen
 import com.arielfaridja.ezrahi.app.ui.map.MapScreen
+import com.arielfaridja.ezrahi.app.ui.management.EventManagementScreen
 import com.arielfaridja.ezrahi.app.util.EventPrefs
 import com.arielfaridja.ezrahi.app.ui.theme.EzrahiTheme
 import com.google.firebase.auth.FirebaseAuth
@@ -234,9 +235,8 @@ fun EzrahiNavApp() {
                 )
             }
             composable("activity_overview") {
-                PlaceholderScreen(
-                    title = "Activity Overview",
-                    subtitle = "Activity overview (Work in Progress)",
+                EventManagementScreen(
+                    eventId = currentEventId,
                     onOpenDrawer = { scope.launch { drawerState.open() } }
                 )
             }
