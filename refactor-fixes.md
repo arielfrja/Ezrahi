@@ -12,7 +12,7 @@
 |---|---|---|---|
 | F1 | Quick-Dial Screen (`QuickDialFragment`) | 🟢 DONE (`app/ui/dial/`, staff grouped by role, `ACTION_DIAL`, commit `ed41729`) | `todo-fix-2.md` |
 | F2 | Event Management Screen (`ActivityOverviewFragment`) | 🟢 DONE (`app/ui/management/`, tabs: Details/Crew/Reports, role filter + combobox role editing, manager rename; rules allow manager participant writes; commit `e49493e`) | `todo-fix-3.md` |
-| F3 | GPX Route Parser + Polyline Renderer | 🔵 TODO | `todo-fix-5.md` |
+| F3 | GPX Route Parser + Polyline Renderer | 🟢 DONE (SAF file picker → Firebase Storage `gpx/{eventId}/{uid}/**` → route library `events/{eventId}/routes` with active switcher; dynamic role/member upload permissions on the event doc; osmdroid Polyline + bounds auto-fit on map; offline points cache in Room; rules tested 8/8 + deployed) | `todo-fix-5.md` |
 | F4 | Structured Field Reports & Checkpoints | 🟢 DONE (Phase 5: long-press → Add Marker dialog → `Reports`; SOS FAB removed by PO decision, `triggerSOS` dormant) | `todo-fix-1` series |
 | F5 | Full User Registration (name/email/phone → `Users/{uid}`) | 🟢 DONE (Phase 5 signup + `registerUser`) | Phase 5 |
 | F6 | Role-Based Messaging Channels | 🟢 DONE (WhatsApp-style chat list: All Broadcast + dynamic role channels with previews, pair-scoped direct messages, messenger link buttons in Crew tab; dynamic roles/messengers from `settings` docs; resilient listeners + `isPairMember` via `split().hasAny()` rules fix) | `todo-fix-4.md` |
