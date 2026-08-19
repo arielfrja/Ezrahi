@@ -61,7 +61,22 @@ data class FieldEvent(
     val managerContact: String = "",
     val gpxRouteUrl: String? = null,
     val isLive: Boolean = true,
+    val routeAllowedRoles: List<String> = emptyList(),
+    val routeAllowedUids: List<String> = emptyList(),
     val createdAt: Long = System.currentTimeMillis()
+)
+
+// 5b. Planned GPX trail route for an event (events/{eventId}/routes/{routeId}).
+//     Only one route is active at a time; the active one is rendered on the map.
+data class RouteInfo(
+    val id: String = "",
+    val eventId: String = "",
+    val name: String = "",
+    val gpxRouteUrl: String = "",
+    val storagePath: String = "",
+    val uploadedBy: String = "",
+    val uploadedAt: Long = System.currentTimeMillis(),
+    val isActive: Boolean = false
 )
 
 // 6. Messages sent in field channels

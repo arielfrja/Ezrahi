@@ -2,6 +2,8 @@ package com.arielfaridja.ezrahi.app.ui.management
 
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +22,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
@@ -62,6 +65,8 @@ import com.arielfaridja.ezrahi.domain.model.EventParticipant
 import com.arielfaridja.ezrahi.domain.model.FieldReport
 import com.arielfaridja.ezrahi.domain.model.FieldReportType
 import com.arielfaridja.ezrahi.domain.model.MessengerOption
+import com.arielfaridja.ezrahi.domain.model.RoleOption
+import com.arielfaridja.ezrahi.domain.model.RouteInfo
 import com.arielfaridja.ezrahi.domain.model.UserRole
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -159,6 +164,25 @@ fun EventManagementScreen(
                                     isManager = state.isManager,
                                     onRename = { name -> viewModel.renameEvent(eventId, name) }
                                 )
+                            }
+                            if (state.canManageRoutes) {
+                                item(key = "routes-section") {
+                                    RoutesSection(
+                                        routes = state.routes,
+                                        isUploading = state.isUploading,
+                                        isManager = state.isManager,
+                                        roleOptions = state.roleOptions,
+                                        participants = state.participants,
+                                        allowedRoles = state.event?.routeAllowedRoles ?: emptyList(),
+                                        allowedUids = state.event?.routeAllowedUids ?: emptyList(),
+                                        onUpload = { uri, name -> viewModel.uploadRoute(eventId, uri, name) },
+                                        onActivate = { routeId -> viewModel.setActiveRoute(eventId, routeId) },
+                                        onDelete = { routeId -> viewModel.deleteRoute(eventId, routeId) },
+                                        onSavePermissions = { roles, uids ->
+                                            viewModel.updateRoutePermissions(eventId, roles, uids)
+                                        }
+                                    )
+                                }
                             }
                         }
 
@@ -501,4 +525,179 @@ private fun reportTypeLabel(type: FieldReportType): String = when (type) {
     FieldReportType.MEDICAL -> "MEDICAL"
     FieldReportType.GENERAL -> "GENERAL"
     FieldReportType.UNKNOWN -> "UNKNOWN"
+}
+
+private fun queryDisplayName(context: android.content.Context, uri: Uri): String? =
+    runCatching {
+        context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
+            ?.use { cursor ->
+                if (cursor.moveToFirst()) cursor.getString(0) else null
+            }
+    }.getOrNull()
+
+@Composable
+private fun RoutesSection(
+    routes: List<RouteInfo>,
+    isUploading: Boolean,
+    isManager: Boolean,
+    roleOptions: List<RoleOption>,
+    participants: List<EventParticipant>,
+    allowedRoles: List<String>,
+    allowedUids: List<String>,
+    onUpload: (Uri, String) -> Unit,
+    onActivate: (String) -> Unit,
+    onDelete: (String) -> Unit,
+    onSavePermissions: (List<String>, List<String>) -> Unit
+) {
+    val context = LocalContext.current
+    val filePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            val name = queryDisplayName(context, uri) ?: "route.gpx"
+            onUpload(uri, name)
+        }
+    }
+
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Text(
+                text = "Routes / מסלולים",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(8.dp))
+            if (routes.isEmpty()) {
+                Text(
+                    text = "No routes yet — upload the planned trail (GPX).",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(8.dp))
+            } else {
+                routes.forEach { route ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = route.name,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (route.isActive) FontWeight.Bold else FontWeight.Normal,
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (route.isActive) {
+                            Text(
+                                text = "ACTIVE",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        } else {
+                            TextButton(onClick = { onActivate(route.id) }) {
+                                Text("Activate")
+                            }
+                        }
+                        IconButton(onClick = { onDelete(route.id) }) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Delete route ${route.name}",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+            }
+            Button(
+                onClick = { filePicker.launch("*/*") },
+                enabled = !isUploading
+            ) {
+                if (isUploading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.width(18.dp).height(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    Spacer(Modifier.width(8.dp))
+                }
+                Text(if (isUploading) "Uploading..." else "Upload Route / העלה מסלול")
+            }
+
+            if (isManager) {
+                Spacer(Modifier.height(16.dp))
+                RoutePermissionsEditor(
+                    roleOptions = roleOptions,
+                    participants = participants,
+                    allowedRoles = allowedRoles,
+                    allowedUids = allowedUids,
+                    onSave = onSavePermissions
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RoutePermissionsEditor(
+    roleOptions: List<RoleOption>,
+    participants: List<EventParticipant>,
+    allowedRoles: List<String>,
+    allowedUids: List<String>,
+    onSave: (List<String>, List<String>) -> Unit
+) {
+    var selectedRoles by remember { mutableStateOf(allowedRoles) }
+    var selectedUids by remember { mutableStateOf(allowedUids) }
+
+    Text(
+        text = "Who can upload routes / מי רשאי להעלות מסלולים",
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+    Spacer(Modifier.height(8.dp))
+    Text(
+        text = "Roles",
+        style = MaterialTheme.typography.bodySmall
+    )
+    Row(
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        roleOptions.forEach { option ->
+            val selected = option.name in selectedRoles
+            FilterChip(
+                selected = selected,
+                onClick = {
+                    selectedRoles = if (selected) selectedRoles - option.name else selectedRoles + option.name
+                },
+                label = { Text(option.label) }
+            )
+        }
+    }
+    Spacer(Modifier.height(8.dp))
+    Text(
+        text = "Members",
+        style = MaterialTheme.typography.bodySmall
+    )
+    Row(
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        participants.forEach { participant ->
+            val selected = participant.userId in selectedUids
+            FilterChip(
+                selected = selected,
+                onClick = {
+                    selectedUids = if (selected) selectedUids - participant.userId else selectedUids + participant.userId
+                },
+                label = { Text(participant.fullName.ifBlank { participant.userId }) }
+            )
+        }
+    }
+    Spacer(Modifier.height(8.dp))
+    Button(
+        onClick = { onSave(selectedRoles, selectedUids) },
+        enabled = selectedRoles != allowedRoles || selectedUids != allowedUids
+    ) {
+        Text("Save permissions")
+    }
 }

@@ -39,4 +39,20 @@ interface EzrahiDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertReports(reports: List<ReportLocalEntity>)
+
+    // Routes
+    @Query("SELECT * FROM cached_routes WHERE eventId = :eventId ORDER BY uploadedAt ASC")
+    fun observeRoutes(eventId: String): Flow<List<RouteLocalEntity>>
+
+    @Query("SELECT * FROM cached_routes WHERE id = :routeId")
+    suspend fun getRoute(routeId: String): RouteLocalEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRoutes(routes: List<RouteLocalEntity>)
+
+    @Query("UPDATE cached_routes SET pointsJson = :pointsJson WHERE id = :routeId")
+    suspend fun updateRoutePoints(routeId: String, pointsJson: String)
+
+    @Query("DELETE FROM cached_routes WHERE id = :routeId")
+    suspend fun deleteRoute(routeId: String)
 }

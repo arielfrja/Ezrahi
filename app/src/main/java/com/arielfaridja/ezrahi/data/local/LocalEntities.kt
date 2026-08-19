@@ -10,7 +10,22 @@ data class EventLocalEntity(
     val managerId: String,
     val managerContact: String,
     val gpxRouteUrl: String?,
-    val isLive: Boolean
+    val isLive: Boolean,
+    val routeAllowedRolesJson: String = "[]",
+    val routeAllowedUidsJson: String = "[]"
+)
+
+@Entity(tableName = "cached_routes")
+data class RouteLocalEntity(
+    @PrimaryKey val id: String,
+    val eventId: String,
+    val name: String,
+    val gpxRouteUrl: String,
+    val storagePath: String,
+    val uploadedBy: String,
+    val uploadedAt: Long,
+    val isActive: Boolean,
+    val pointsJson: String? = null
 )
 
 @Entity(tableName = "cached_participants")

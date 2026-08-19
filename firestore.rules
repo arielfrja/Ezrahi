@@ -100,6 +100,31 @@ service cloud.firestore {
         allow create: if isEventParticipant(eventId) && request.resource.data.senderId == request.auth.uid;
         allow update, delete: if false;
       }
+
+      // 2.3 Routes sub-collection (planned GPX trails). Route management
+      //     (create/update/delete/activate) is allowed for the manager and
+      //     for any participant whose role or uid the manager explicitly
+      //     permitted via the event doc fields routeAllowedRoles /
+      //     routeAllowedUids (dynamically toggled from the app).
+      function isRoutePermitted(eventId) {
+        return get(/databases/$(database)/documents/events/$(eventId)).data.managerId == request.auth.uid ||
+          (get(/databases/$(database)/documents/events/$(eventId)).data.routeAllowedUids is list &&
+            request.auth.uid in get(/databases/$(database)/documents/events/$(eventId)).data.routeAllowedUids) ||
+          (exists(/databases/$(database)/documents/events/$(eventId)/participants/$(request.auth.uid)) &&
+            get(/databases/$(database)/documents/events/$(eventId)).data.routeAllowedRoles is list &&
+            get(/databases/$(database)/documents/events/$(eventId)/participants/$(request.auth.uid)).data.role in
+              get(/databases/$(database)/documents/events/$(eventId)).data.routeAllowedRoles);
+      }
+      match /routes/{routeId} {
+        allow read: if canAccessEvent(eventId);
+        allow create: if isRoutePermitted(eventId) &&
+          request.resource.data.name is string &&
+          request.resource.data.name.size() > 0 &&
+          request.resource.data.storagePath is string &&
+          request.resource.data.storagePath.matches('gpx/.*') &&
+          request.resource.data.uploadedBy == request.auth.uid;
+        allow update, delete: if isRoutePermitted(eventId);
+      }
     }
 
     // ---------------------------------------------------------------

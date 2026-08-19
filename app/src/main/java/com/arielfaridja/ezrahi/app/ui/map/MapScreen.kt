@@ -33,11 +33,13 @@ import com.arielfaridja.ezrahi.service.LocationTrackingService
 import com.google.firebase.auth.FirebaseAuth
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Overlay
+import org.osmdroid.views.overlay.Polyline
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 
@@ -73,6 +75,7 @@ fun MapScreen(
     var showBatteryExplanation by remember { mutableStateOf(false) }
     var showAddMarkerDialog by remember { mutableStateOf(false) }
     var longPressLocation by remember { mutableStateOf<GeoPoint?>(null) }
+    var hasFittedRoute by remember { mutableStateOf(false) }
 
     lateinit var requestSecondaryPermissions: (Context) -> Unit
     lateinit var requestBatteryOptimizationExemption: (Context) -> Unit
@@ -195,6 +198,26 @@ fun MapScreen(
         }
     }
 
+    val routePolyline = remember {
+        Polyline().apply {
+            setColor(0xFF1565C0.toInt())
+            setWidth(8f)
+        }
+    }
+
+    LaunchedEffect(state.routePoints, hasFittedRoute) {
+        routePolyline.setPoints(state.routePoints.map { GeoPoint(it.latitude, it.longitude) })
+        if (mapView.overlayManager.overlays().none { it == routePolyline }) {
+            mapView.overlayManager.add(routePolyline)
+        }
+        if (state.routePoints.size > 1 && !hasFittedRoute) {
+            hasFittedRoute = true
+            val box = BoundingBox.fromGeoPoints(routePolyline.actualPoints)
+            mapView.zoomToBoundingBox(box, true)
+        }
+        mapView.invalidate()
+    }
+
     LaunchedEffect(state.participants, state.reports) {
         mapView.overlayManager.overlays()
             .filterIsInstance<Marker>()
@@ -229,14 +252,24 @@ fun MapScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(state.event?.name ?: "Field Activity") },
-                navigationIcon = {
-                    IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+            Column {
+                TopAppBar(
+                    title = { Text(state.event?.name ?: "Field Activity") },
+                    navigationIcon = {
+                        IconButton(onClick = onOpenDrawer) {
+                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        }
                     }
+                )
+                if (state.activeRouteName != null) {
+                    Text(
+                        text = "Route: ${state.activeRouteName}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
+                    )
                 }
-            )
+            }
         },
         floatingActionButton = {
             FloatingActionButton(

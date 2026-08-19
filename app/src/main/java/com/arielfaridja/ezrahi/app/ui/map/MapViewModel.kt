@@ -18,6 +18,8 @@ data class MapUiState(
     val event: FieldEvent? = null,
     val participants: List<EventParticipant> = emptyList(),
     val reports: List<FieldReport> = emptyList(),
+    val routePoints: List<GeoPoint> = emptyList(),
+    val activeRouteName: String? = null,
     val isSosActive: Boolean = false,
     val statusMessage: String? = null
 )
@@ -45,6 +47,16 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch {
             repository.getReports(eventId).collect { list ->
                 _uiState.update { it.copy(reports = list) }
+            }
+        }
+        viewModelScope.launch {
+            repository.getRoutes(eventId).collect { routes ->
+                _uiState.update { it.copy(activeRouteName = routes.firstOrNull { r -> r.isActive }?.name) }
+            }
+        }
+        viewModelScope.launch {
+            repository.getActiveRoutePoints(eventId).collect { points ->
+                _uiState.update { it.copy(routePoints = points) }
             }
         }
     }

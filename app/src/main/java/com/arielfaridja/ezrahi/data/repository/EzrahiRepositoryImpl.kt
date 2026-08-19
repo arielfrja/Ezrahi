@@ -1,14 +1,17 @@
 package com.arielfaridja.ezrahi.data.repository
 
+import android.net.Uri
 import android.util.Log
 import com.arielfaridja.ezrahi.data.local.*
 import com.arielfaridja.ezrahi.data.mapper.FieldReportMapper
+import com.arielfaridja.ezrahi.app.util.GpxParser
 import com.arielfaridja.ezrahi.app.util.defaultRoleOptions
 import com.arielfaridja.ezrahi.domain.model.*
 import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -16,12 +19,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import java.net.URL
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class EzrahiRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
+    private val storage: FirebaseStorage,
     private val dao: EzrahiDao
 ) : EzrahiRepository {
 
@@ -51,7 +58,9 @@ class EzrahiRepositoryImpl @Inject constructor(
                             managerId = doc.getString("managerId") ?: "",
                             managerContact = doc.getString("managerContact") ?: "",
                             gpxRouteUrl = doc.getString("gpxRouteUrl"),
-                            isLive = doc.getBoolean("isLive") ?: true
+                            isLive = doc.getBoolean("isLive") ?: true,
+                            routeAllowedRolesJson = listToJson(doc.get("routeAllowedRoles") as? List<*>),
+                            routeAllowedUidsJson = listToJson(doc.get("routeAllowedUids") as? List<*>)
                         )
                     }
                     scope.launch { dao.insertEvents(list) }
@@ -93,7 +102,9 @@ class EzrahiRepositoryImpl @Inject constructor(
                             managerId = doc.getString("managerId") ?: "",
                             managerContact = doc.getString("managerContact") ?: "",
                             gpxRouteUrl = doc.getString("gpxRouteUrl"),
-                            isLive = doc.getBoolean("isLive") ?: true
+                            isLive = doc.getBoolean("isLive") ?: true,
+                            routeAllowedRoles = (doc.get("routeAllowedRoles") as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
+                            routeAllowedUids = (doc.get("routeAllowedUids") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
                         )
                     }
                     emitMerged()
@@ -142,7 +153,9 @@ class EzrahiRepositoryImpl @Inject constructor(
                         managerId = snapshot.getString("managerId") ?: "",
                         managerContact = snapshot.getString("managerContact") ?: "",
                         gpxRouteUrl = snapshot.getString("gpxRouteUrl"),
-                        isLive = snapshot.getBoolean("isLive") ?: true
+                        isLive = snapshot.getBoolean("isLive") ?: true,
+                        routeAllowedRolesJson = listToJson(snapshot.get("routeAllowedRoles") as? List<*>),
+                        routeAllowedUidsJson = listToJson(snapshot.get("routeAllowedUids") as? List<*>)
                     )
                     scope.launch { dao.insertEvent(event) }
                 }
@@ -234,6 +247,201 @@ class EzrahiRepositoryImpl @Inject constructor(
         awaitClose {
             registration.remove()
             job.cancel()
+        }
+    }
+
+    override fun getRoutes(eventId: String): Flow<List<RouteInfo>> = callbackFlow {
+        val registration = firestore.collection("events").document(eventId).collection("routes")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    logListenerError("events/$eventId/routes", error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    snapshot.documents.forEach { doc ->
+                        if (!doc.exists()) return@forEach
+                        scope.launch {
+                            val cached = dao.getRoute(doc.id)
+                            dao.insertRoutes(
+                                listOf(
+                                    RouteLocalEntity(
+                                        id = doc.id,
+                                        eventId = eventId,
+                                        name = doc.getString("name") ?: "",
+                                        gpxRouteUrl = doc.getString("gpxRouteUrl") ?: "",
+                                        storagePath = doc.getString("storagePath") ?: "",
+                                        uploadedBy = doc.getString("uploadedBy") ?: "",
+                                        uploadedAt = doc.getLong("uploadedAt") ?: System.currentTimeMillis(),
+                                        isActive = doc.getBoolean("isActive") ?: false,
+                                        pointsJson = cached?.pointsJson
+                                    )
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+        val job = launch {
+            dao.observeRoutes(eventId).collect { list ->
+                trySend(list.map { it.toRouteInfo() })
+            }
+        }
+        awaitClose {
+            registration.remove()
+            job.cancel()
+        }
+    }
+
+    override fun getActiveRoutePoints(eventId: String): Flow<List<GeoPoint>> = callbackFlow {
+        val registration = firestore.collection("events").document(eventId).collection("routes")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    logListenerError("events/$eventId/routes (active)", error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    snapshot.documents.forEach { doc ->
+                        if (!doc.exists()) return@forEach
+                        scope.launch {
+                            val cached = dao.getRoute(doc.id)
+                            dao.insertRoutes(
+                                listOf(
+                                    RouteLocalEntity(
+                                        id = doc.id,
+                                        eventId = eventId,
+                                        name = doc.getString("name") ?: "",
+                                        gpxRouteUrl = doc.getString("gpxRouteUrl") ?: "",
+                                        storagePath = doc.getString("storagePath") ?: "",
+                                        uploadedBy = doc.getString("uploadedBy") ?: "",
+                                        uploadedAt = doc.getLong("uploadedAt") ?: System.currentTimeMillis(),
+                                        isActive = doc.getBoolean("isActive") ?: false,
+                                        pointsJson = cached?.pointsJson
+                                    )
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+        val job = launch {
+            var lastFetchedRouteId: String? = null
+            dao.observeRoutes(eventId).collect { routes ->
+                val active = routes.firstOrNull { it.isActive }
+                if (active == null) {
+                    lastFetchedRouteId = null
+                    trySend(emptyList())
+                    return@collect
+                }
+                val cachedPoints = active.pointsJson?.let { parsePointsJson(it) }
+                if (cachedPoints != null) trySend(cachedPoints)
+                if (active.id != lastFetchedRouteId || cachedPoints == null) {
+                    lastFetchedRouteId = active.id
+                    if (active.gpxRouteUrl.isNotBlank()) {
+                        scope.launch {
+                            runCatching {
+                                val xml = downloadGpx(active.gpxRouteUrl)
+                                val points = GpxParser.parse(xml)
+                                if (points.isNotEmpty()) {
+                                    dao.updateRoutePoints(active.id, toPointsJson(points))
+                                    trySend(points)
+                                }
+                            }.onFailure { error ->
+                                Log.w(TAG, "route download/parse failed for '${active.name}': ${error.message}")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        awaitClose {
+            registration.remove()
+            job.cancel()
+        }
+    }
+
+    override suspend fun uploadRoute(eventId: String, uid: String, uri: Uri, fileName: String): Result<Unit> = runCatching {
+        val safeName = fileName.replace(Regex("[^a-zA-Z0-9._-]"), "_").ifBlank { "route.gpx" }
+        val path = "gpx/$eventId/$uid/$safeName"
+        val ref = storage.reference.child(path)
+        val downloadUrl = ref.putFile(uri).await().storage.downloadUrl.await()
+        val routeId = firestore.collection("events").document(eventId).collection("routes").document().id
+        firestore.collection("events").document(eventId).collection("routes").document(routeId).set(
+            mapOf(
+                "name" to safeName.removeSuffix(".gpx"),
+                "gpxRouteUrl" to downloadUrl.toString(),
+                "storagePath" to path,
+                "uploadedBy" to uid,
+                "uploadedAt" to System.currentTimeMillis(),
+                "isActive" to false
+            )
+        ).await()
+        Unit
+    }.onFailure { error ->
+        Log.w(TAG, "uploadRoute(event=$eventId) failed", error)
+    }
+
+    override suspend fun setActiveRoute(eventId: String, routeId: String): Result<Unit> = runCatching {
+        val refs = firestore.collection("events").document(eventId).collection("routes")
+        val batch = firestore.batch()
+        refs.get().await().documents.forEach { doc ->
+            batch.update(refs.document(doc.id), "isActive", doc.id == routeId)
+        }
+        batch.commit().await()
+    }
+
+    override suspend fun deleteRoute(eventId: String, routeId: String): Result<Unit> = runCatching {
+        val docRef = firestore.collection("events").document(eventId).collection("routes").document(routeId)
+        val path = docRef.get().await().getString("storagePath")
+        if (path != null) {
+            runCatching { storage.reference.child(path).delete().await() }
+        }
+        docRef.delete().await()
+    }
+
+    override suspend fun updateRoutePermissions(eventId: String, allowedRoles: List<String>, allowedUids: List<String>): Result<Unit> = runCatching {
+        firestore.collection("events").document(eventId).update(
+            mapOf(
+                "routeAllowedRoles" to allowedRoles,
+                "routeAllowedUids" to allowedUids
+            )
+        ).await()
+    }
+
+    private suspend fun downloadGpx(url: String): String = withContext(Dispatchers.IO) {
+        URL(url).openConnection().apply {
+            setRequestProperty("User-Agent", "Ezrahi")
+            connectTimeout = 15_000
+            readTimeout = 15_000
+        }.getInputStream().bufferedReader().use { it.readText() }
+    }
+
+    private fun toPointsJson(points: List<GeoPoint>): String {
+        val arr = JSONArray()
+        points.forEach { arr.put(JSONArray(listOf(it.latitude, it.longitude))) }
+        return arr.toString()
+    }
+
+    private fun parsePointsJson(json: String): List<GeoPoint>? = runCatching {
+        val arr = JSONArray(json)
+        (0 until arr.length()).map { idx ->
+            val pair = arr.getJSONArray(idx)
+            GeoPoint(latitude = pair.getDouble(0), longitude = pair.getDouble(1))
+        }
+    }.getOrNull()
+
+    private fun listToJson(list: List<*>?): String {
+        if (list == null) return "[]"
+        val arr = JSONArray()
+        list.forEach { if (it is String) arr.put(it) }
+        return arr.toString()
+    }
+
+    private fun jsonToList(json: String): List<String> {
+        val arr = JSONArray(json)
+        return (0 until arr.length()).mapNotNull { idx ->
+            arr.optString(idx).takeIf { it.isNotBlank() }
         }
     }
 
@@ -479,7 +687,20 @@ class EzrahiRepositoryImpl @Inject constructor(
         managerId = managerId,
         managerContact = managerContact,
         gpxRouteUrl = gpxRouteUrl,
-        isLive = isLive
+        isLive = isLive,
+        routeAllowedRoles = jsonToList(routeAllowedRolesJson),
+        routeAllowedUids = jsonToList(routeAllowedUidsJson)
+    )
+
+    private fun RouteLocalEntity.toRouteInfo() = RouteInfo(
+        id = id,
+        eventId = eventId,
+        name = name,
+        gpxRouteUrl = gpxRouteUrl,
+        storagePath = storagePath,
+        uploadedBy = uploadedBy,
+        uploadedAt = uploadedAt,
+        isActive = isActive
     )
 
     private fun ParticipantLocalEntity.toEventParticipant() = EventParticipant(
