@@ -10,7 +10,7 @@
 
 | # | Item | Status | Where |
 |---|---|---|---|
-| F1 | Quick-Dial Screen (`QuickDialFragment`) | 🔵 TODO | `todo-fix-2.md` |
+| F1 | Quick-Dial Screen (`QuickDialFragment`) | 🟢 DONE (`app/ui/dial/`, staff grouped by role, `ACTION_DIAL`, commit `ed41729`) | `todo-fix-2.md` |
 | F2 | Event Management Screen (`ActivityOverviewFragment`) | 🔵 TODO | `todo-fix-3.md` |
 | F3 | GPX Route Parser + Polyline Renderer | 🔵 TODO | `todo-fix-5.md` |
 | F4 | Structured Field Reports & Checkpoints | 🟢 DONE (Phase 5: long-press → Add Marker dialog → `Reports`; SOS FAB removed by PO decision, `triggerSOS` dormant) | `todo-fix-1` series |
