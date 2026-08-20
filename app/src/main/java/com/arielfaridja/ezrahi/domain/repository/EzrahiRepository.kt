@@ -3,6 +3,7 @@ package com.arielfaridja.ezrahi.domain.repository
 import com.arielfaridja.ezrahi.domain.model.*
 import android.net.Uri
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
 
 interface EzrahiRepository {
     fun getEventUpdates(eventId: String): Flow<FieldEvent?>
@@ -12,6 +13,7 @@ interface EzrahiRepository {
     fun getMessages(eventId: String): Flow<List<FieldMessage>>
     fun getRoutes(eventId: String): Flow<List<RouteInfo>>
     fun getActiveRoutePoints(eventId: String): Flow<List<GeoPoint>>
+    val routeErrorEvents: SharedFlow<String>
     suspend fun uploadRoute(eventId: String, uid: String, uri: Uri, fileName: String): Result<Unit>
     suspend fun setActiveRoute(eventId: String, routeId: String): Result<Unit>
     suspend fun deleteRoute(eventId: String, routeId: String): Result<Unit>

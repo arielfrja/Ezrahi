@@ -153,6 +153,15 @@ fun MapScreen(
 
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.statusMessage) {
+        state.statusMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearStatus()
+        }
+    }
+
     val mapView = remember {
         Configuration.getInstance().userAgentValue = context.packageName
         MapView(context).apply {
@@ -251,6 +260,7 @@ fun MapScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             Column {
                 TopAppBar(

@@ -111,12 +111,6 @@ class EventManagementViewModel @Inject constructor(
             repository.uploadRoute(eventId, uid, uri, fileName)
                 .onSuccess {
                     _uiState.update { it.copy(statusMessage = "Route uploaded") }
-                    if (_uiState.value.routes.none { r -> r.isActive }) {
-                        _uiState.value.routes.firstOrNull()?.let { first ->
-                            repository.setActiveRoute(eventId, first.id)
-                                .onFailure { e -> _uiState.update { it.copy(statusMessage = "Uploaded, but activation failed: ${e.message}") } }
-                        }
-                    }
                 }
                 .onFailure { e -> _uiState.update { it.copy(statusMessage = "Upload failed: ${e.message}") } }
             _uiState.update { it.copy(isUploading = false) }

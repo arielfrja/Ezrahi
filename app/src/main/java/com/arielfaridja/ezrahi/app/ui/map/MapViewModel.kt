@@ -51,7 +51,9 @@ class MapViewModel @Inject constructor(
         }
         viewModelScope.launch {
             repository.getRoutes(eventId).collect { routes ->
-                _uiState.update { it.copy(activeRouteName = routes.firstOrNull { r -> r.isActive }?.name) }
+                val name = if (routes.size == 1) routes.first().name
+                else routes.firstOrNull { r -> r.isActive }?.name
+                _uiState.update { it.copy(activeRouteName = name) }
             }
         }
         viewModelScope.launch {
@@ -59,6 +61,15 @@ class MapViewModel @Inject constructor(
                 _uiState.update { it.copy(routePoints = points) }
             }
         }
+        viewModelScope.launch {
+            repository.routeErrorEvents.collect { error ->
+                _uiState.update { it.copy(statusMessage = error) }
+            }
+        }
+    }
+
+    fun clearStatus() {
+        _uiState.update { it.copy(statusMessage = null) }
     }
 
     fun triggerSOS(eventId: String, currentLat: Double, currentLng: Double) {

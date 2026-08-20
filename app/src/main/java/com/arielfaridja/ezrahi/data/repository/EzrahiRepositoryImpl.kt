@@ -1,5 +1,6 @@
 package com.arielfaridja.ezrahi.data.repository
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.arielfaridja.ezrahi.data.local.*
@@ -12,10 +13,14 @@ import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.storage.FirebaseStorage
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -27,6 +32,7 @@ import javax.inject.Singleton
 
 @Singleton
 class EzrahiRepositoryImpl @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val firestore: FirebaseFirestore,
     private val storage: FirebaseStorage,
     private val dao: EzrahiDao
@@ -37,6 +43,9 @@ class EzrahiRepositoryImpl @Inject constructor(
     }
 
     private val scope = CoroutineScope(Dispatchers.IO)
+
+    private val _routeErrorEvents = MutableSharedFlow<String>()
+    override val routeErrorEvents: SharedFlow<String> = _routeErrorEvents.asSharedFlow()
 
     private fun logListenerError(query: String, error: Exception) {
         Log.w(TAG, "listener '$query' failed: ${error.message} (serving cached data)", error)
@@ -251,16 +260,25 @@ class EzrahiRepositoryImpl @Inject constructor(
     }
 
     override fun getRoutes(eventId: String): Flow<List<RouteInfo>> = callbackFlow {
-        val registration = firestore.collection("events").document(eventId).collection("routes")
-            .addSnapshotListener { snapshot, error ->
+        val routesRef = firestore.collection("events").document(eventId).collection("routes")
+        val registration = routesRef.addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     logListenerError("events/$eventId/routes", error)
                     return@addSnapshotListener
                 }
                 if (snapshot != null) {
-                    snapshot.documents.forEach { doc ->
-                        if (!doc.exists()) return@forEach
-                        scope.launch {
+                    val existing = snapshot.documents.filter { it.exists() }
+                    if (existing.size == 1 && existing[0].getBoolean("isActive") != true) {
+                        routesRef.document(existing[0].id).update("isActive", true)
+                    }
+                    val serverIds = existing.map { it.id }
+                    scope.launch {
+                        if (serverIds.isEmpty()) {
+                            dao.deleteRoutesForEvent(eventId)
+                        } else {
+                            dao.deleteRoutesNotIn(eventId, serverIds)
+                        }
+                        existing.forEach { doc ->
                             val cached = dao.getRoute(doc.id)
                             dao.insertRoutes(
                                 listOf(
@@ -301,9 +319,15 @@ class EzrahiRepositoryImpl @Inject constructor(
                     return@addSnapshotListener
                 }
                 if (snapshot != null) {
-                    snapshot.documents.forEach { doc ->
-                        if (!doc.exists()) return@forEach
-                        scope.launch {
+                    val existing = snapshot.documents.filter { it.exists() }
+                    val serverIds = existing.map { it.id }
+                    scope.launch {
+                        if (serverIds.isEmpty()) {
+                            dao.deleteRoutesForEvent(eventId)
+                        } else {
+                            dao.deleteRoutesNotIn(eventId, serverIds)
+                        }
+                        existing.forEach { doc ->
                             val cached = dao.getRoute(doc.id)
                             dao.insertRoutes(
                                 listOf(
@@ -328,7 +352,7 @@ class EzrahiRepositoryImpl @Inject constructor(
         val job = launch {
             var lastFetchedRouteId: String? = null
             dao.observeRoutes(eventId).collect { routes ->
-                val active = routes.firstOrNull { it.isActive }
+                val active = if (routes.size == 1) routes.first() else routes.firstOrNull { it.isActive }
                 if (active == null) {
                     lastFetchedRouteId = null
                     trySend(emptyList())
@@ -346,11 +370,16 @@ class EzrahiRepositoryImpl @Inject constructor(
                                 if (points.isNotEmpty()) {
                                     dao.updateRoutePoints(active.id, toPointsJson(points))
                                     trySend(points)
+                                } else {
+                                    _routeErrorEvents.emit("Route '${active.name}': GPX contains no track points")
                                 }
                             }.onFailure { error ->
                                 Log.w(TAG, "route download/parse failed for '${active.name}': ${error.message}")
+                                _routeErrorEvents.emit("Route '${active.name}' failed to load: ${error.message}")
                             }
                         }
+                    } else {
+                        _routeErrorEvents.emit("Route '${active.name}' has no download URL")
                     }
                 }
             }
@@ -363,18 +392,26 @@ class EzrahiRepositoryImpl @Inject constructor(
 
     override suspend fun uploadRoute(eventId: String, uid: String, uri: Uri, fileName: String): Result<Unit> = runCatching {
         val safeName = fileName.replace(Regex("[^a-zA-Z0-9._-]"), "_").ifBlank { "route.gpx" }
+        val xml = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+            ?: throw IllegalArgumentException("Cannot read the selected file")
+        val parsedPoints = GpxParser.parse(xml)
+        if (parsedPoints.isEmpty()) {
+            throw IllegalArgumentException("Selected file is not a valid GPX track (no track points found)")
+        }
         val path = "gpx/$eventId/$uid/$safeName"
         val ref = storage.reference.child(path)
         val downloadUrl = ref.putFile(uri).await().storage.downloadUrl.await()
-        val routeId = firestore.collection("events").document(eventId).collection("routes").document().id
-        firestore.collection("events").document(eventId).collection("routes").document(routeId).set(
+        val routesRef = firestore.collection("events").document(eventId).collection("routes")
+        val isFirst = routesRef.get().await().documents.isEmpty()
+        val routeId = routesRef.document().id
+        routesRef.document(routeId).set(
             mapOf(
                 "name" to safeName.removeSuffix(".gpx"),
                 "gpxRouteUrl" to downloadUrl.toString(),
                 "storagePath" to path,
                 "uploadedBy" to uid,
                 "uploadedAt" to System.currentTimeMillis(),
-                "isActive" to false
+                "isActive" to isFirst
             )
         ).await()
         Unit

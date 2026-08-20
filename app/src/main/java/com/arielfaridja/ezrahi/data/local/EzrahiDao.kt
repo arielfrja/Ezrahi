@@ -55,4 +55,10 @@ interface EzrahiDao {
 
     @Query("DELETE FROM cached_routes WHERE id = :routeId")
     suspend fun deleteRoute(routeId: String)
+
+    @Query("DELETE FROM cached_routes WHERE eventId = :eventId AND id NOT IN (:ids)")
+    suspend fun deleteRoutesNotIn(eventId: String, ids: List<String>)
+
+    @Query("DELETE FROM cached_routes WHERE eventId = :eventId")
+    suspend fun deleteRoutesForEvent(eventId: String)
 }

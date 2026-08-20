@@ -56,7 +56,8 @@ pm_backup/
 roadmap.md
 
 # Development / test sandbox: scratch scripts, experiments, and throwaway
-# test code that must never be committed. Anything development-related that
-# is not meant for the repo goes here.
-.sandbox/
+# test code that must never be committed. The directory itself is tracked
+# (via .sandbox/.gitkeep); only its contents are ignored.
+.sandbox/*
+!.sandbox/.gitkeep
 

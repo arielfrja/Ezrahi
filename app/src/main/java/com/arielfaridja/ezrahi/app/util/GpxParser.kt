@@ -6,12 +6,14 @@ import org.xmlpull.v1.XmlPullParserFactory
 
 object GpxParser {
 
+    private val BOM_AND_LEADING_WS = Regex("^[\\uFEFF\\s]*")
+
     fun parse(xml: String): List<GeoPoint> {
         val points = mutableListOf<GeoPoint>()
         val factory = XmlPullParserFactory.newInstance()
         factory.isNamespaceAware = true
         val parser = factory.newPullParser()
-        parser.setInput(xml.reader())
+        parser.setInput(xml.replace(BOM_AND_LEADING_WS, "").reader())
         var eventType = parser.eventType
         while (eventType != XmlPullParser.END_DOCUMENT) {
             if (eventType == XmlPullParser.START_TAG &&
