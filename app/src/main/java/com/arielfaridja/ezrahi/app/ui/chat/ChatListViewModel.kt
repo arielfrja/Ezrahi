@@ -2,7 +2,7 @@ package com.arielfaridja.ezrahi.app.ui.chat
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.arielfaridja.ezrahi.app.util.defaultRoleOptions
+import com.arielfaridja.ezrahi.domain.model.defaultRoleOptions
 import com.arielfaridja.ezrahi.domain.model.EventParticipant
 import com.arielfaridja.ezrahi.domain.model.FieldMessage
 import com.arielfaridja.ezrahi.domain.model.RoleOption

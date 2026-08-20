@@ -1,4 +1,4 @@
-package com.arielfaridja.ezrahi.app.util
+package com.arielfaridja.ezrahi.data.parser
 
 import com.arielfaridja.ezrahi.domain.model.GeoPoint
 import org.xmlpull.v1.XmlPullParser

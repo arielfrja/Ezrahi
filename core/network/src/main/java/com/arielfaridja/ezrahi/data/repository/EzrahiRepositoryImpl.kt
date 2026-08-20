@@ -5,9 +5,9 @@ import android.net.Uri
 import android.util.Log
 import com.arielfaridja.ezrahi.data.local.*
 import com.arielfaridja.ezrahi.data.mapper.FieldReportMapper
-import com.arielfaridja.ezrahi.app.util.GpxParser
-import com.arielfaridja.ezrahi.app.util.defaultRoleOptions
+import com.arielfaridja.ezrahi.data.parser.GpxParser
 import com.arielfaridja.ezrahi.domain.model.*
+import com.arielfaridja.ezrahi.domain.model.defaultRoleOptions
 import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
 import com.arielfaridja.ezrahi.util.logging.ErrorType
 import com.arielfaridja.ezrahi.util.logging.ExceptionLogger

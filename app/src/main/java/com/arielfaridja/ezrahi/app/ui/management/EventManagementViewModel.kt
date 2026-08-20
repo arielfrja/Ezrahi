@@ -3,7 +3,7 @@ package com.arielfaridja.ezrahi.app.ui.management
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.arielfaridja.ezrahi.app.util.defaultRoleOptions
+import com.arielfaridja.ezrahi.domain.model.defaultRoleOptions
 import com.arielfaridja.ezrahi.domain.model.EventParticipant
 import com.arielfaridja.ezrahi.domain.model.FieldEvent
 import com.arielfaridja.ezrahi.domain.model.FieldReport

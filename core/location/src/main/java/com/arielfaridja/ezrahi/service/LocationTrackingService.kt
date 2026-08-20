@@ -6,7 +6,6 @@ import android.content.Intent
 import android.os.IBinder
 import android.os.Looper
 import androidx.core.app.NotificationCompat
-import com.arielfaridja.ezrahi.MainActivity
 import com.arielfaridja.ezrahi.domain.model.GeoPoint
 import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
 import com.arielfaridja.ezrahi.util.logging.ErrorType
@@ -34,6 +33,11 @@ class LocationTrackingService : Service() {
 
     private var eventId: String = ""
     private var userId: String = ""
+    private var contentActivityName: String? = null
+
+    companion object {
+        const val EXTRA_CONTENT_ACTIVITY = "EXTRA_CONTENT_ACTIVITY"
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -64,6 +68,7 @@ class LocationTrackingService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         eventId = intent?.getStringExtra("EXTRA_EVENT_ID") ?: ""
         userId = intent?.getStringExtra("EXTRA_USER_ID") ?: ""
+        contentActivityName = intent?.getStringExtra(EXTRA_CONTENT_ACTIVITY)
 
         try {
             val notification = createNotification()
@@ -94,18 +99,22 @@ class LocationTrackingService : Service() {
     }
 
     private fun createNotification(): Notification {
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, Intent(this, MainActivity::class.java),
-            PendingIntent.FLAG_IMMUTABLE
-        )
+        val contentIntent = contentActivityName?.let { name ->
+            runCatching {
+                PendingIntent.getActivity(
+                    this, 0, Intent(this, Class.forName(name)),
+                    PendingIntent.FLAG_IMMUTABLE
+                )
+            }.getOrNull()
+        }
 
-        return NotificationCompat.Builder(this, "ezrahi_tracking_channel")
+        val builder = NotificationCompat.Builder(this, "ezrahi_tracking_channel")
             .setContentTitle("Ezrahi Field Tracking Active")
             .setContentText("Transmitting your location to field staff...")
             .setSmallIcon(android.R.drawable.ic_menu_mylocation)
-            .setContentIntent(pendingIntent)
             .setOngoing(true)
-            .build()
+        contentIntent?.let { builder.setContentIntent(it) }
+        return builder.build()
     }
 
     private fun createNotificationChannel() {

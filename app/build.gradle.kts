@@ -85,10 +85,12 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
-    // Room
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    ksp(libs.room.compiler)
+    // Core modules (Phase 1 decomposition)
+    implementation(project(":core:model"))
+    implementation(project(":core:common"))
+    implementation(project(":core:database"))
+    implementation(project(":core:network"))
+    implementation(project(":core:location"))
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)

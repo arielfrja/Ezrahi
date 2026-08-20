@@ -1,7 +1,4 @@
-package com.arielfaridja.ezrahi.app.util
-
-import com.arielfaridja.ezrahi.domain.model.RoleOption
-import com.arielfaridja.ezrahi.domain.model.UserRole
+package com.arielfaridja.ezrahi.domain.model
 
 fun defaultRoleOptions(): List<RoleOption> = UserRole.entries.map { role ->
     RoleOption(

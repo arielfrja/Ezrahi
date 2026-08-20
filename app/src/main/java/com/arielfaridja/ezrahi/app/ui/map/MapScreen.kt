@@ -25,6 +25,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.arielfaridja.ezrahi.MainActivity
 import com.arielfaridja.ezrahi.R
 import com.arielfaridja.ezrahi.app.util.LocationPermissionHelper
 import com.arielfaridja.ezrahi.domain.model.FieldReportStatus
@@ -142,6 +143,7 @@ fun MapScreen(
                     val intent = Intent(context, LocationTrackingService::class.java).apply {
                         putExtra("EXTRA_EVENT_ID", eventId)
                         putExtra("EXTRA_USER_ID", user.uid)
+                        putExtra(LocationTrackingService.EXTRA_CONTENT_ACTIVITY, MainActivity::class.java.name)
                     }
                     context.startForegroundService(intent)
                 } catch (e: Exception) {

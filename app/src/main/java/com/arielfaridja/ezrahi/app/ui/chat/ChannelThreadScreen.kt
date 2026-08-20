@@ -39,7 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.arielfaridja.ezrahi.app.util.roleLabel
+import com.arielfaridja.ezrahi.domain.model.roleLabel
 import com.arielfaridja.ezrahi.domain.model.FieldMessage
 import com.google.firebase.auth.FirebaseAuth
 import java.text.SimpleDateFormat
