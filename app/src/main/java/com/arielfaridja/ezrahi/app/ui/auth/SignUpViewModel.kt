@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.arielfaridja.ezrahi.domain.model.UserProfile
 import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
+import com.arielfaridja.ezrahi.util.logging.ErrorType
+import com.arielfaridja.ezrahi.util.logging.ExceptionLogger
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,7 +29,8 @@ data class SignUpUiState(
 @HiltViewModel
 class SignUpViewModel @Inject constructor(
     private val repository: EzrahiRepository,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val logger: ExceptionLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SignUpUiState())
@@ -61,6 +64,7 @@ class SignUpViewModel @Inject constructor(
                                     phoneNumber = state.phone.trim()
                                 )
                             ).onFailure {
+                                logger.log(it, ErrorType.NETWORK, screen = "signup")
                                 _uiState.value = _uiState.value.copy(
                                     isLoading = false,
                                     errorMessage = it.localizedMessage ?: "Failed to save profile"
@@ -78,6 +82,7 @@ class SignUpViewModel @Inject constructor(
                     }
                 }
                 .addOnFailureListener { err ->
+                    logger.log(err, ErrorType.AUTH, screen = "signup")
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         errorMessage = err.localizedMessage ?: "Sign up failed"

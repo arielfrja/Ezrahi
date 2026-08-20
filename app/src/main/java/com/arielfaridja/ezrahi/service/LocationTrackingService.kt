@@ -9,6 +9,8 @@ import androidx.core.app.NotificationCompat
 import com.arielfaridja.ezrahi.MainActivity
 import com.arielfaridja.ezrahi.domain.model.GeoPoint
 import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
+import com.arielfaridja.ezrahi.util.logging.ErrorType
+import com.arielfaridja.ezrahi.util.logging.ExceptionLogger
 import com.google.android.gms.location.*
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -25,6 +27,7 @@ import android.os.Build
 class LocationTrackingService : Service() {
 
     @Inject lateinit var repository: EzrahiRepository
+    @Inject lateinit var logger: ExceptionLogger
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
@@ -42,11 +45,15 @@ class LocationTrackingService : Service() {
                 result.lastLocation?.let { loc ->
                     if (eventId.isNotEmpty() && userId.isNotEmpty()) {
                         serviceScope.launch {
-                            repository.updateLocation(
-                                eventId = eventId,
-                                userId = userId,
-                                location = GeoPoint(loc.latitude, loc.longitude, System.currentTimeMillis())
-                            )
+                            runCatching {
+                                repository.updateLocation(
+                                    eventId = eventId,
+                                    userId = userId,
+                                    location = GeoPoint(loc.latitude, loc.longitude, System.currentTimeMillis())
+                                ).getOrThrow()
+                            }.onFailure { e ->
+                                logger.log(e, ErrorType.NETWORK, eventId, screen = "location_service")
+                            }
                         }
                     }
                 }
@@ -67,7 +74,7 @@ class LocationTrackingService : Service() {
             }
             startLocationUpdates()
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.log(e, ErrorType.LOCATION_SERVICE, eventId, screen = "location_service")
         }
 
         return START_STICKY
@@ -82,7 +89,7 @@ class LocationTrackingService : Service() {
 
             fusedLocationClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper())
         } catch (e: Exception) {
-            e.printStackTrace()
+            logger.log(e, ErrorType.LOCATION_SERVICE, eventId, screen = "location_service")
         }
     }
 

@@ -8,6 +8,8 @@ import com.arielfaridja.ezrahi.domain.model.FieldReport
 import com.arielfaridja.ezrahi.domain.model.FieldReportType
 import com.arielfaridja.ezrahi.domain.model.GeoPoint
 import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
+import com.arielfaridja.ezrahi.util.logging.ErrorType
+import com.arielfaridja.ezrahi.util.logging.ExceptionLogger
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -27,7 +29,8 @@ data class MapUiState(
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val repository: EzrahiRepository,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val logger: ExceptionLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MapUiState())
@@ -72,6 +75,10 @@ class MapViewModel @Inject constructor(
         _uiState.update { it.copy(statusMessage = null) }
     }
 
+    fun logServiceStartFailure(e: Exception) {
+        logger.log(e, ErrorType.LOCATION_SERVICE, screen = "map")
+    }
+
     fun triggerSOS(eventId: String, currentLat: Double, currentLng: Double) {
         viewModelScope.launch {
             val user = auth.currentUser
@@ -83,6 +90,11 @@ class MapViewModel @Inject constructor(
             )
             if (result.isSuccess) {
                 _uiState.update { it.copy(isSosActive = true, statusMessage = "🚨 SOS Transmitted!") }
+            } else {
+                result.exceptionOrNull()?.let { e ->
+                    logger.log(e, ErrorType.NETWORK, eventId, screen = "map")
+                    _uiState.update { it.copy(statusMessage = "SOS failed: ${e.message}") }
+                }
             }
         }
     }
@@ -99,6 +111,7 @@ class MapViewModel @Inject constructor(
                 type = type
             )
             repository.addReport(report)
+                .onFailure { e -> logger.log(e, ErrorType.CAUGHT, eventId, screen = "map") }
         }
     }
 }

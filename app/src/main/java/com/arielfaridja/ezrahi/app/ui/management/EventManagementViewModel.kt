@@ -12,6 +12,8 @@ import com.arielfaridja.ezrahi.domain.model.RoleOption
 import com.arielfaridja.ezrahi.domain.model.RouteInfo
 import com.arielfaridja.ezrahi.domain.model.UserRole
 import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
+import com.arielfaridja.ezrahi.util.logging.ErrorType
+import com.arielfaridja.ezrahi.util.logging.ExceptionLogger
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -39,7 +41,8 @@ data class EventManagementUiState(
 @HiltViewModel
 class EventManagementViewModel @Inject constructor(
     private val repository: EzrahiRepository,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val logger: ExceptionLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EventManagementUiState())
@@ -112,7 +115,10 @@ class EventManagementViewModel @Inject constructor(
                 .onSuccess {
                     _uiState.update { it.copy(statusMessage = "Route uploaded") }
                 }
-                .onFailure { e -> _uiState.update { it.copy(statusMessage = "Upload failed: ${e.message}") } }
+                .onFailure { e ->
+                    logger.log(e, ErrorType.NETWORK, eventId, screen = "management")
+                    _uiState.update { it.copy(statusMessage = "Upload failed: ${e.message}") }
+                }
             _uiState.update { it.copy(isUploading = false) }
         }
     }
@@ -121,7 +127,10 @@ class EventManagementViewModel @Inject constructor(
         viewModelScope.launch {
             repository.setActiveRoute(eventId, routeId)
                 .onSuccess { _uiState.update { it.copy(statusMessage = "Route activated") } }
-                .onFailure { e -> _uiState.update { it.copy(statusMessage = "Activation failed: ${e.message}") } }
+                .onFailure { e ->
+                    logger.log(e, ErrorType.NETWORK, eventId, screen = "management")
+                    _uiState.update { it.copy(statusMessage = "Activation failed: ${e.message}") }
+                }
         }
     }
 
@@ -137,7 +146,10 @@ class EventManagementViewModel @Inject constructor(
                         }
                     }
                 }
-                .onFailure { e -> _uiState.update { it.copy(statusMessage = "Delete failed: ${e.message}") } }
+                .onFailure { e ->
+                    logger.log(e, ErrorType.NETWORK, eventId, screen = "management")
+                    _uiState.update { it.copy(statusMessage = "Delete failed: ${e.message}") }
+                }
         }
     }
 
@@ -145,7 +157,10 @@ class EventManagementViewModel @Inject constructor(
         viewModelScope.launch {
             repository.updateRoutePermissions(eventId, allowedRoles, allowedUids)
                 .onSuccess { _uiState.update { it.copy(statusMessage = "Permissions saved") } }
-                .onFailure { e -> _uiState.update { it.copy(statusMessage = "Permissions failed: ${e.message}") } }
+                .onFailure { e ->
+                    logger.log(e, ErrorType.NETWORK, eventId, screen = "management")
+                    _uiState.update { it.copy(statusMessage = "Permissions failed: ${e.message}") }
+                }
         }
     }
 
@@ -153,7 +168,10 @@ class EventManagementViewModel @Inject constructor(
         viewModelScope.launch {
             repository.updateParticipantRole(eventId, userId, role)
                 .onSuccess { _uiState.update { it.copy(statusMessage = "Role updated") } }
-                .onFailure { e -> _uiState.update { it.copy(statusMessage = "Failed: ${e.message}") } }
+                .onFailure { e ->
+                    logger.log(e, ErrorType.CAUGHT, eventId, screen = "management")
+                    _uiState.update { it.copy(statusMessage = "Failed: ${e.message}") }
+                }
         }
     }
 
@@ -162,7 +180,10 @@ class EventManagementViewModel @Inject constructor(
         viewModelScope.launch {
             repository.updateEventName(eventId, name)
                 .onSuccess { _uiState.update { it.copy(statusMessage = "Event renamed") } }
-                .onFailure { e -> _uiState.update { it.copy(statusMessage = "Failed: ${e.message}") } }
+                .onFailure { e ->
+                    logger.log(e, ErrorType.CAUGHT, eventId, screen = "management")
+                    _uiState.update { it.copy(statusMessage = "Failed: ${e.message}") }
+                }
         }
     }
 

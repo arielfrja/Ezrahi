@@ -9,6 +9,8 @@ import com.arielfaridja.ezrahi.app.util.GpxParser
 import com.arielfaridja.ezrahi.app.util.defaultRoleOptions
 import com.arielfaridja.ezrahi.domain.model.*
 import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
+import com.arielfaridja.ezrahi.util.logging.ErrorType
+import com.arielfaridja.ezrahi.util.logging.ExceptionLogger
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -35,7 +37,8 @@ class EzrahiRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val firestore: FirebaseFirestore,
     private val storage: FirebaseStorage,
-    private val dao: EzrahiDao
+    private val dao: EzrahiDao,
+    private val logger: ExceptionLogger
 ) : EzrahiRepository {
 
     companion object {
@@ -49,6 +52,7 @@ class EzrahiRepositoryImpl @Inject constructor(
 
     private fun logListenerError(query: String, error: Exception) {
         Log.w(TAG, "listener '$query' failed: ${error.message} (serving cached data)", error)
+        logger.log(error, ErrorType.FIRESTORE_LISTENER, screen = query)
     }
 
     override fun getEvents(): Flow<List<FieldEvent>> = callbackFlow {
@@ -375,6 +379,7 @@ class EzrahiRepositoryImpl @Inject constructor(
                                 }
                             }.onFailure { error ->
                                 Log.w(TAG, "route download/parse failed for '${active.name}': ${error.message}")
+                                logger.log(error, ErrorType.ROUTE_PARSER, eventId, screen = "map")
                                 _routeErrorEvents.emit("Route '${active.name}' failed to load: ${error.message}")
                             }
                         }
@@ -417,6 +422,7 @@ class EzrahiRepositoryImpl @Inject constructor(
         Unit
     }.onFailure { error ->
         Log.w(TAG, "uploadRoute(event=$eventId) failed", error)
+        logger.log(error, ErrorType.ROUTE_PARSER, eventId, screen = "management")
     }
 
     override suspend fun setActiveRoute(eventId: String, routeId: String): Result<Unit> = runCatching {
@@ -640,6 +646,7 @@ class EzrahiRepositoryImpl @Inject constructor(
             Unit
     }.onFailure { error ->
         Log.w(TAG, "sendDirectMessage(event=$eventId, other=$otherUserId) failed", error)
+        logger.log(error, ErrorType.NETWORK, eventId, screen = "direct")
     }
 
     override suspend fun sendMessage(message: FieldMessage): Result<Unit> = runCatching {

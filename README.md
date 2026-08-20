@@ -12,6 +12,37 @@ sh gradlew :app:assembleDebug
 
 Debug APK: `app/build/outputs/apk/debug/app-debug.apk`
 
+## Exception logging (fix-6)
+
+Every frontend exception and crash is logged to **Firestore** in the `app_errors`
+collection (one document per error, document ID = GUID). Details and design:
+`docs/specs/todo-fix-6-exception-logging.md`.
+
+**Where errors land**
+
+| Source | Where it goes | When |
+|---|---|---|
+| Handled exceptions (parse, uploads, listeners, network, auth, location) | Firestore `app_errors` (direct write, offline-safe) | Immediately |
+| Fatal crashes | Disk dump `filesDir/crash_reports/crash_<guid>.json` → flushed to `app_errors` | On next launch |
+| Logcat (local only) | `E/EzrahiLogger: <type> [<GUID>] <message>` | Immediately |
+
+**What is in a record:** GUID, error type (CRASH / ROUTE_PARSER / NETWORK /
+FIRESTORE_LISTENER / AUTH / LOCATION_SERVICE / UI_COMPOSE / CAUGHT), severity,
+sanitized message + stack trace, timestamp, app version/code, device model,
+OS version, user id (or `anon-<id>` when signed out), event id, screen,
+session id, thread, fatal flag, foreground state, last 8 breadcrumbs.
+
+**Reading errors:** Firebase Console → Firestore → `app_errors`
+(reads are blocked from the app by security rules; query via console/gcloud).
+Fatal records have `isFatal: true`.
+
+**Guards (by design, see spec §5.5–§5.6):** PII sanitizer redacts phones,
+emails, coordinates, API keys, tokens and URIs before anything leaves the
+device; dedup (identical error ≤3 min), token bucket (≤5 writes/sec) and
+hourly budget (≤20 records/hour/device) prevent floods — suppressed floods
+are marked with `RATE_LIMITED` / `CIRCUIT_OPEN` records; records are
+immutable and auto-deleted after 30 days (TTL).
+
 ## Project docs
 
 All documentation lives under `docs/` (README excluded).

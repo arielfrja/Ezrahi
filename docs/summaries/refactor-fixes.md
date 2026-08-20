@@ -16,6 +16,7 @@
 | F4 | Structured Field Reports & Checkpoints | 🟢 DONE (Phase 5: long-press → Add Marker dialog → `Reports`; SOS FAB removed by PO decision, `triggerSOS` dormant) | `todo-fix-1` series |
 | F5 | Full User Registration (name/email/phone → `Users/{uid}`) | 🟢 DONE (Phase 5 signup + `registerUser`) | Phase 5 |
 | F6 | Role-Based Messaging Channels | 🟢 DONE (WhatsApp-style chat list: All Broadcast + dynamic role channels with previews, pair-scoped direct messages, messenger link buttons in Crew tab; dynamic roles/messengers from `settings` docs; resilient listeners + `isPairMember` via `split().hasAny()` rules fix) | `../specs/todo-fix-4.md` |
+| F7 | Exception Logging System (`app_errors`) | 🟢 DONE (App-wide `ExceptionLogger` + `GlobalCrashHandler` + disk dump flush; PII sanitizer, 3min dedup, token bucket rate limiter, 20/hr budget, circuit breaker; immutable `app_errors/{errorId}` Firestore collection; security rules 15/15 unit-tested & deployed + composite index deployed) | `../specs/todo-fix-6-exception-logging.md` |
 | B1 | Firestore SnapshotListener Leaks | 🟢 DONE (`callbackFlow`/`awaitClose` on all 7 listeners, commit `30984f5`) | `../specs/todo-fix-1.md` |
 | B2 | Android 14+ FGS Crash | 🟢 DONE (Phase 4: `FOREGROUND_SERVICE_LOCATION` declared + API 34 `startForeground` branch + POST_NOTIFICATIONS flow) | Phase 4 |
 | B3 | Room Type Handling | 🟢 N/A — all Room fields are primitives; no converters needed | — |

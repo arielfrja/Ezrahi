@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.arielfaridja.ezrahi.domain.model.FieldMessage
 import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
+import com.arielfaridja.ezrahi.util.logging.ErrorType
+import com.arielfaridja.ezrahi.util.logging.ExceptionLogger
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +26,8 @@ data class DirectThreadUiState(
 @HiltViewModel
 class DirectThreadViewModel @Inject constructor(
     private val repository: EzrahiRepository,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val logger: ExceptionLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DirectThreadUiState())
@@ -66,6 +69,9 @@ class DirectThreadViewModel @Inject constructor(
                 text = trimmed
             )
             if (result.isFailure) {
+                result.exceptionOrNull()?.let { e ->
+                    logger.log(e, ErrorType.NETWORK, eventId, screen = "direct")
+                }
                 _uiState.update {
                     it.copy(statusMessage = result.exceptionOrNull()?.message ?: "Failed to send message")
                 }

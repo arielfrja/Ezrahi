@@ -128,6 +128,27 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------
+    // 4. App error logging (spec docs/specs/todo-fix-6-exception-logging.md).
+    //    Clients may CREATE records (authenticated under their own uid, or
+    //    anonymous pre-auth under the anon- namespace); records are
+    //    immutable and unreadable from the app (query via console/gcloud).
+    // ---------------------------------------------------------------
+    match /app_errors/{errorId} {
+      allow create: if request.resource.data.id == errorId
+        && request.resource.data.timestamp is number
+        && request.resource.data.timestamp <= request.time.toMillis() + 300000    // no future-dating > 5 min
+        && request.resource.data.timestamp >= request.time.toMillis() - 86400000  // flush window: backdate <= 24 h
+        && request.resource.data.message is string
+        && request.resource.data.message.size() <= 2048
+        && request.resource.data.stackTrace is string
+        && request.resource.data.stackTrace.size() <= 8192
+        && ( (request.auth != null && request.resource.data.userId == request.auth.uid)
+          || (request.auth == null && request.resource.data.userId.matches('^anon-.*')) );
+      allow read: if false;
+      allow update, delete: if false;
+    }
+
+    // ---------------------------------------------------------------
     // 3. Collection-group access (event picker: getUserEvents queries
     //    collectionGroup("participants")). Firestore requires a
     //    {path=**} rule for collection-group queries. A user may only

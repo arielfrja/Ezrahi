@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.arielfaridja.ezrahi.domain.model.MessengerOption
 import com.arielfaridja.ezrahi.domain.model.UserRole
 import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
+import com.arielfaridja.ezrahi.util.logging.ErrorType
+import com.arielfaridja.ezrahi.util.logging.ExceptionLogger
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -28,7 +30,8 @@ data class SettingsUiState(
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val repository: EzrahiRepository,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val logger: ExceptionLogger
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -69,7 +72,10 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             repository.updateMyMessengers(eventId, uid, messengers)
                 .onSuccess { _uiState.update { it.copy(statusMessage = "Saved") } }
-                .onFailure { e -> _uiState.update { it.copy(statusMessage = "Failed: ${e.message}") } }
+                .onFailure { e ->
+                    logger.log(e, ErrorType.NETWORK, eventId, screen = "settings")
+                    _uiState.update { it.copy(statusMessage = "Failed: ${e.message}") }
+                }
         }
     }
 

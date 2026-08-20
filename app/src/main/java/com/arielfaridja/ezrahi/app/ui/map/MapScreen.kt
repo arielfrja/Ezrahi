@@ -145,7 +145,7 @@ fun MapScreen(
                     }
                     context.startForegroundService(intent)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    viewModel.logServiceStartFailure(e)
                 }
             }
         }
