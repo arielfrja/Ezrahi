@@ -1,6 +1,6 @@
 # Todo — Phase 1: Domain Entities & Cleaning Technical Debt
 
-> Source: `modernization-roadmap.md` "🏛️ Phase 1" (Days 4–7) + checklist items 1.1–1.3.
+> Source: `../roadmaps/modernization-roadmap.md` "🏛️ Phase 1" (Days 4–7) + checklist items 1.1–1.3.
 > Phase 0 is **complete** (base `refactor/modernization-v2`, build green, user test gate passed, crash/report fixes committed in `c55adef`).
 
 ## Objective

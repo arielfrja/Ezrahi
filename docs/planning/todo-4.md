@@ -1,6 +1,6 @@
 # Todo — Phase 4: Permissions & Background Location Service
 
-> Source: `modernization-roadmap.md` "📍 Phase 4" (Days 18–22) + checklist items 4.1–4.2.
+> Source: `../roadmaps/modernization-roadmap.md` "📍 Phase 4" (Days 18–22) + checklist items 4.1–4.2.
 > Phase 3 is **complete** (`1914f21`): reports cached offline in Room, offline-first `getReports()`, smoke test passed.
 
 ## Objective

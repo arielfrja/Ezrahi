@@ -1,4 +1,0 @@
-feat: Update string resources and add empty array for preferences
-
-Updates various string resources in English and Hebrew.
-Adds an empty string array resource for ListPreference default values.

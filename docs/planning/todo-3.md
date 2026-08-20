@@ -1,6 +1,6 @@
 # Todo — Phase 3: Offline-First Data Layer with Room
 
-> Source: `modernization-roadmap.md` "💾 Phase 3" (Days 12–17) + checklist items 3.1–3.4.
+> Source: `../roadmaps/modernization-roadmap.md` "💾 Phase 3" (Days 12–17) + checklist items 3.1–3.4.
 > Phase 2 is **complete** (`2ecaf60`): `FirebaseDataRepo` Hilt-bound, `DataRepoFactory` is an `@EntryPoint` facade. Smoke test passed.
 
 ## Objective

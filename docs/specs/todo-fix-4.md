@@ -1,6 +1,6 @@
 # Todo — Audit Fix 4: Role-Based Messaging (dynamic roles)
 
-> Source: `refactor-fixes.md` §1 Functional Regression #6 — Superficial Role-Based Messaging.
+> Source: `../summaries/refactor-fixes.md` §1 Functional Regression #6 — Superficial Role-Based Messaging.
 > Requirement: separate WhatsApp-style channels filtered by role (e.g., "Medics Only", "Staff Only", "All Broadcast").
 > Current status: `messages/{eventId}` placeholder only; `getMessages` returns one flat stream.
 
@@ -23,7 +23,7 @@ Firestore doc (or a future settings screen), not code.
 - [ ] Event Management: filter chips + role combobox now driven by `getRoleOptions()` (not static list).
 - [ ] Build green, stage APK.
 - [ ] PO test: chat channels (All + per-role), send targeted message → visible only in that channel; change `settings/roles` doc → app reflects without rebuild.
-- [ ] Commit; update `refactor-fixes.md` (F6 → done).
+- [ ] Commit; update `../summaries/refactor-fixes.md` (F6 → done).
 
 ## Constraints / Notes
 - `targetRole` stays `UserRole?` in the domain/Room model (null = broadcast). Unknown dynamic role names are mapped to `null` (broadcast) until the enum catches up.

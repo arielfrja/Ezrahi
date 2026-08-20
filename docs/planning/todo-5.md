@@ -1,6 +1,6 @@
 # Todo — Phase 5: Single-Activity & Jetpack Compose UI Migration
 
-> Source: `modernization-roadmap.md` "🎨 Phase 5" (Days 23–32) + checklist items 5.1–5.4.
+> Source: `../roadmaps/modernization-roadmap.md` "🎨 Phase 5" (Days 23–32) + checklist items 5.1–5.4.
 > Also **executes the deferred deletions** from Phase 1 (legacy `entities.Activity`, `Callback`, `DataRepoFactory`) and Phase 2 Task 2.6 (duplicate classes) — legacy UI is finally retired here.
 > Phases 0–4 complete. Current commits: `e97171d` (back-press fix) on `refactor/modernization-v2`.
 

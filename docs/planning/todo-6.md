@@ -1,6 +1,6 @@
 # Todo — Phase 6: Cloud Security & Rules Hardening
 
-> Source: `modernization-roadmap.md` "🔒 Phase 6: Cloud Security & Rules Hardening" (Days 33–36), Task 6.1.
+> Source: `../roadmaps/modernization-roadmap.md` "🔒 Phase 6: Cloud Security & Rules Hardening" (Days 33–36), Task 6.1.
 > Phase 5 complete (commits `1890cf5`, `0fc44ae` on `refactor/modernization-v2`); legacy app fully deleted — rules no longer need to serve the old activities flow.
 
 ## Objective

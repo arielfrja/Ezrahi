@@ -1,6 +1,6 @@
 # Todo — Audit Fix 3: Event Management Screen
 
-> Source: `refactor-fixes.md` §1 Functional Regression #2 — Missing Activity/Event Management Screen.
+> Source: `../summaries/refactor-fixes.md` §1 Functional Regression #2 — Missing Activity/Event Management Screen.
 > Requirement: event managers create/edit events, view + assign role permissions, upload/switch GPX routes, inspect field report checkpoints.
 > Current status: only an `activity_overview` placeholder route exists.
 
@@ -21,7 +21,7 @@
 - [ ] `MainActivity`: replace `activity_overview` placeholder with `EventManagementScreen(eventId = currentEventId, ...)`.
 - [ ] Build green, stage APK.
 - [ ] PO test: open Activity Overview from drawer → rename event, change a role, verify reports listed; verify map still shows updated roles.
-- [ ] Commit; update `refactor-fixes.md` (F2 → done).
+- [ ] Commit; update `../summaries/refactor-fixes.md` (F2 → done).
 
 ## Constraints / Notes
 - Only the event manager (managerId) can rename or change roles — UI hides controls otherwise; rules enforce server-side.

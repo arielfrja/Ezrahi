@@ -1,6 +1,6 @@
 # Todo — Audit Fix 1: Firestore SnapshotListener Memory Leaks
 
-> Source: `refactor-fixes.md` §1 Critical Bugs #1 — "Firestore SnapshotListener Memory Leak".
+> Source: `../summaries/refactor-fixes.md` §1 Critical Bugs #1 — "Firestore SnapshotListener Memory Leak".
 > Series: follow-up fixes to the modernization roadmap (Phases 0–7 done, HEAD `800732e`). This is a new numbering series: `todo-fix-N.md`.
 
 ## Objective
@@ -21,7 +21,7 @@ Every Firestore `addSnapshotListener` in the repository must be lifecycle-manage
 - [x] Remove now-unused `flow.map` import (nothing else uses it).
 - [x] Build green (`sh gradlew :app:assembleDebug`), APK staged.
 - [ ] PO smoke test: app behaves identically (auth → picker → map → reports) — this is a behavior-preserving refactor.
-- [ ] Commit; update `refactor-fixes.md` (mark bug #1 done).
+- [ ] Commit; update `../summaries/refactor-fixes.md` (mark bug #1 done).
 
 ## Constraints / Notes
 - No data-model or rule changes — Firestore writes/reads stay exactly as-is (rules already hardened in Phase 6).

@@ -1,6 +1,6 @@
 # Todo — Phase 7: Off-Grid LoRa / Mesh Architecture Preparation (Days 37–40)
 
-> Source: `modernization-roadmap.md` "📻 Phase 7: LoRa / Mesh Architecture Preparation".
+> Source: `../roadmaps/modernization-roadmap.md` "📻 Phase 7: LoRa / Mesh Architecture Preparation".
 > Phases 0–6 complete (HEAD: `f97a67f` on `refactor/modernization-v2`).
 
 ## Objective

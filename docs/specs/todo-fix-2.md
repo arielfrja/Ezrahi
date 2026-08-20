@@ -1,6 +1,6 @@
 # Todo — Audit Fix 2: Role-Based Quick Dial Screen
 
-> Source: `refactor-fixes.md` §1 Functional Regression #1 — Quick-Dial Screen.
+> Source: `../summaries/refactor-fixes.md` §1 Functional Regression #1 — Quick-Dial Screen.
 > Original requirement: a role-based emergency/contact dialer where guides and participants instantly call role-holders (Lead Guide, Medic, Sweep Guide, Basecamp) without knowing their numbers.
 > Current status: only a `speed_dial` placeholder route exists.
 
@@ -14,7 +14,7 @@
 - [ ] `MainActivity.kt`: hoist `currentEventId` state (set on event select), replace `speed_dial` placeholder with `QuickDialScreen(eventId = currentEventId, ...)`.
 - [ ] Build green, stage APK.
 - [ ] PO test: pick an event → drawer → Speed Dial → staff roles listed → tap dials.
-- [ ] Commit; update `refactor-fixes.md` (F1 → done).
+- [ ] Commit; update `../summaries/refactor-fixes.md` (F1 → done).
 
 ## Constraints / Notes
 - Uses `ACTION_DIAL` (not `ACTION_CALL`) — no `CALL_PHONE` permission needed; user confirms before calling.
