@@ -21,6 +21,7 @@
 | B2 | Android 14+ FGS Crash | 🟢 DONE (Phase 4: `FOREGROUND_SERVICE_LOCATION` declared + API 34 `startForeground` branch + POST_NOTIFICATIONS flow) | Phase 4 |
 | B3 | Room Type Handling | 🟢 N/A — all Room fields are primitives; no converters needed | — |
 | B4 | Runtime Location Permissions in Compose | 🟢 DONE (Phase 4 + MapScreen: fine/coarse/background/battery + consent dialogs) | Phase 4 |
+| P2 | Phase 2: Pluggable Multi-Bearer Transport & Priority Outbox Engine | IMPLEMENTED + SMOKE-TESTED — awaiting PO sign-off (commit/push gated) | core/network, core/database, app/work | docs/summaries/phase2-intentional-deviations.md |
 
 ---
 

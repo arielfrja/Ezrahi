@@ -348,8 +348,10 @@ gantt
      * High-frequency GPS: `Channel<TelemetryUpdate>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)`
      * Reliable incidents / messages / SOS: `Channel<FieldMessage>(capacity = Channel.UNLIMITED)`
   5. Build `OutboxSyncWorker` using `WorkManager` with `NetworkType.CONNECTED` to flush queued records upon network restoration.
-  6. Provide mock/skeleton `MeshTransportAdapter` adhering to `MeshTransceiver` to validate multi-bearer extensibility.
+   6. Provide mock/skeleton `MeshTransportAdapter` adhering to `MeshTransceiver` to validate multi-bearer extensibility.
 * **Verification Deliverable:** Unit tests verifying `DROP_OLDEST` behavior for telemetry and persistent outbox queue draining for SOS.
+
+> **Recorded intentional deviations from this phase's spec + smoke-test verification:** see `docs/summaries/phase2-intentional-deviations.md`.
 
 ---
 

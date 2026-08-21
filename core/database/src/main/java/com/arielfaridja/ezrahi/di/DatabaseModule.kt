@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.arielfaridja.ezrahi.data.local.EzrahiDao
 import com.arielfaridja.ezrahi.data.local.EzrahiDatabase
+import com.arielfaridja.ezrahi.data.local.OutboxDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,4 +28,7 @@ object DatabaseModule {
 
     @Provides
     fun provideEzrahiDao(db: EzrahiDatabase): EzrahiDao = db.ezrahiDao()
+
+    @Provides
+    fun provideOutboxDao(db: EzrahiDatabase): OutboxDao = db.outboxDao()
 }

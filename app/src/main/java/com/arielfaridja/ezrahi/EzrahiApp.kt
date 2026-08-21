@@ -3,19 +3,28 @@ package com.arielfaridja.ezrahi
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import com.arielfaridja.ezrahi.util.logging.ExceptionLogger
+import com.arielfaridja.ezrahi.work.OutboxSyncScheduler
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
 @HiltAndroidApp
-class EzrahiApp : Application() {
+class EzrahiApp : Application(), Configuration.Provider {
 
     @Inject lateinit var exceptionLogger: ExceptionLogger
+    @Inject lateinit var workerFactory: HiltWorkerFactory
+    @Inject lateinit var outboxSyncScheduler: OutboxSyncScheduler
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
 
     override fun onCreate() {
         super.onCreate()
         exceptionLogger.installCrashHandler()
         exceptionLogger.flushPendingCrashDumps()
+        outboxSyncScheduler.schedule()
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityStarted(activity: Activity) = exceptionLogger.onActivityStarted()
             override fun onActivityStopped(activity: Activity) = exceptionLogger.onActivityStopped()

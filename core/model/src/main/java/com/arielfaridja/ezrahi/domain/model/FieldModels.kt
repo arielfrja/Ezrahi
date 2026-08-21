@@ -134,3 +134,13 @@ data class FieldReport(
     val status: FieldReportStatus = FieldReportStatus.REPORTED,
     val type: FieldReportType = FieldReportType.GENERAL
 )
+
+// 10. High-frequency GPS telemetry packet (Phase 2 transport engine, DROP_OLDEST channel)
+data class TelemetryUpdate(
+    val userId: String = "",
+    val eventId: String = "",
+    val location: GeoPoint = GeoPoint(),
+    val bearingDegrees: Float = 0f,
+    val speedMps: Float = 0f,
+    val accuracyMeters: Float = 0f
+)
