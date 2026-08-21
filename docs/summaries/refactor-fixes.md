@@ -22,6 +22,7 @@
 | B3 | Room Type Handling | 🟢 N/A — all Room fields are primitives; no converters needed | — |
 | B4 | Runtime Location Permissions in Compose | 🟢 DONE (Phase 4 + MapScreen: fine/coarse/background/battery + consent dialogs) | Phase 4 |
 | P2 | Phase 2: Pluggable Multi-Bearer Transport & Priority Outbox Engine | IMPLEMENTED + SMOKE-TESTED — awaiting PO sign-off (commit/push gated) | core/network, core/database, app/work | docs/summaries/phase2-intentional-deviations.md |
+| P3 | Phase 3: Configurable Staleness Decay & Manual State Management | IMPLEMENTED (build green + 11/11 unit tests) — awaiting PO sign-off (commit/push gated). **Non-permanent override refinement:** manager manual state change seeds `lastSeenTimestamp` (via `StalenessConfig.seedTimestampFor`) so computed liveness == chosen state, and clears `manualStateOverride` (persisted) — state then decays naturally; re-setting same status re-seeds timer. | core/model, core/database, core/network, app/ui/management, app/ui/map | modernization-execution-plan.md Phase 3 |
 
 ---
 

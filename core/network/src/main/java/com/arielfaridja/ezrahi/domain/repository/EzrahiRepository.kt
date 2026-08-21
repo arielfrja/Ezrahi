@@ -33,4 +33,11 @@ interface EzrahiRepository {
     fun getReports(actId: String): Flow<List<FieldReport>>
     suspend fun addReport(report: FieldReport): Result<String>
     suspend fun registerUser(profile: UserProfile): Result<Unit>
+    suspend fun updateStalenessConfig(eventId: String, config: StalenessConfig): Result<Unit>
+    suspend fun updateParticipantManualState(
+        eventId: String,
+        userId: String,
+        override: EntityLivenessState?,
+        config: StalenessConfig
+    ): Result<Unit>
 }

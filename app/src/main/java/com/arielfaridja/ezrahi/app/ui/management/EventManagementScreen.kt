@@ -20,6 +20,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.RadioButton
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
+import com.arielfaridja.ezrahi.domain.model.EntityLivenessState
+import com.arielfaridja.ezrahi.domain.model.StalenessConfig
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
@@ -86,6 +92,7 @@ fun EventManagementScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var roleFilter by remember { mutableStateOf<UserRole?>(null) }
     var editingParticipant by remember { mutableStateOf<EventParticipant?>(null) }
+    var overrideTarget by remember { mutableStateOf<EventParticipant?>(null) }
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     val roleOptions = state.roleOptions.mapNotNull { option ->
         runCatching { UserRole.valueOf(option.name) }.getOrNull()
@@ -184,6 +191,14 @@ fun EventManagementScreen(
                                     )
                                 }
                             }
+                            if (state.isManager) {
+                                item(key = "staleness-settings") {
+                                    StalenessSettingsSection(
+                                        config = state.event?.stalenessConfig ?: StalenessConfig(),
+                                        onSave = { viewModel.updateStalenessConfig(eventId, it) }
+                                    )
+                                }
+                            }
                         }
 
                         1 -> {
@@ -208,8 +223,10 @@ fun EventManagementScreen(
                                 ParticipantRow(
                                     participant = participant,
                                     canEditRoles = state.isManager,
+                                    stalenessConfig = state.event?.stalenessConfig ?: StalenessConfig(),
                                     messengerOptions = state.messengerOptions,
-                                    onEditRequest = { editingParticipant = participant }
+                                    onEditRequest = { editingParticipant = participant },
+                                    onOverrideRequest = { overrideTarget = participant }
                                 )
                             }
                             if (filtered.isEmpty()) {
@@ -255,6 +272,17 @@ fun EventManagementScreen(
                 editingParticipant = null
             },
             onDismiss = { editingParticipant = null }
+        )
+    }
+    overrideTarget?.let { participant ->
+        val currentEventId = eventId ?: return@let
+        ManualStateDialog(
+            participant = participant,
+            onConfirm = { stateOverride ->
+                viewModel.updateParticipantManualState(currentEventId, participant.userId, stateOverride)
+                overrideTarget = null
+            },
+            onDismiss = { overrideTarget = null }
         )
     }
 }
@@ -335,8 +363,10 @@ private fun RoleFilterRow(
 private fun ParticipantRow(
     participant: EventParticipant,
     canEditRoles: Boolean,
+    stalenessConfig: StalenessConfig,
     messengerOptions: List<MessengerOption>,
-    onEditRequest: () -> Unit
+    onEditRequest: () -> Unit,
+    onOverrideRequest: () -> Unit
 ) {
     val context = LocalContext.current
     Card(modifier = Modifier.fillMaxWidth()) {
@@ -353,6 +383,22 @@ private fun ParticipantRow(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    val liveState = participant.effectiveState(stalenessConfig)
+                    Text(
+                        text = when (liveState) {
+                            EntityLivenessState.ACTIVE -> "Active"
+                            EntityLivenessState.STALE -> "Stale"
+                            EntityLivenessState.DISCONNECTED -> "Disconnected"
+                            EntityLivenessState.EXPIRED -> "Faded"
+                        },
+                        style = MaterialTheme.typography.labelMedium,
+                        color = when (liveState) {
+                            EntityLivenessState.ACTIVE -> Color(0xFF2E7D32)
+                            EntityLivenessState.STALE -> Color(0xFFF9A825)
+                            EntityLivenessState.DISCONNECTED -> Color(0xFF616161)
+                            EntityLivenessState.EXPIRED -> Color(0xFF9E9E9E)
+                        }
+                    )
                 }
                 Text(
                     text = roleLabel(participant.role),
@@ -365,6 +411,9 @@ private fun ParticipantRow(
                             Icons.Default.Edit,
                             contentDescription = "Change role of ${participant.fullName}"
                         )
+                    }
+                    TextButton(onClick = onOverrideRequest) {
+                        Text("State")
                     }
                 }
             }
@@ -466,6 +515,111 @@ private fun RoleEditDialog(
             }
         }
     )
+}
+
+@Composable
+private fun StalenessSettingsSection(
+    config: StalenessConfig,
+    onSave: (StalenessConfig) -> Unit
+) {
+    var stale by remember { mutableStateOf(config.staleThresholdMinutes.toString()) }
+    var disconnected by remember { mutableStateOf(config.disconnectedThresholdMinutes.toString()) }
+    var expired by remember { mutableStateOf(config.expiredThresholdMinutes.toString()) }
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Text(
+                text = "Staleness Thresholds / ספי רעננות",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Minutes before a participant is marked (Amber / Grey / Hidden)",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(8.dp))
+            StalenessNumberField("Stale (Amber)", stale) { stale = it }
+            StalenessNumberField("Disconnected (Grey)", disconnected) { disconnected = it }
+            StalenessNumberField("Expired / Faded (Hidden)", expired) { expired = it }
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = {
+                    val s = stale.toIntOrNull() ?: config.staleThresholdMinutes
+                    val d = disconnected.toIntOrNull() ?: config.disconnectedThresholdMinutes
+                    val e = expired.toIntOrNull() ?: config.expiredThresholdMinutes
+                    onSave(StalenessConfig(s, d, e))
+                }
+            ) {
+                Text("Save thresholds")
+            }
+        }
+    }
+}
+
+@Composable
+private fun StalenessNumberField(label: String, value: String, onValueChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = { if (it.isEmpty() || it.all { ch -> ch.isDigit() }) onValueChange(it) },
+        label = { Text(label) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ManualStateDialog(
+    participant: EventParticipant,
+    onConfirm: (EntityLivenessState?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var selected by remember { mutableStateOf<EntityLivenessState?>(participant.manualStateOverride) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Set state override") },
+        text = {
+            Column {
+                Text(
+                    text = participant.fullName.ifBlank { participant.userId },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(12.dp))
+                EntityLivenessState.entries.forEach { state ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(
+                            selected = selected == state,
+                            onClick = { selected = state }
+                        )
+                        Text(stateLabel(state))
+                    }
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(
+                        selected = selected == null,
+                        onClick = { selected = null }
+                    )
+                    Text("Clear override (auto)")
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(selected); onDismiss() }) { Text("Save") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
+private fun stateLabel(state: EntityLivenessState): String = when (state) {
+    EntityLivenessState.ACTIVE -> "Active (Green)"
+    EntityLivenessState.STALE -> "Stale (Amber)"
+    EntityLivenessState.DISCONNECTED -> "Disconnected (Grey)"
+    EntityLivenessState.EXPIRED -> "Faded / Hidden"
 }
 
 @Composable

@@ -4,6 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.ShapeDrawable
+import android.graphics.drawable.shapes.OvalShape
+import android.graphics.Paint
 import android.view.MotionEvent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,8 +31,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arielfaridja.ezrahi.MainActivity
 import com.arielfaridja.ezrahi.R
 import com.arielfaridja.ezrahi.app.util.LocationPermissionHelper
+import com.arielfaridja.ezrahi.domain.model.EntityLivenessState
 import com.arielfaridja.ezrahi.domain.model.FieldReportStatus
 import com.arielfaridja.ezrahi.domain.model.FieldReportType
+import com.arielfaridja.ezrahi.domain.model.StalenessConfig
 import com.arielfaridja.ezrahi.service.LocationTrackingService
 import com.google.firebase.auth.FirebaseAuth
 import org.osmdroid.config.Configuration
@@ -59,6 +64,24 @@ private fun reportAlpha(status: FieldReportStatus): Float = when (status) {
     FieldReportStatus.HANDLED -> 0.5f
     FieldReportStatus.UNKNOWN -> 0.0f
     else -> 1.0f
+}
+
+private fun livenessColor(state: EntityLivenessState): Int = when (state) {
+    EntityLivenessState.ACTIVE -> 0xFF2E7D32.toInt()
+    EntityLivenessState.STALE -> 0xFFF9A825.toInt()
+    EntityLivenessState.DISCONNECTED -> 0xFF616161.toInt()
+    EntityLivenessState.EXPIRED -> 0xFF9E9E9E.toInt()
+}
+
+private fun livenessMarkerDrawable(context: Context, color: Int): Drawable {
+    val size = 36
+    val drawable = ShapeDrawable(OvalShape())
+    drawable.intrinsicWidth = size
+    drawable.intrinsicHeight = size
+    drawable.setBounds(0, 0, size, size)
+    drawable.paint.color = color
+    drawable.paint.style = Paint.Style.FILL
+    return drawable
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -246,11 +269,14 @@ fun MapScreen(
         }
         state.participants.forEach { participant ->
             participant.currentLocation?.let { loc ->
+                val live = participant.effectiveState(state.event?.stalenessConfig ?: StalenessConfig())
+                if (live == EntityLivenessState.EXPIRED) return@let
                 Marker(mapView).apply {
                     position = GeoPoint(loc.latitude, loc.longitude)
                     title = "${participant.fullName} (${participant.role})"
-                    snippet = "Last seen: ${participant.isOnline}"
+                    snippet = "State: ${live.name}"
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                    icon = livenessMarkerDrawable(context, livenessColor(live))
                     mapView.overlayManager.add(this)
                 }
             }

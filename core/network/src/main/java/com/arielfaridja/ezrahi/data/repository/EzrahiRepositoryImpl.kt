@@ -73,7 +73,8 @@ class EzrahiRepositoryImpl @Inject constructor(
                             gpxRouteUrl = doc.getString("gpxRouteUrl"),
                             isLive = doc.getBoolean("isLive") ?: true,
                             routeAllowedRolesJson = listToJson(doc.get("routeAllowedRoles") as? List<*>),
-                            routeAllowedUidsJson = listToJson(doc.get("routeAllowedUids") as? List<*>)
+                            routeAllowedUidsJson = listToJson(doc.get("routeAllowedUids") as? List<*>),
+                            stalenessConfigJson = stalenessConfigToJson(mapToStalenessConfig(doc.get("stalenessConfig") as? Map<*, *>))
                         )
                     }
                     scope.launch { dao.insertEvents(list) }
@@ -117,7 +118,8 @@ class EzrahiRepositoryImpl @Inject constructor(
                             gpxRouteUrl = doc.getString("gpxRouteUrl"),
                             isLive = doc.getBoolean("isLive") ?: true,
                             routeAllowedRoles = (doc.get("routeAllowedRoles") as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
-                            routeAllowedUids = (doc.get("routeAllowedUids") as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                            routeAllowedUids = (doc.get("routeAllowedUids") as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
+                            stalenessConfig = mapToStalenessConfig(doc.get("stalenessConfig") as? Map<*, *>)
                         )
                     }
                     emitMerged()
@@ -168,7 +170,8 @@ class EzrahiRepositoryImpl @Inject constructor(
                         gpxRouteUrl = snapshot.getString("gpxRouteUrl"),
                         isLive = snapshot.getBoolean("isLive") ?: true,
                         routeAllowedRolesJson = listToJson(snapshot.get("routeAllowedRoles") as? List<*>),
-                        routeAllowedUidsJson = listToJson(snapshot.get("routeAllowedUids") as? List<*>)
+                        routeAllowedUidsJson = listToJson(snapshot.get("routeAllowedUids") as? List<*>),
+                        stalenessConfigJson = stalenessConfigToJson(mapToStalenessConfig(snapshot.get("stalenessConfig") as? Map<*, *>))
                     )
                     scope.launch { dao.insertEvent(event) }
                 }
@@ -207,7 +210,8 @@ class EzrahiRepositoryImpl @Inject constructor(
                             lastSeenTimestamp = doc.getLong("lastSeenTimestamp") ?: System.currentTimeMillis(),
                             messengersJson = (doc.get("messengers") as? Map<*, *>)
                                 ?.let { org.json.JSONObject(it).toString() }
-                                ?: "{}"
+                                ?: "{}",
+                            manualStateOverride = doc.getString("manualStateOverride")
                         )
                     }
                     scope.launch { dao.insertParticipants(list) }
@@ -488,6 +492,36 @@ class EzrahiRepositoryImpl @Inject constructor(
         }
     }
 
+    private fun stalenessConfigToJson(c: StalenessConfig): String = org.json.JSONObject().apply {
+        put("staleThresholdMinutes", c.staleThresholdMinutes)
+        put("disconnectedThresholdMinutes", c.disconnectedThresholdMinutes)
+        put("expiredThresholdMinutes", c.expiredThresholdMinutes)
+    }.toString()
+
+    private fun jsonToStalenessConfig(json: String): StalenessConfig = runCatching {
+        val obj = org.json.JSONObject(json)
+        StalenessConfig(
+            staleThresholdMinutes = obj.optInt("staleThresholdMinutes", 5),
+            disconnectedThresholdMinutes = obj.optInt("disconnectedThresholdMinutes", 15),
+            expiredThresholdMinutes = obj.optInt("expiredThresholdMinutes", 30)
+        )
+    }.getOrDefault(StalenessConfig())
+
+    private fun stalenessConfigToMap(c: StalenessConfig): Map<String, Int> = mapOf(
+        "staleThresholdMinutes" to c.staleThresholdMinutes,
+        "disconnectedThresholdMinutes" to c.disconnectedThresholdMinutes,
+        "expiredThresholdMinutes" to c.expiredThresholdMinutes
+    )
+
+    private fun mapToStalenessConfig(map: Map<*, *>?): StalenessConfig {
+        if (map == null) return StalenessConfig()
+        return StalenessConfig(
+            staleThresholdMinutes = (map["staleThresholdMinutes"] as? Number)?.toInt() ?: 5,
+            disconnectedThresholdMinutes = (map["disconnectedThresholdMinutes"] as? Number)?.toInt() ?: 15,
+            expiredThresholdMinutes = (map["expiredThresholdMinutes"] as? Number)?.toInt() ?: 30
+        )
+    }
+
     override suspend fun updateLocation(eventId: String, userId: String, location: GeoPoint): Result<Unit> = runCatching {
         val data = mapOf(
             "latitude" to location.latitude,
@@ -725,6 +759,40 @@ class EzrahiRepositoryImpl @Inject constructor(
         firestore.collection("Users").document(profile.id).set(data).await()
     }
 
+    override suspend fun updateStalenessConfig(eventId: String, config: StalenessConfig): Result<Unit> = runCatching {
+        firestore.collection("events").document(eventId)
+            .update("stalenessConfig", stalenessConfigToMap(config)).await()
+        Unit
+    }.onFailure { error ->
+        Log.w(TAG, "updateStalenessConfig(event=$eventId) failed", error)
+        logger.log(error, ErrorType.CAUGHT, eventId, screen = "management")
+    }
+
+    override suspend fun updateParticipantManualState(
+        eventId: String,
+        userId: String,
+        override: EntityLivenessState?,
+        config: StalenessConfig
+    ): Result<Unit> = runCatching {
+        val data = if (override == null) {
+            mapOf("manualStateOverride" to null)
+        } else {
+            // Seed the staleness timer so the chosen liveness is fresh, and clear
+            // any sticky pin so the state decays naturally (not permanent).
+            mapOf(
+                "lastSeenTimestamp" to config.seedTimestampFor(override),
+                "manualStateOverride" to null
+            )
+        }
+        firestore.collection("events").document(eventId)
+            .collection("participants").document(userId)
+            .update(data).await()
+        Unit
+    }.onFailure { error ->
+        Log.w(TAG, "updateParticipantManualState(event=$eventId, user=$userId) failed", error)
+        logger.log(error, ErrorType.CAUGHT, eventId, screen = "management")
+    }
+
     private fun EventLocalEntity.toFieldEvent() = FieldEvent(
         id = id,
         name = name,
@@ -733,7 +801,8 @@ class EzrahiRepositoryImpl @Inject constructor(
         gpxRouteUrl = gpxRouteUrl,
         isLive = isLive,
         routeAllowedRoles = jsonToList(routeAllowedRolesJson),
-        routeAllowedUids = jsonToList(routeAllowedUidsJson)
+        routeAllowedUids = jsonToList(routeAllowedUidsJson),
+        stalenessConfig = jsonToStalenessConfig(stalenessConfigJson)
     )
 
     private fun RouteLocalEntity.toRouteInfo() = RouteInfo(
@@ -753,9 +822,10 @@ class EzrahiRepositoryImpl @Inject constructor(
         phoneNumber = phoneNumber,
         role = runCatching { UserRole.valueOf(role) }.getOrDefault(UserRole.MEMBER),
         currentLocation = GeoPoint(latitude, longitude, lastSeenTimestamp),
-        isOnline = isOnline,
-        lastSeenTimestamp = lastSeenTimestamp,
-        messengers = runCatching {
+            isOnline = isOnline,
+            lastSeenTimestamp = lastSeenTimestamp,
+            manualStateOverride = manualStateOverride?.let { runCatching { EntityLivenessState.valueOf(it) }.getOrNull() },
+            messengers = runCatching {
             val obj = org.json.JSONObject(messengersJson)
             obj.keys().asSequence().associateWith { obj.getString(it) }
         }.getOrDefault(emptyMap())

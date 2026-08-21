@@ -12,7 +12,8 @@ data class EventLocalEntity(
     val gpxRouteUrl: String?,
     val isLive: Boolean,
     val routeAllowedRolesJson: String = "[]",
-    val routeAllowedUidsJson: String = "[]"
+    val routeAllowedUidsJson: String = "[]",
+    val stalenessConfigJson: String = "{}"
 )
 
 @Entity(tableName = "cached_routes")
@@ -39,7 +40,8 @@ data class ParticipantLocalEntity(
     val longitude: Double,
     val isOnline: Boolean,
     val lastSeenTimestamp: Long,
-    val messengersJson: String = "{}"
+    val messengersJson: String = "{}",
+    val manualStateOverride: String? = null
 )
 
 @Entity(tableName = "cached_messages")

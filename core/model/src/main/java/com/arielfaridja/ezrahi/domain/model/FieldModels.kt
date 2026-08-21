@@ -25,6 +25,59 @@ data class MessengerOption(
     val urlTemplate: String
 )
 
+// 1d. Entity liveness / staleness state for field participants
+enum class EntityLivenessState {
+    ACTIVE,
+    STALE,
+    DISCONNECTED,
+    EXPIRED;
+
+    companion object {
+        fun compute(
+            lastSeenTimestamp: Long,
+            config: StalenessConfig,
+            now: Long = System.currentTimeMillis()
+        ): EntityLivenessState {
+            val ageMinutes = (now - lastSeenTimestamp) / (60_000L)
+            return when {
+                ageMinutes < config.staleThresholdMinutes -> ACTIVE
+                ageMinutes < config.disconnectedThresholdMinutes -> STALE
+                ageMinutes < config.expiredThresholdMinutes -> DISCONNECTED
+                else -> EXPIRED
+            }
+        }
+    }
+}
+
+// 1e. Per-event staleness decay configuration
+data class StalenessConfig(
+    val staleThresholdMinutes: Int = 5,
+    val disconnectedThresholdMinutes: Int = 15,
+    val expiredThresholdMinutes: Int = 30
+) {
+    /**
+     * Returns a [lastSeenTimestamp] seed such that [EntityLivenessState.compute]
+     * yields [state]. Used by manual manager reports so the chosen liveness is
+     * "fresh" and then decays naturally (no permanent pin).
+     */
+    fun seedTimestampFor(
+        state: EntityLivenessState,
+        now: Long = System.currentTimeMillis()
+    ): Long {
+        val minute = 60_000L
+        return when (state) {
+            EntityLivenessState.ACTIVE ->
+                now - (staleThresholdMinutes / 2L) * minute
+            EntityLivenessState.STALE ->
+                now - ((staleThresholdMinutes + disconnectedThresholdMinutes) / 2L) * minute
+            EntityLivenessState.DISCONNECTED ->
+                now - ((disconnectedThresholdMinutes + expiredThresholdMinutes) / 2L) * minute
+            EntityLivenessState.EXPIRED ->
+                now - (expiredThresholdMinutes + 1L) * minute
+        }
+    }
+}
+
 // 2. Location coordinates
 data class GeoPoint(
     val latitude: Double = 0.0,
@@ -50,8 +103,16 @@ data class EventParticipant(
     val currentLocation: GeoPoint? = null,
     val isOnline: Boolean = true,
     val lastSeenTimestamp: Long = System.currentTimeMillis(),
-    val messengers: Map<String, String> = emptyMap()
-)
+    val messengers: Map<String, String> = emptyMap(),
+    val manualStateOverride: EntityLivenessState? = null
+) {
+    fun effectiveState(
+        config: StalenessConfig,
+        now: Long = System.currentTimeMillis()
+    ): EntityLivenessState {
+        return manualStateOverride ?: EntityLivenessState.compute(lastSeenTimestamp, config, now)
+    }
+}
 
 // 5. The primary Field Event (Formerly "Activity")
 data class FieldEvent(
@@ -63,6 +124,7 @@ data class FieldEvent(
     val isLive: Boolean = true,
     val routeAllowedRoles: List<String> = emptyList(),
     val routeAllowedUids: List<String> = emptyList(),
+    val stalenessConfig: StalenessConfig = StalenessConfig(),
     val createdAt: Long = System.currentTimeMillis()
 )
 

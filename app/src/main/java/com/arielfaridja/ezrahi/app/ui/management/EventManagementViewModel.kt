@@ -4,8 +4,10 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.arielfaridja.ezrahi.domain.model.defaultRoleOptions
+import com.arielfaridja.ezrahi.domain.model.EntityLivenessState
 import com.arielfaridja.ezrahi.domain.model.EventParticipant
 import com.arielfaridja.ezrahi.domain.model.FieldEvent
+import com.arielfaridja.ezrahi.domain.model.StalenessConfig
 import com.arielfaridja.ezrahi.domain.model.FieldReport
 import com.arielfaridja.ezrahi.domain.model.MessengerOption
 import com.arielfaridja.ezrahi.domain.model.RoleOption
@@ -189,5 +191,28 @@ class EventManagementViewModel @Inject constructor(
 
     fun clearStatus() {
         _uiState.update { it.copy(statusMessage = null) }
+    }
+
+    fun updateStalenessConfig(eventId: String, config: StalenessConfig) {
+        viewModelScope.launch {
+            repository.updateStalenessConfig(eventId, config)
+                .onSuccess { _uiState.update { it.copy(statusMessage = "Staleness settings saved") } }
+                .onFailure { e ->
+                    logger.log(e, ErrorType.CAUGHT, eventId, screen = "management")
+                    _uiState.update { it.copy(statusMessage = "Failed: ${e.message}") }
+                }
+        }
+    }
+
+    fun updateParticipantManualState(eventId: String, userId: String, override: EntityLivenessState?) {
+        viewModelScope.launch {
+            val config = _uiState.value.event?.stalenessConfig ?: StalenessConfig()
+            repository.updateParticipantManualState(eventId, userId, override, config)
+                .onSuccess { _uiState.update { it.copy(statusMessage = "Participant state updated") } }
+                .onFailure { e ->
+                    logger.log(e, ErrorType.CAUGHT, eventId, screen = "management")
+                    _uiState.update { it.copy(statusMessage = "Failed: ${e.message}") }
+                }
+        }
     }
 }
