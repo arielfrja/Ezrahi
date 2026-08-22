@@ -8,6 +8,7 @@ import androidx.work.Configuration
 import com.arielfaridja.ezrahi.util.logging.ExceptionLogger
 import com.arielfaridja.ezrahi.work.OutboxSyncScheduler
 import dagger.hilt.android.HiltAndroidApp
+import org.maplibre.android.MapLibre
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -22,6 +23,7 @@ class EzrahiApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        MapLibre.getInstance(this)
         exceptionLogger.installCrashHandler()
         exceptionLogger.flushPendingCrashDumps()
         outboxSyncScheduler.schedule()

@@ -1,16 +1,11 @@
 package com.arielfaridja.ezrahi.app.ui.map
 
 import android.Manifest
-import android.content.Context
-import android.content.Intent
-import android.graphics.drawable.Drawable
-import android.graphics.drawable.ShapeDrawable
-import android.graphics.drawable.shapes.OvalShape
-import android.graphics.Paint
-import android.view.MotionEvent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MyLocation
@@ -21,68 +16,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.res.ResourcesCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arielfaridja.ezrahi.MainActivity
 import com.arielfaridja.ezrahi.R
 import com.arielfaridja.ezrahi.app.util.LocationPermissionHelper
-import com.arielfaridja.ezrahi.domain.model.EntityLivenessState
-import com.arielfaridja.ezrahi.domain.model.FieldReportStatus
+import com.arielfaridja.ezrahi.core.mapengine.MapLayers
+import com.arielfaridja.ezrahi.core.mapengine.MapLibreConfig
+import com.arielfaridja.ezrahi.core.mapengine.MapLibreView
+import com.arielfaridja.ezrahi.core.mapengine.OfflineTileManager
 import com.arielfaridja.ezrahi.domain.model.FieldReportType
+import com.arielfaridja.ezrahi.domain.model.GeoPoint
 import com.arielfaridja.ezrahi.domain.model.StalenessConfig
 import com.arielfaridja.ezrahi.service.LocationTrackingService
 import com.google.firebase.auth.FirebaseAuth
-import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.BoundingBox
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.CustomZoomButtonsController
-import org.osmdroid.views.MapView
-import org.osmdroid.views.overlay.Marker
-import org.osmdroid.views.overlay.Overlay
-import org.osmdroid.views.overlay.Polyline
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
-
-private const val DEFAULT_ZOOM_LEVEL = 12.0
-private const val DEFAULT_LATITUDE = 31.776551
-private const val DEFAULT_LONGITUDE = 35.233808
-
-private fun reportTypeToIcon(context: Context, type: FieldReportType): Drawable? {
-    return when (type) {
-        FieldReportType.MEDICAL -> ResourcesCompat.getDrawable(context.resources, R.drawable.report_medical, null)
-        else -> ResourcesCompat.getDrawable(context.resources, R.drawable.report_canvas, null)
-    }
-}
-
-private fun reportAlpha(status: FieldReportStatus): Float = when (status) {
-    FieldReportStatus.HANDLED -> 0.5f
-    FieldReportStatus.UNKNOWN -> 0.0f
-    else -> 1.0f
-}
-
-private fun livenessColor(state: EntityLivenessState): Int = when (state) {
-    EntityLivenessState.ACTIVE -> 0xFF2E7D32.toInt()
-    EntityLivenessState.STALE -> 0xFFF9A825.toInt()
-    EntityLivenessState.DISCONNECTED -> 0xFF616161.toInt()
-    EntityLivenessState.EXPIRED -> 0xFF9E9E9E.toInt()
-}
-
-private fun livenessMarkerDrawable(context: Context, color: Int): Drawable {
-    val size = 36
-    val drawable = ShapeDrawable(OvalShape())
-    drawable.intrinsicWidth = size
-    drawable.intrinsicHeight = size
-    drawable.setBounds(0, 0, size, size)
-    drawable.paint.color = color
-    drawable.paint.style = Paint.Style.FILL
-    return drawable
-}
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import android.content.Context
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.geometry.LatLngBounds
+import org.maplibre.android.location.LocationComponentActivationOptions
+import org.maplibre.android.maps.MapLibreMap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,6 +55,8 @@ fun MapScreen(
     var showAddMarkerDialog by remember { mutableStateOf(false) }
     var longPressLocation by remember { mutableStateOf<GeoPoint?>(null) }
     var hasFittedRoute by remember { mutableStateOf(false) }
+    var styleUri by remember { mutableStateOf<String?>(null) }
+    val mapState = remember { mutableStateOf<MapLibreMap?>(null) }
 
     lateinit var requestSecondaryPermissions: (Context) -> Unit
     lateinit var requestBatteryOptimizationExemption: (Context) -> Unit
@@ -156,6 +113,7 @@ fun MapScreen(
             permissions.add(Manifest.permission.POST_NOTIFICATIONS)
         }
         permissionLauncher.launch(permissions.toTypedArray())
+        styleUri = withContext(Dispatchers.IO) { OfflineTileManager.resolveStyleUri(context) }
     }
 
     LaunchedEffect(permissionsGranted) {
@@ -163,7 +121,7 @@ fun MapScreen(
             val user = auth.currentUser
             if (user != null) {
                 try {
-                    val intent = Intent(context, LocationTrackingService::class.java).apply {
+                    val intent = android.content.Intent(context, LocationTrackingService::class.java).apply {
                         putExtra("EXTRA_EVENT_ID", eventId)
                         putExtra("EXTRA_USER_ID", user.uid)
                         putExtra(LocationTrackingService.EXTRA_CONTENT_ACTIVITY, MainActivity::class.java.name)
@@ -187,104 +145,44 @@ fun MapScreen(
         }
     }
 
-    val mapView = remember {
-        Configuration.getInstance().userAgentValue = context.packageName
-        MapView(context).apply {
-            setTileSource(TileSourceFactory.MAPNIK)
-            setMultiTouchControls(true)
-            zoomController.setVisibility(CustomZoomButtonsController.Visibility.SHOW_AND_FADEOUT)
-            controller.setCenter(GeoPoint(DEFAULT_LATITUDE, DEFAULT_LONGITUDE))
-            controller.setZoom(DEFAULT_ZOOM_LEVEL)
-            overlayManager.add(object : Overlay() {
-                override fun onLongPress(event: MotionEvent?, mapView: MapView?): Boolean {
-                    event?.let { ev ->
-                        mapView?.let {
-                            longPressLocation = it.projection.fromPixels(ev.x.toInt(), ev.y.toInt()) as? GeoPoint
-                            showAddMarkerDialog = true
-                        }
-                    }
-                    return true
-                }
-            })
+    LaunchedEffect(mapState.value, state.participants, state.reports) {
+        val map = mapState.value ?: return@LaunchedEffect
+        map.style?.let { style ->
+            MapLayers.updateParticipants(style, state.participants, state.event?.stalenessConfig ?: StalenessConfig())
+            MapLayers.updateReports(style, state.reports)
         }
     }
 
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner, mapView) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> mapView.onResume()
-                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
-                else -> {}
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-            mapView.onDetach()
-        }
-    }
-
-    val myLocationOverlay = remember(mapView) {
-        MyLocationNewOverlay(GpsMyLocationProvider(context), mapView).apply {
-            enableMyLocation()
-            enableFollowLocation()
-        }
-    }
-
-    val routePolyline = remember {
-        Polyline().apply {
-            setColor(0xFF1565C0.toInt())
-            setWidth(8f)
-        }
-    }
-
-    LaunchedEffect(state.routePoints, hasFittedRoute) {
-        routePolyline.setPoints(state.routePoints.map { GeoPoint(it.latitude, it.longitude) })
-        if (mapView.overlayManager.overlays().none { it == routePolyline }) {
-            mapView.overlayManager.add(routePolyline)
-        }
+    LaunchedEffect(mapState.value, state.routePoints) {
+        val map = mapState.value ?: return@LaunchedEffect
         if (state.routePoints.size > 1 && !hasFittedRoute) {
             hasFittedRoute = true
-            val box = BoundingBox.fromGeoPoints(routePolyline.actualPoints)
-            mapView.zoomToBoundingBox(box, true)
+            val bounds = LatLngBounds.Builder().includes(
+                state.routePoints.map { LatLng(it.latitude, it.longitude) }
+            ).build()
+            map.easeCamera(CameraUpdateFactory.newLatLngBounds(bounds, 64))
         }
-        mapView.invalidate()
+        map.style?.let { MapLayers.updateRoute(it, state.routePoints) }
     }
 
-    LaunchedEffect(state.participants, state.reports) {
-        mapView.overlayManager.overlays()
-            .filterIsInstance<Marker>()
-            .forEach { mapView.overlayManager.remove(it) }
-        state.reports.forEach { report ->
-            Marker(mapView).apply {
-                position = GeoPoint(report.location.latitude, report.location.longitude)
-                title = report.title.ifEmpty { "Report" }
-                snippet = report.description
-                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                icon = reportTypeToIcon(context, report.type)
-                alpha = reportAlpha(report.status)
-                mapView.overlayManager.add(this)
-            }
-        }
-        state.participants.forEach { participant ->
-            participant.currentLocation?.let { loc ->
-                val live = participant.effectiveState(state.event?.stalenessConfig ?: StalenessConfig())
-                if (live == EntityLivenessState.EXPIRED) return@let
-                Marker(mapView).apply {
-                    position = GeoPoint(loc.latitude, loc.longitude)
-                    title = "${participant.fullName} (${participant.role})"
-                    snippet = "State: ${live.name}"
-                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                    icon = livenessMarkerDrawable(context, livenessColor(live))
-                    mapView.overlayManager.add(this)
+    LaunchedEffect(mapState.value, permissionsGranted) {
+        val map = mapState.value ?: return@LaunchedEffect
+        if (permissionsGranted) {
+            val style = map.style ?: return@LaunchedEffect
+            try {
+                val locationComponent = map.locationComponent
+                if (!locationComponent.isLocationComponentActivated) {
+                    locationComponent.activateLocationComponent(
+                        LocationComponentActivationOptions.builder(context, style)
+                            .useDefaultLocationEngine(true)
+                            .build()
+                    )
                 }
+                locationComponent.isLocationComponentEnabled = true
+            } catch (e: Exception) {
+                viewModel.logServiceStartFailure(e)
             }
         }
-        if (mapView.overlayManager.overlays().none { it == myLocationOverlay }) {
-            mapView.overlayManager.add(myLocationOverlay)
-        }
-        mapView.invalidate()
     }
 
     Scaffold(
@@ -312,11 +210,10 @@ fun MapScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    val loc = myLocationOverlay.myLocation
-                    if (loc != null) {
-                        myLocationOverlay.enableFollowLocation()
-                        mapView.controller.animateTo(loc)
-                        mapView.controller.zoomTo(20.0)
+                    val map = mapState.value
+                    val loc = map?.locationComponent?.lastKnownLocation
+                    if (map != null && loc != null) {
+                        map.easeCamera(CameraUpdateFactory.newLatLngZoom(LatLng(loc.latitude, loc.longitude), 16.0))
                     }
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -326,10 +223,23 @@ fun MapScreen(
             }
         }
     ) { padding ->
-        AndroidView(
-            factory = { mapView },
-            modifier = Modifier.fillMaxSize().padding(padding)
-        )
+        if (styleUri == null) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            MapLibreView(
+                styleUri = styleUri!!,
+                modifier = Modifier.fillMaxSize().padding(padding),
+                onMapReady = { map ->
+                    mapState.value = map
+                },
+                onLongClick = { latLng ->
+                    longPressLocation = GeoPoint(latLng.latitude, latLng.longitude)
+                    showAddMarkerDialog = true
+                }
+            )
+        }
 
         if (showBackgroundExplanation) {
             AlertDialog(
@@ -387,29 +297,31 @@ fun MapScreen(
                 onDismissRequest = { showAddMarkerDialog = false },
                 title = { Text("Add Marker / הוספת דיווח") },
                 text = {
-                    Column {
-                        OutlinedTextField(
-                            value = markerTitle,
-                            onValueChange = { markerTitle = it },
-                            label = { Text("Title / כותרת") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        OutlinedTextField(
-                            value = markerDescription,
-                            onValueChange = { markerDescription = it },
-                            label = { Text("Description / תיאור") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(Modifier.height(12.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FieldReportType.entries.forEach { type ->
-                                FilterChip(
-                                    selected = reportType == type,
-                                    onClick = { reportType = type },
-                                    label = { Text(if (type == FieldReportType.MEDICAL) "Medical" else "General") }
-                                )
+                    LazyColumn {
+                        item {
+                            OutlinedTextField(
+                                value = markerTitle,
+                                onValueChange = { markerTitle = it },
+                                label = { Text("Title / כותרת") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            OutlinedTextField(
+                                value = markerDescription,
+                                onValueChange = { markerDescription = it },
+                                label = { Text("Description / תיאור") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                FieldReportType.entries.forEach { type ->
+                                    FilterChip(
+                                        selected = reportType == type,
+                                        onClick = { reportType = type },
+                                        label = { Text(if (type == FieldReportType.MEDICAL) "Medical" else "General") }
+                                    )
+                                }
                             }
                         }
                     }

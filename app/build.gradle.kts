@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
@@ -30,6 +31,12 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        debug {
+            isMinifyEnabled = false
+            firebaseCrashlytics {
+                nativeSymbolUploadEnabled = false
+            }
         }
     }
 
@@ -96,6 +103,7 @@ dependencies {
     implementation(project(":core:database"))
     implementation(project(":core:network"))
     implementation(project(":core:location"))
+    implementation(project(":core:map-engine"))
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
@@ -107,13 +115,13 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.storage)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.crashlytics.ndk)
 
     // Maps & Location
     implementation(libs.play.services.location)
     implementation(libs.play.services.maps)
     implementation(libs.maps.compose)
-    implementation(libs.osmdroid.android)
-    implementation(libs.osmbonuspack)
 
     // Tests
     testImplementation("junit:junit:4.13.2")
