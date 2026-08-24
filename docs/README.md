@@ -37,6 +37,7 @@ Analysis & specification documents for the audit fix series:
 - [`specs/event-map-layers-hybrid-spec.md`](./specs/event-map-layers-hybrid-spec.md) — hybrid map strategy: OpenFreeMap basemap + offline regions + event trails (spec only, not yet developed)
 - [`specs/MAPLIBRE_CRASH_DEEP_DIVE.md`](./specs/MAPLIBRE_CRASH_DEEP_DIVE.md) — MapLibre crash investigation
 - [`specs/maplibre-migration-fix-summary.md`](./specs/maplibre-migration-fix-summary.md) — osmdroid → MapLibre migration & crash resolution
+- [`specs/dynamic-report-types.md`](./specs/dynamic-report-types.md) — per-event dynamic report types replacing the hardcoded enum (spec only, not yet developed)
 
 ## Resolved issues
 
