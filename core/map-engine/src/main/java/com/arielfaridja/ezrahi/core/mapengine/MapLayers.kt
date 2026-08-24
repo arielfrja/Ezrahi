@@ -120,4 +120,44 @@ object MapLayers {
         }
         source.setGeoJson(FeatureCollection.fromFeatures(listOf(Feature.fromGeometry(LineString.fromLngLats(linePoints)))))
     }
+
+    fun ensureMeasureLayers(style: Style) {
+        if (style.getSource(MEASURE_SRC) == null) {
+            style.addSource(GeoJsonSource(MEASURE_SRC, FeatureCollection.fromFeatures(emptyList())))
+        }
+        if (style.getLayer(MEASURE_LINE_LAYER) == null) {
+            style.addLayerBelow(
+                LineLayer(MEASURE_LINE_LAYER, MEASURE_SRC).withProperties(
+                    PropertyFactory.lineColor("#6A1B9A"),
+                    PropertyFactory.lineWidth(3f),
+                    PropertyFactory.lineOpacity(0.9f)
+                ),
+                PARTICIPANTS_LAYER
+            )
+        }
+        if (style.getLayer(MEASURE_POINTS_LAYER) == null) {
+            style.addLayerBelow(
+                CircleLayer(MEASURE_POINTS_LAYER, MEASURE_SRC).withProperties(
+                    PropertyFactory.circleRadius(6f),
+                    PropertyFactory.circleColor("#6A1B9A"),
+                    PropertyFactory.circleStrokeColor("#FFFFFF"),
+                    PropertyFactory.circleStrokeWidth(2f)
+                ),
+                PARTICIPANTS_LAYER
+            )
+        }
+    }
+
+    fun updateMeasure(style: Style, points: List<GeoPoint>) {
+        val source = style.getSourceAs<GeoJsonSource>(MEASURE_SRC) ?: return
+        val features = mutableListOf<Feature>()
+        if (points.size >= 2) {
+            val line = LineString.fromLngLats(points.map { Point.fromLngLat(it.longitude, it.latitude) })
+            features.add(Feature.fromGeometry(line))
+        }
+        points.forEach { p ->
+            features.add(Feature.fromGeometry(Point.fromLngLat(p.longitude, p.latitude)))
+        }
+        source.setGeoJson(FeatureCollection.fromFeatures(features))
+    }
 }

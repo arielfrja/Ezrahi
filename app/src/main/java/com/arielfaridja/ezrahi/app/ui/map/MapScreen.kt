@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +21,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arielfaridja.ezrahi.MainActivity
 import com.arielfaridja.ezrahi.R
+import com.arielfaridja.ezrahi.app.util.Coordinates
+import com.arielfaridja.ezrahi.app.util.CoordFormat
 import com.arielfaridja.ezrahi.app.util.LocationPermissionHelper
 import com.arielfaridja.ezrahi.core.mapengine.MapLayers
 import com.arielfaridja.ezrahi.core.mapengine.MapLibreConfig
@@ -57,6 +60,24 @@ fun MapScreen(
     var hasFittedRoute by remember { mutableStateOf(false) }
     var styleUri by remember { mutableStateOf<String?>(null) }
     val mapState = remember { mutableStateOf<MapLibreMap?>(null) }
+
+    var coordFormat by remember { mutableStateOf(CoordFormat.ITM) }
+    val hudState by viewModel.hudState.collectAsStateWithLifecycle()
+    var measureMode by remember { mutableStateOf(false) }
+    val measurePoints = remember { mutableStateListOf<GeoPoint>() }
+
+    val hudDisplay = HudDisplay(
+        coordinateText = hudState.fix?.let {
+            Coordinates.format(it.latitude, it.longitude, coordFormat)
+        } ?: "--",
+        accuracyMeters = hudState.fix?.accuracyMeters?.takeIf { a -> a > 0f },
+        altitudeMeters = hudState.fix?.altitudeMeters?.takeIf { a -> a != 0.0 },
+        online = hudState.online,
+        pendingOutbox = hudState.pendingOutbox,
+        batteryPercent = hudState.batteryPercent,
+        strategyLabel = hudState.strategyLabel,
+        lowPowerActive = hudState.lowPowerActive
+    )
 
     lateinit var requestSecondaryPermissions: (Context) -> Unit
     lateinit var requestBatteryOptimizationExemption: (Context) -> Unit
@@ -111,6 +132,9 @@ fun MapScreen(
         )
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            permissions.add(Manifest.permission.ACTIVITY_RECOGNITION)
         }
         permissionLauncher.launch(permissions.toTypedArray())
         styleUri = withContext(Dispatchers.IO) { OfflineTileManager.resolveStyleUri(context) }
@@ -185,6 +209,13 @@ fun MapScreen(
         }
     }
 
+    LaunchedEffect(mapState.value, measureMode, measurePoints.size) {
+        val map = mapState.value ?: return@LaunchedEffect
+        val style = map.style ?: return@LaunchedEffect
+        MapLayers.ensureMeasureLayers(style)
+        MapLayers.updateMeasure(style, measurePoints.toList())
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -205,21 +236,38 @@ fun MapScreen(
                         modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
                     )
                 }
+                TacticalHudBar(
+                    hud = hudDisplay,
+                    onCycleCoordinateFormat = { coordFormat = coordFormat.next() }
+                )
             }
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    val map = mapState.value
-                    val loc = map?.locationComponent?.lastKnownLocation
-                    if (map != null && loc != null) {
-                        map.easeCamera(CameraUpdateFactory.newLatLngZoom(LatLng(loc.latitude, loc.longitude), 16.0))
-                    }
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White
-            ) {
-                Icon(Icons.Default.MyLocation, contentDescription = "My Location")
+            Column(horizontalAlignment = Alignment.End) {
+                FloatingActionButton(
+                    onClick = {
+                        measureMode = !measureMode
+                        measurePoints.clear()
+                    },
+                    containerColor = if (measureMode) MaterialTheme.colorScheme.secondary
+                    else MaterialTheme.colorScheme.secondaryContainer
+                ) {
+                    Icon(Icons.Default.Straighten, contentDescription = "Measure")
+                }
+                Spacer(Modifier.height(12.dp))
+                FloatingActionButton(
+                    onClick = {
+                        val map = mapState.value
+                        val loc = map?.locationComponent?.lastKnownLocation
+                        if (map != null && loc != null) {
+                            map.easeCamera(CameraUpdateFactory.newLatLngZoom(LatLng(loc.latitude, loc.longitude), 16.0))
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = Color.White
+                ) {
+                    Icon(Icons.Default.MyLocation, contentDescription = "My Location")
+                }
             }
         }
     ) { padding ->
@@ -234,9 +282,19 @@ fun MapScreen(
                 onMapReady = { map ->
                     mapState.value = map
                 },
-                onLongClick = { latLng ->
-                    longPressLocation = GeoPoint(latLng.latitude, latLng.longitude)
-                    showAddMarkerDialog = true
+                onMapClick = { latLng ->
+                    if (measureMode) {
+                        measurePoints.add(GeoPoint(latLng.latitude, latLng.longitude))
+                    }
+                },
+                onLongClick = { latLng, _ ->
+                    val geo = GeoPoint(latLng.latitude, latLng.longitude)
+                    if (measureMode) {
+                        measurePoints.add(geo)
+                    } else {
+                        longPressLocation = geo
+                        showAddMarkerDialog = true
+                    }
                 }
             )
         }
@@ -339,5 +397,54 @@ fun MapScreen(
                 }
             )
         }
+
+        if (measureMode) {
+            val segments = measurePoints.zipWithNext { a, b ->
+                Coordinates.haversineMeters(a.latitude, a.longitude, b.latitude, b.longitude)
+            }
+            val totalMeters = segments.sum()
+            val lastSegment = segments.lastOrNull()
+            Box(Modifier.fillMaxSize()) {
+                Surface(
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                    shape = MaterialTheme.shapes.medium,
+                    tonalElevation = 6.dp,
+                    shadowElevation = 6.dp,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 110.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Column {
+                            Text(
+                                text = if (totalMeters >= 1000) "%.2f km".format(totalMeters / 1000)
+                                else "%.0f m".format(totalMeters),
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                            if (measurePoints.isNotEmpty()) {
+                                Text(
+                                    text = buildString {
+                                        append("${measurePoints.size} pts")
+                                        lastSegment?.let {
+                                            append(" · last ")
+                                            append(if (it >= 1000) "%.2f km".format(it / 1000) else "%.0f m".format(it))
+                                        }
+                                    },
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                        TextButton(onClick = { measurePoints.clear() }) { Text("Clear") }
+                        TextButton(onClick = { measureMode = false; measurePoints.clear() }) { Text("Done") }
+                    }
+                }
+            }
+        }
+
     }
 }

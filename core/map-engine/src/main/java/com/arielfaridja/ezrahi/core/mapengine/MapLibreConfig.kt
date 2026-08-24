@@ -9,9 +9,12 @@ const val REPORTS_SRC = "ezrahi-reports-src"
 const val REPORTS_LAYER = "ezrahi-reports-layer"
 const val ROUTE_SRC = "ezrahi-route-src"
 const val ROUTE_LAYER = "ezrahi-route-layer"
+const val MEASURE_SRC = "ezrahi-measure-src"
+const val MEASURE_LINE_LAYER = "ezrahi-measure-line-layer"
+const val MEASURE_POINTS_LAYER = "ezrahi-measure-points-layer"
 
 object MapLibreConfig {
-    const val ONLINE_STYLE_URI = "https://demotiles.maplibre.org/style.json"
+    const val ONLINE_STYLE_URI = "https://tiles.openfreemap.org/styles/liberty"
 
     fun livenessColor(state: EntityLivenessState): String = when (state) {
         EntityLivenessState.ACTIVE -> "#2E7D32"

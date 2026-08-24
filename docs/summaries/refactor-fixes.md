@@ -21,8 +21,11 @@
 | B2 | Android 14+ FGS Crash | 🟢 DONE (Phase 4: `FOREGROUND_SERVICE_LOCATION` declared + API 34 `startForeground` branch + POST_NOTIFICATIONS flow) | Phase 4 |
 | B3 | Room Type Handling | 🟢 N/A — all Room fields are primitives; no converters needed | — |
 | B4 | Runtime Location Permissions in Compose | 🟢 DONE (Phase 4 + MapScreen: fine/coarse/background/battery + consent dialogs) | Phase 4 |
-| P2 | Phase 2: Pluggable Multi-Bearer Transport & Priority Outbox Engine | IMPLEMENTED + SMOKE-TESTED — awaiting PO sign-off (commit/push gated) | core/network, core/database, app/work | docs/summaries/phase2-intentional-deviations.md |
-| P3 | Phase 3: Configurable Staleness Decay & Manual State Management | IMPLEMENTED (build green + 11/11 unit tests) — awaiting PO sign-off (commit/push gated). **Non-permanent override refinement:** manager manual state change seeds `lastSeenTimestamp` (via `StalenessConfig.seedTimestampFor`) so computed liveness == chosen state, and clears `manualStateOverride` (persisted) — state then decays naturally; re-setting same status re-seeds timer. | core/model, core/database, core/network, app/ui/management, app/ui/map | modernization-execution-plan.md Phase 3 |
+| P2 | Phase 2: Pluggable Multi-Bearer Transport & Priority Outbox Engine | 🟢 DONE (commit `becccbc`) | core/network, core/database, app/work | docs/summaries/phase2-intentional-deviations.md |
+| P3 | Phase 3: Configurable Staleness Decay & Manual State Management | 🟢 DONE (commit `7e497ce`) | core/model, core/database, core/network, app/ui/management, app/ui/map | modernization-execution-plan.md Phase 3 |
+| P4 | Phase 4: Modern Map Engine Migration (MapLibre Native Android) | 🟢 DONE (commit `aebc39f`) | core/map-engine, app/ui/map | modernization-execution-plan.md Phase 4 |
+| P5 | Phase 5: Adaptive Location Power Engine & Android 14/15 Compliance | 🟢 DONE (AdaptiveLocationEngine Stationary/FootPatrol/Vehicle/SOS, battery low-power receiver, foregroundServiceType location\|dataSync) | core/location, app | modernization-execution-plan.md Phase 5 |
+| P6 | Phase 6: Tactical UI / UX (Radial Action Menu & Heads-Up Display) | 🟡 IMPLEMENTED (TacticalRadialOverlay 360° menu: SOS+confirm / Drop Report / Measure (haversine chip) / Ping Participant via direct message; TacticalHudBar: WGS84-ITM-MGRS cycle coords, GPS accuracy+altitude, Firebase/Offline bearer + outbox count, battery% + live GPS strategy; zero-battery-cost fix telemetry via AdaptiveLocationEngine) — awaiting PO sign-off | app/ui/map, app/util/Coordinates.kt, core/location | modernization-execution-plan.md Phase 6 |
 
 ---
 

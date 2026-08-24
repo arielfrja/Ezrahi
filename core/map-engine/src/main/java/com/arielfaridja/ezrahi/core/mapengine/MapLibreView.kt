@@ -1,11 +1,13 @@
 package com.arielfaridja.ezrahi.core.mapengine
 
 import android.util.Log
+import android.graphics.PointF
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
@@ -22,7 +24,8 @@ fun MapLibreView(
     styleUri: String,
     modifier: Modifier = Modifier,
     onMapReady: (MapLibreMap) -> Unit = {},
-    onLongClick: (LatLng) -> Unit = {}
+    onMapClick: (LatLng) -> Unit = {},
+    onLongClick: (LatLng, Offset) -> Unit = { _, _ -> }
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -67,8 +70,14 @@ fun MapLibreView(
                             Log.e("MapLibreView", "ensureBaseLayers failed", e)
                         }
                     }
+                    map.addOnMapClickListener { latLng ->
+                        onMapClick(latLng)
+                        false
+                    }
                     map.addOnMapLongClickListener { latLng ->
-                        onLongClick(latLng)
+                        val screen = runCatching { map.projection.toScreenLocation(latLng) }
+                            .getOrDefault(PointF())
+                        onLongClick(latLng, Offset(screen.x, screen.y))
                         true
                     }
                 } catch (e: Throwable) {

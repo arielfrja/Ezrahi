@@ -29,6 +29,13 @@ object LocationPermissionHelper {
             true
         }
 
+    fun activityRecognitionGranted(context: Context): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+
     /** Android 10 can prompt for background location directly; Android 11+ requires a settings redirect. */
     fun backgroundLocationCanBePrompted(): Boolean =
         Build.VERSION.SDK_INT == Build.VERSION_CODES.Q
