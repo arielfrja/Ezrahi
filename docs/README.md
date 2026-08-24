@@ -34,6 +34,7 @@ Analysis & specification documents for the audit fix series:
 - [`specs/todo-fix-4.md`](./specs/todo-fix-4.md) — Role-based messaging (F6)
 - [`specs/todo-fix-5.md`](./specs/todo-fix-5.md) — GPX routes (F3)
 - [`specs/todo-fix-6-exception-logging.md`](./specs/todo-fix-6-exception-logging.md) — global frontend exception logging (spec only, not yet developed)
+- [`specs/dynamic-report-types.md`](./specs/dynamic-report-types.md) — per-event dynamic report types replacing the hardcoded enum (spec only, not yet developed)
 
 ## Resolved issues
 
