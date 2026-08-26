@@ -40,4 +40,11 @@ interface EzrahiRepository {
         override: EntityLivenessState?,
         config: StalenessConfig
     ): Result<Unit>
+    fun getReportTypes(eventId: String): Flow<List<ReportTypeDefinition>>
+    suspend fun ensureReportTypesSeeded(eventId: String): Result<Unit>
+    suspend fun addReportType(eventId: String, name: String, iconKey: String, colorHex: String): Result<String>
+    suspend fun updateReportType(eventId: String, typeId: String, name: String, iconKey: String, colorHex: String): Result<Unit>
+    suspend fun deleteReportType(eventId: String, typeId: String, resolution: DeletionResolution?): Result<Unit>
+    fun getDeletionPreference(eventId: String): Flow<DeletionResolution?>
+    suspend fun setDeletionPreference(eventId: String, resolution: DeletionResolution?): Result<Unit>
 }

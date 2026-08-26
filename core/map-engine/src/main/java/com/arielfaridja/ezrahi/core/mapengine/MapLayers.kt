@@ -55,8 +55,6 @@ object MapLayers {
             style.addSource(GeoJsonSource(REPORTS_SRC, FeatureCollection.fromFeatures(emptyList())))
         }
         if (style.getLayer(REPORTS_LAYER) == null) {
-            if (style.getImage("report_general") == null) style.addImage("report_general", createReportBitmap(false))
-            if (style.getImage("report_medical") == null) style.addImage("report_medical", createReportBitmap(true))
             style.addLayer(
                 SymbolLayer(REPORTS_LAYER, REPORTS_SRC).withProperties(
                     PropertyFactory.iconImage(Expression.get("icon")),
@@ -96,19 +94,28 @@ object MapLayers {
         source.setGeoJson(FeatureCollection.fromFeatures(features))
     }
 
-    fun updateReports(style: Style, reports: List<FieldReport>) {
+    fun updateReports(style: Style, reports: List<FieldReport>, imageNameFor: (FieldReport) -> String = { report ->
+        if (report.type == FieldReportType.MEDICAL) "report_medical" else "report_general"
+    }) {
         val source = style.getSourceAs<GeoJsonSource>(REPORTS_SRC) ?: return
         val features = reports.mapNotNull { report ->
             val location = report.location ?: return@mapNotNull null
             Feature.fromGeometry(Point.fromLngLat(location.longitude, location.latitude)).also {
                 it.addStringProperty("title", report.title.ifEmpty { "Report" })
-                it.addStringProperty(
-                    "icon",
-                    if (report.type == FieldReportType.MEDICAL) "report_medical" else "report_general"
-                )
+                it.addStringProperty("icon", imageNameFor(report))
             }
         }
         source.setGeoJson(FeatureCollection.fromFeatures(features))
+    }
+
+    /**
+     * Registers per-type marker bitmaps under the given style image names
+     * ("rtype_..."). Always overwrites so icon/color edits refresh live.
+     */
+    fun ensureReportTypeIcons(style: Style, bitmaps: Map<String, android.graphics.Bitmap>) {
+        bitmaps.forEach { (imageName, bmp) ->
+            style.addImage(imageName, bmp)
+        }
     }
 
     fun updateRoute(style: Style, points: List<GeoPoint>) {

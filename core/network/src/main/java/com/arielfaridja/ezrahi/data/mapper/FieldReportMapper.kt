@@ -25,18 +25,23 @@ object FieldReportMapper {
             ),
             reportTime = doc.getTimestamp("Time")?.toDate()?.time ?: System.currentTimeMillis(),
             status = FieldReportStatus.getByValue(doc.getDouble("Status")?.toInt() ?: -1),
-            type = FieldReportType.getByValue(doc.getDouble("Type")?.toInt() ?: -1)
+            type = FieldReportType.getByValue(doc.getDouble("Type")?.toInt() ?: -1),
+            typeId = doc.getString("TypeId")
         )
     }
 
-    fun toWriteMap(report: FieldReport): Map<String, Any> = mapOf(
-        "ActId" to report.actId,
-        "ReporterId" to report.reporterId,
-        "Title" to report.title,
-        "Description" to report.description,
-        "Location" to FirestoreGeoPoint(report.location.latitude, report.location.longitude),
-        "Time" to Timestamp(java.util.Date(report.reportTime)),
-        "Status" to report.status.value,
-        "Type" to report.type.value
-    )
+    fun toWriteMap(report: FieldReport): MutableMap<String, Any> {
+        val map = mutableMapOf<String, Any>(
+            "ActId" to report.actId,
+            "ReporterId" to report.reporterId,
+            "Title" to report.title,
+            "Description" to report.description,
+            "Location" to FirestoreGeoPoint(report.location.latitude, report.location.longitude),
+            "Time" to Timestamp(java.util.Date(report.reportTime)),
+            "Status" to report.status.value,
+            "Type" to report.type.value
+        )
+        report.typeId?.let { map["TypeId"] = it }
+        return map
+    }
 }

@@ -11,6 +11,7 @@ import com.arielfaridja.ezrahi.domain.model.FieldEvent
 import com.arielfaridja.ezrahi.domain.model.FieldReport
 import com.arielfaridja.ezrahi.domain.model.FieldReportType
 import com.arielfaridja.ezrahi.domain.model.GeoPoint
+import com.arielfaridja.ezrahi.domain.model.ReportTypeDefinition
 import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
 import com.arielfaridja.ezrahi.location.AdaptiveLocationEngine
 import com.arielfaridja.ezrahi.location.GpsFix
@@ -30,6 +31,7 @@ data class MapUiState(
     val event: FieldEvent? = null,
     val participants: List<EventParticipant> = emptyList(),
     val reports: List<FieldReport> = emptyList(),
+    val reportTypes: List<ReportTypeDefinition> = emptyList(),
     val routePoints: List<GeoPoint> = emptyList(),
     val activeRouteName: String? = null,
     val isSosActive: Boolean = false,
@@ -68,6 +70,8 @@ class MapViewModel @Inject constructor(
 
     private val _pendingOutbox = MutableStateFlow(0)
     private val _online = MutableStateFlow(true)
+    private val _reportTypes = MutableStateFlow<List<ReportTypeDefinition>>(emptyList())
+    val reportTypes: StateFlow<List<ReportTypeDefinition>> = _reportTypes.asStateFlow()
 
     val hudState: StateFlow<HudState> = combine(
         adaptiveEngine.lastFix,
@@ -131,6 +135,12 @@ class MapViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
+            repository.getReportTypes(eventId).collect { types ->
+                _reportTypes.value = types
+                _uiState.update { it.copy(reportTypes = types) }
+            }
+        }
+        viewModelScope.launch {
             repository.routeErrorEvents.collect { error ->
                 _uiState.update { it.copy(statusMessage = error) }
             }
@@ -165,7 +175,7 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    fun addReport(eventId: String, title: String, description: String, type: FieldReportType, lat: Double, lng: Double) {
+    fun addReport(eventId: String, title: String, description: String, type: FieldReportType, lat: Double, lng: Double, typeId: String? = null) {
         viewModelScope.launch {
             val user = auth.currentUser
             val report = FieldReport(
@@ -174,11 +184,21 @@ class MapViewModel @Inject constructor(
                 title = title,
                 description = description,
                 location = GeoPoint(lat, lng, System.currentTimeMillis()),
-                type = type
+                type = type,
+                typeId = typeId
             )
             repository.addReport(report)
                 .onFailure { e -> logger.log(e, ErrorType.CAUGHT, eventId, screen = "map") }
         }
+    }
+
+    fun addReport(eventId: String, title: String, description: String, typeDef: ReportTypeDefinition, lat: Double, lng: Double) {
+        val legacy = when {
+            !typeDef.builtin -> FieldReportType.UNKNOWN
+            typeDef.name.equals("MEDICAL", ignoreCase = true) -> FieldReportType.MEDICAL
+            else -> FieldReportType.GENERAL
+        }
+        addReport(eventId, title, description, legacy, lat, lng, typeDef.id)
     }
 
     fun pingParticipant(eventId: String, targetUserId: String, targetName: String) {

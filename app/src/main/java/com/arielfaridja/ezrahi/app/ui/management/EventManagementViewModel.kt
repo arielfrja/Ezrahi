@@ -9,7 +9,9 @@ import com.arielfaridja.ezrahi.domain.model.EventParticipant
 import com.arielfaridja.ezrahi.domain.model.FieldEvent
 import com.arielfaridja.ezrahi.domain.model.StalenessConfig
 import com.arielfaridja.ezrahi.domain.model.FieldReport
+import com.arielfaridja.ezrahi.domain.model.DeletionResolution
 import com.arielfaridja.ezrahi.domain.model.MessengerOption
+import com.arielfaridja.ezrahi.domain.model.ReportTypeDefinition
 import com.arielfaridja.ezrahi.domain.model.RoleOption
 import com.arielfaridja.ezrahi.domain.model.RouteInfo
 import com.arielfaridja.ezrahi.domain.model.UserRole
@@ -35,6 +37,8 @@ data class EventManagementUiState(
     val messengerOptions: List<MessengerOption> = emptyList(),
     val isManager: Boolean = false,
     val canManageRoutes: Boolean = false,
+    val reportTypes: List<ReportTypeDefinition> = emptyList(),
+    val deletionPreference: DeletionResolution? = null,
     val isUploading: Boolean = false,
     val isLoading: Boolean = true,
     val statusMessage: String? = null
@@ -91,6 +95,16 @@ class EventManagementViewModel @Inject constructor(
         viewModelScope.launch {
             repository.getMessengerOptions().collect { options ->
                 _uiState.update { it.copy(messengerOptions = options) }
+            }
+        }
+        viewModelScope.launch {
+            repository.getReportTypes(eventId).collect { types ->
+                _uiState.update { it.copy(reportTypes = types) }
+            }
+        }
+        viewModelScope.launch {
+            repository.getDeletionPreference(eventId).collect { pref ->
+                _uiState.update { it.copy(deletionPreference = pref) }
             }
         }
     }
@@ -200,6 +214,67 @@ class EventManagementViewModel @Inject constructor(
                 .onFailure { e ->
                     logger.log(e, ErrorType.CAUGHT, eventId, screen = "management")
                     _uiState.update { it.copy(statusMessage = "Failed: ${e.message}") }
+                }
+        }
+    }
+
+    fun addReportType(eventId: String, name: String, iconKey: String, colorHex: String) {
+        viewModelScope.launch {
+            val trimmed = name.trim()
+            if (trimmed.isEmpty() || trimmed.length > 32) {
+                _uiState.update { it.copy(statusMessage = "Type name must be 1–32 characters") }
+                return@launch
+            }
+            if (_uiState.value.reportTypes.any { it.name.equals(trimmed, ignoreCase = true) }) {
+                _uiState.update { it.copy(statusMessage = "A type with this name already exists") }
+                return@launch
+            }
+            repository.addReportType(eventId, trimmed, iconKey, colorHex)
+                .onSuccess { _uiState.update { s -> s.copy(statusMessage = "Report type added") } }
+                .onFailure { e ->
+                    logger.log(e, ErrorType.CAUGHT, eventId, screen = "management")
+                    _uiState.update { it.copy(statusMessage = "Failed to add type: ${e.message}") }
+                }
+        }
+    }
+
+    fun updateReportType(eventId: String, typeId: String, name: String, iconKey: String, colorHex: String) {
+        viewModelScope.launch {
+            val trimmed = name.trim()
+            if (trimmed.isEmpty() || trimmed.length > 32) {
+                _uiState.update { it.copy(statusMessage = "Type name must be 1–32 characters") }
+                return@launch
+            }
+            if (_uiState.value.reportTypes.any { it.id != typeId && it.name.equals(trimmed, ignoreCase = true) }) {
+                _uiState.update { it.copy(statusMessage = "A type with this name already exists") }
+                return@launch
+            }
+            repository.updateReportType(eventId, typeId, trimmed, iconKey, colorHex)
+                .onSuccess { _uiState.update { s -> s.copy(statusMessage = "Report type updated") } }
+                .onFailure { e ->
+                    logger.log(e, ErrorType.CAUGHT, eventId, screen = "management")
+                    _uiState.update { it.copy(statusMessage = "Failed to update type: ${e.message}") }
+                }
+        }
+    }
+
+    fun deleteReportType(eventId: String, typeId: String, resolution: DeletionResolution?) {
+        viewModelScope.launch {
+            repository.deleteReportType(eventId, typeId, resolution)
+                .onSuccess { _uiState.update { it.copy(statusMessage = "Report type deleted") } }
+                .onFailure { e ->
+                    logger.log(e, ErrorType.CAUGHT, eventId, screen = "management")
+                    _uiState.update { it.copy(statusMessage = "Delete failed: ${e.message}") }
+                }
+        }
+    }
+
+    fun setDeletionPreference(eventId: String, resolution: DeletionResolution?) {
+        viewModelScope.launch {
+            repository.setDeletionPreference(eventId, resolution)
+                .onFailure { e ->
+                    logger.log(e, ErrorType.CAUGHT, eventId, screen = "management")
+                    _uiState.update { it.copy(statusMessage = "Failed to save preference: ${e.message}") }
                 }
         }
     }

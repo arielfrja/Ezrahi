@@ -724,7 +724,8 @@ class EzrahiRepositoryImpl @Inject constructor(
                             longitude = report.location.longitude,
                             reportTime = report.reportTime,
                             status = report.status.value,
-                            type = report.type.value
+                            type = report.type.value,
+                            typeId = report.typeId
                         )
                     }
                     scope.launch { dao.insertReports(reports) }
@@ -793,6 +794,185 @@ class EzrahiRepositoryImpl @Inject constructor(
         logger.log(error, ErrorType.CAUGHT, eventId, screen = "management")
     }
 
+    override fun getReportTypes(eventId: String): Flow<List<ReportTypeDefinition>> = callbackFlow {
+        val registration = firestore.collection("events").document(eventId)
+            .collection("report_types")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    logListenerError("events/$eventId/report_types", error)
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    val types = snapshot.documents.mapNotNull { doc ->
+                        val name = doc.getString("name") ?: return@mapNotNull null
+                        ReportTypeDefinition(
+                            id = doc.id,
+                            name = name,
+                            iconKey = doc.getString("iconKey") ?: "general",
+                            colorHex = doc.getString("colorHex") ?: if (name.equals("MEDICAL", true)) "#C62828" else "#2E7D32",
+                            builtin = doc.getBoolean("builtin") ?: false
+                        )
+                    }.sortedWith(compareByDescending<ReportTypeDefinition> { it.builtin }.thenBy { it.name.lowercase() })
+                    trySend(types)
+                }
+            }
+        awaitClose { registration.remove() }
+    }
+
+    override suspend fun ensureReportTypesSeeded(eventId: String): Result<Unit> = runCatching {
+        val ref = firestore.collection("events").document(eventId).collection("report_types")
+        val existing = ref.get().await()
+        val haveNames = existing.documents.mapNotNull { it.getString("name")?.lowercase() }.toSet()
+        val seeds = listOf(
+            Triple("GENERAL", "general", "#2E7D32"),
+            Triple("MEDICAL", "medical", "#C62828")
+        ).filter { (name, _, _) -> name.lowercase() !in haveNames }
+        if (seeds.isEmpty()) return@runCatching
+        val batch = firestore.batch()
+        seeds.forEach { (name, iconKey, colorHex) ->
+            batch.set(ref.document(), mapOf(
+                "name" to name,
+                "iconKey" to iconKey,
+                "colorHex" to colorHex,
+                "builtin" to true,
+                "createdAt" to com.google.firebase.Timestamp.now()
+            ))
+        }
+        batch.commit().await()
+    }.onFailure { error ->
+        Log.w(TAG, "ensureReportTypesSeeded(event=$eventId) failed", error)
+        logger.log(error, ErrorType.CAUGHT, eventId, screen = "management")
+    }
+
+    override suspend fun addReportType(eventId: String, name: String, iconKey: String, colorHex: String): Result<String> = runCatching {
+        // Try seeding best-effort (ignore seeding error if it fails so user creation still proceeds)
+        ensureReportTypesSeeded(eventId)
+        val ref = firestore.collection("events").document(eventId)
+            .collection("report_types").document()
+        ref.set(mapOf(
+            "name" to name.trim(),
+            "iconKey" to iconKey,
+            "colorHex" to colorHex,
+            "builtin" to false,
+            "createdAt" to com.google.firebase.Timestamp.now()
+        )).await()
+        ref.id
+    }.onFailure { error ->
+        Log.w(TAG, "addReportType(event=$eventId, name=$name) failed", error)
+        logger.log(error, ErrorType.CAUGHT, eventId, screen = "management")
+    }
+
+    override suspend fun updateReportType(eventId: String, typeId: String, name: String, iconKey: String, colorHex: String): Result<Unit> = runCatching {
+        firestore.collection("events").document(eventId)
+            .collection("report_types").document(typeId)
+            .update(mapOf("name" to name.trim(), "iconKey" to iconKey, "colorHex" to colorHex)).await()
+        Unit
+    }.onFailure { error ->
+        Log.w(TAG, "updateReportType(event=$eventId, type=$typeId) failed", error)
+        logger.log(error, ErrorType.CAUGHT, eventId, screen = "management")
+    }
+
+    override suspend fun deleteReportType(eventId: String, typeId: String, resolution: DeletionResolution?): Result<Unit> = runCatching {
+        val typesRef = firestore.collection("events").document(eventId).collection("report_types")
+        val typeDoc = typesRef.document(typeId).get().await()
+        if (!typeDoc.exists()) throw IllegalArgumentException("Report type $typeId does not exist")
+        if (typeDoc.getBoolean("builtin") == true) {
+            throw IllegalArgumentException("Builtin report types cannot be deleted")
+        }
+
+        val affected = firestore.collection("Reports")
+            .whereEqualTo("ActId", eventId)
+            .whereEqualTo("TypeId", typeId)
+            .get().await()
+            .documents
+
+        when (resolution) {
+            is DeletionResolution.RemoveReports -> {
+                affected.chunked(450).forEach { chunk ->
+                    val batch = firestore.batch()
+                    chunk.forEach { batch.delete(it.reference) }
+                    batch.commit().await()
+                }
+            }
+            is DeletionResolution.ConvertToGeneral, is DeletionResolution.ConvertTo -> {
+                val targetTypeId = when (resolution) {
+                    is DeletionResolution.ConvertToGeneral -> {
+                        val generalDoc = typesRef.whereEqualTo("name", "GENERAL").limit(1).get().await().documents.firstOrNull()
+                            ?: throw IllegalStateException("Builtin GENERAL type not found for event $eventId")
+                        generalDoc.id
+                    }
+                    is DeletionResolution.ConvertTo -> resolution.targetTypeId
+                    else -> throw IllegalStateException()
+                }
+                val targetDef = typesRef.document(targetTypeId).get().await()
+                val legacyInt = legacyIntFor(targetDef)
+                affected.chunked(450).forEach { chunk ->
+                    val batch = firestore.batch()
+                    chunk.forEach { batch.update(it.reference, mapOf("TypeId" to targetTypeId, "Type" to legacyInt)) }
+                    batch.commit().await()
+                }
+            }
+            null -> Unit
+        }
+
+        typesRef.document(typeId).delete().await()
+        Unit
+    }.onFailure { error ->
+        Log.w(TAG, "deleteReportType(event=$eventId, type=$typeId) failed", error)
+        logger.log(error, ErrorType.CAUGHT, eventId, screen = "management")
+    }
+
+    override fun getDeletionPreference(eventId: String): Flow<DeletionResolution?> = callbackFlow {
+        val registration = firestore.collection("events").document(eventId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    logListenerError("events/$eventId (deletion preference)", error)
+                    return@addSnapshotListener
+                }
+                trySend(snapshot?.getString("reportTypeDeletionAction").toResolution())
+            }
+        awaitClose { registration.remove() }
+    }
+
+    override suspend fun setDeletionPreference(eventId: String, resolution: DeletionResolution?): Result<Unit> = runCatching {
+        val docRef = firestore.collection("events").document(eventId)
+        if (resolution == null) {
+            docRef.update("reportTypeDeletionAction", com.google.firebase.firestore.FieldValue.delete()).await()
+        } else {
+            docRef.update("reportTypeDeletionAction", resolution.toFieldValue()).await()
+        }
+        Unit
+    }.onFailure { error ->
+        Log.w(TAG, "setDeletionPreference(event=$eventId) failed", error)
+        logger.log(error, ErrorType.CAUGHT, eventId, screen = "management")
+    }
+
+    private fun legacyIntFor(typeDoc: com.google.firebase.firestore.DocumentSnapshot): Int {
+        if (typeDoc.getBoolean("builtin") != true) return -1
+        return when (typeDoc.getString("name")?.lowercase()) {
+            "general" -> 0
+            "medical" -> 1
+            else -> -1
+        }
+    }
+
+    private val PREF_REMOVE = "REMOVE"
+    private val PREF_GENERAL = "CONVERT_GENERAL"
+    private val PREF_TYPE_PREFIX = "CONVERT_TYPE:"
+
+    private fun DeletionResolution.toFieldValue(): String = when (this) {
+        is DeletionResolution.RemoveReports -> PREF_REMOVE
+        is DeletionResolution.ConvertToGeneral -> PREF_GENERAL
+        is DeletionResolution.ConvertTo -> "$PREF_TYPE_PREFIX$targetTypeId"
+    }
+
+    private fun String?.toResolution(): DeletionResolution? = when {
+        this == PREF_REMOVE -> DeletionResolution.RemoveReports
+        this == PREF_GENERAL -> DeletionResolution.ConvertToGeneral
+        this != null && startsWith(PREF_TYPE_PREFIX) -> DeletionResolution.ConvertTo(removePrefix(PREF_TYPE_PREFIX))
+        else -> null
+    }
+
     private fun EventLocalEntity.toFieldEvent() = FieldEvent(
         id = id,
         name = name,
@@ -859,6 +1039,7 @@ class EzrahiRepositoryImpl @Inject constructor(
         location = GeoPoint(latitude, longitude),
         reportTime = reportTime,
         status = FieldReportStatus.getByValue(status),
-        type = FieldReportType.getByValue(type)
+        type = FieldReportType.getByValue(type),
+        typeId = typeId
     )
 }

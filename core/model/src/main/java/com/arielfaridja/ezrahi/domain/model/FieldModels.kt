@@ -194,8 +194,26 @@ data class FieldReport(
     val location: GeoPoint = GeoPoint(),
     val reportTime: Long = System.currentTimeMillis(),
     val status: FieldReportStatus = FieldReportStatus.REPORTED,
-    val type: FieldReportType = FieldReportType.GENERAL
+    val type: FieldReportType = FieldReportType.GENERAL,
+    val typeId: String? = null
 )
+
+// 9a. Per-event user-defined report type (docs/specs/dynamic-report-types.md).
+//     Persisted under events/{eventId}/report_types; document id == report's typeId.
+data class ReportTypeDefinition(
+    val id: String = "",
+    val name: String = "",
+    val iconKey: String = "general",
+    val colorHex: String = "#2E7D32",
+    val builtin: Boolean = false
+)
+
+// 9b. What to do with a type's existing reports when the type is deleted (§5.1).
+sealed class DeletionResolution {
+    data object RemoveReports : DeletionResolution()
+    data object ConvertToGeneral : DeletionResolution()
+    data class ConvertTo(val targetTypeId: String) : DeletionResolution()
+}
 
 // 10. High-frequency GPS telemetry packet (Phase 2 transport engine, DROP_OLDEST channel)
 data class TelemetryUpdate(

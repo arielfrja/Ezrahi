@@ -4,6 +4,8 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -15,14 +17,21 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.RadioButton
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.input.KeyboardType
 import com.arielfaridja.ezrahi.domain.model.EntityLivenessState
 import com.arielfaridja.ezrahi.domain.model.StalenessConfig
@@ -34,6 +43,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,6 +52,8 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -61,17 +73,22 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arielfaridja.ezrahi.domain.model.roleLabel
+import com.arielfaridja.ezrahi.app.ui.reports.ReportIconCatalog
+import com.arielfaridja.ezrahi.domain.model.DeletionResolution
 import com.arielfaridja.ezrahi.domain.model.EventParticipant
 import com.arielfaridja.ezrahi.domain.model.FieldReport
 import com.arielfaridja.ezrahi.domain.model.FieldReportType
 import com.arielfaridja.ezrahi.domain.model.MessengerOption
 import com.arielfaridja.ezrahi.domain.model.RoleOption
+import com.arielfaridja.ezrahi.domain.model.ReportTypeDefinition
 import com.arielfaridja.ezrahi.domain.model.RouteInfo
 import com.arielfaridja.ezrahi.domain.model.UserRole
 
@@ -192,6 +209,12 @@ fun EventManagementScreen(
                                 }
                             }
                             if (state.isManager) {
+                                item(key = "report-types-preference") {
+                                    DeletionPreferenceSection(
+                                        current = state.deletionPreference,
+                                        onChange = { viewModel.setDeletionPreference(eventId, it) }
+                                    )
+                                }
                                 item(key = "staleness-settings") {
                                     StalenessSettingsSection(
                                         config = state.event?.stalenessConfig ?: StalenessConfig(),
@@ -249,11 +272,33 @@ fun EventManagementScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                             }
+                            if (state.isManager && REPORT_TYPES_EDITOR_ENABLED) {
+                                item(key = "manage-types") {
+                                    var showTypeSheet by remember { mutableStateOf(false) }
+                                    OutlinedButton(onClick = { showTypeSheet = true }) {
+                                        Text("Manage report types")
+                                    }
+                                    if (showTypeSheet) {
+                                        ReportTypesSheet(
+                                            types = state.reportTypes,
+                                            reports = state.reports,
+                                            rememberedPreference = state.deletionPreference,
+                                            onDismiss = { showTypeSheet = false },
+                                            onAdd = { name, icon, color -> viewModel.addReportType(eventId, name, icon, color) },
+                                            onUpdate = { id, name, icon, color -> viewModel.updateReportType(eventId, id, name, icon, color) },
+                                            onDelete = { type, resolution, remember ->
+                                                viewModel.deleteReportType(eventId, type.id, resolution)
+                                                viewModel.setDeletionPreference(eventId, if (remember) resolution else null)
+                                            }
+                                        )
+                                    }
+                                }
+                            }
                             item(key = "reports-summary") {
-                                ReportsSummary(reports = state.reports)
+                                ReportsSummary(reports = state.reports, types = state.reportTypes)
                             }
                             items(state.reports, key = { "r-${it.id}" }) { report ->
-                                ReportRow(report = report)
+                                ReportRow(report = report, types = state.reportTypes)
                             }
                         }
                     }
@@ -622,27 +667,81 @@ private fun stateLabel(state: EntityLivenessState): String = when (state) {
     EntityLivenessState.EXPIRED -> "Faded / Hidden"
 }
 
+private fun parseTypeColor(hex: String?, fallback: Color = Color(0xFF757575)): Color =
+    hex?.let { runCatching { Color(android.graphics.Color.parseColor(it)) }.getOrNull() } ?: fallback
+
 @Composable
-private fun ReportsSummary(reports: List<FieldReport>) {
-    val medicalCount = reports.count { it.type == FieldReportType.MEDICAL }
-    val generalCount = reports.count { it.type == FieldReportType.GENERAL }
+private fun ReportsSummary(reports: List<FieldReport>, types: List<ReportTypeDefinition>) {
+    val typesById = types.associateBy { it.id }
+    val counts = reports.groupingBy { report ->
+        report.typeId?.let { id -> typesById[id]?.name } ?: when (report.type) {
+            FieldReportType.MEDICAL -> "MEDICAL"
+            FieldReportType.GENERAL -> "GENERAL"
+            FieldReportType.UNKNOWN -> "Other"
+        }
+    }.eachCount()
+    val ordered = counts.entries.sortedByDescending { it.value }
     Card(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             Text("Total: ${reports.size}")
-            Text("Medical: $medicalCount", color = MaterialTheme.colorScheme.error)
-            Text("General: $generalCount")
+            Spacer(Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                ordered.take(4).forEach { (label, count) ->
+                    val def = types.firstOrNull { it.name.equals(label, ignoreCase = true) }
+                    val accent = def?.let { parseTypeColor(it.colorHex, ReportIconCatalog.entry(it.iconKey).accent) }
+                        ?: Color(0xFF757575)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(ReportIconCatalog.entry(def?.iconKey ?: "general").resId),
+                            contentDescription = null,
+                            tint = accent,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(Modifier.width(2.dp))
+                        Text("$label: $count", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+            if (ordered.size > 4) {
+                Text(
+                    "+ ${ordered.drop(4).joinToString { "${it.key}: ${it.value}" }}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
 
+private fun typeLabelFor(report: FieldReport, types: List<ReportTypeDefinition>): String =
+    types.firstOrNull { it.id == report.typeId }?.name ?: when (report.type) {
+        FieldReportType.MEDICAL -> "MEDICAL"
+        FieldReportType.GENERAL -> "GENERAL"
+        FieldReportType.UNKNOWN -> "Custom"
+    }
+
 @Composable
-private fun ReportRow(report: FieldReport) {
+private fun ReportRow(report: FieldReport, types: List<ReportTypeDefinition>) {
+    val label = typeLabelFor(report, types)
+    val def = types.firstOrNull { it.id == report.typeId }
+    val entry = def?.let { ReportIconCatalog.entry(it.iconKey) }
+    val accent = def?.let { parseTypeColor(it.colorHex, entry?.accent ?: Color(0xFF757575)) }
+        ?: if (report.type == FieldReportType.MEDICAL) MaterialTheme.colorScheme.error else Color(0xFF757575)
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
+                if (entry != null) {
+                    Icon(
+                        painter = painterResource(entry.resId),
+                        contentDescription = null,
+                        tint = accent,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(6.dp))
+                }
                 Text(
                     text = report.title.ifBlank { "Untitled report" },
                     style = MaterialTheme.typography.bodyLarge,
@@ -650,13 +749,9 @@ private fun ReportRow(report: FieldReport) {
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = reportTypeLabel(report.type),
+                    text = label.uppercase(),
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (report.type == FieldReportType.MEDICAL) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    }
+                    color = accent
                 )
             }
             Text(
@@ -675,10 +770,427 @@ private fun ReportRow(report: FieldReport) {
     }
 }
 
-private fun reportTypeLabel(type: FieldReportType): String = when (type) {
-    FieldReportType.MEDICAL -> "MEDICAL"
-    FieldReportType.GENERAL -> "GENERAL"
-    FieldReportType.UNKNOWN -> "UNKNOWN"
+// ---------------------------------------------------------------------------
+// Dynamic report types (spec docs/specs/dynamic-report-types.md §9)
+// ---------------------------------------------------------------------------
+
+/** Gates the type editor until the new Firestore rules are deployed (§11). */
+private const val REPORT_TYPES_EDITOR_ENABLED = true
+
+@Composable
+private fun DeletionPreferenceSection(current: DeletionResolution?, onChange: (DeletionResolution?) -> Unit) {
+    var showDialog by remember { mutableStateOf(false) }
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Text("Report type deletion", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = when (current) {
+                    is DeletionResolution.RemoveReports -> "Remembered: remove affected reports"
+                    is DeletionResolution.ConvertToGeneral -> "Remembered: convert to General"
+                    is DeletionResolution.ConvertTo -> "Remembered: convert to chosen type"
+                    null -> "Ask every time a type is deleted"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(onClick = { showDialog = true }) { Text("Change") }
+        }
+    }
+    if (showDialog) {
+        DeletionPreferenceDialog(
+            current = current,
+            onConfirm = { resolution ->
+                onChange(resolution)
+                showDialog = false
+            },
+            onDismiss = { showDialog = false }
+        )
+    }
+}
+
+@Composable
+private fun DeletionPreferenceDialog(
+    current: DeletionResolution?,
+    onConfirm: (DeletionResolution?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var selected by remember { mutableStateOf<Int>(current.toOptionIndex()) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("When deleting a report type") },
+        text = {
+            Column {
+                listOf(
+                    "Ask every time" to null,
+                    "Remove affected reports" to DeletionResolution.RemoveReports,
+                    "Convert them to General" to DeletionResolution.ConvertToGeneral
+                ).forEachIndexed { index, (label, resolution) ->
+                    val optionIndex = if (resolution == null) 0 else index
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = selected == optionIndex, onClick = { selected = optionIndex })
+                        Text(label)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                onConfirm(
+                    when (selected) {
+                        1 -> DeletionResolution.RemoveReports
+                        2 -> DeletionResolution.ConvertToGeneral
+                        else -> null
+                    }
+                )
+            }) { Text("Save") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+private fun DeletionResolution?.toOptionIndex(): Int = when (this) {
+    is DeletionResolution.RemoveReports -> 1
+    is DeletionResolution.ConvertToGeneral -> 2
+    else -> 0
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReportTypesSheet(
+    types: List<ReportTypeDefinition>,
+    reports: List<FieldReport>,
+    rememberedPreference: DeletionResolution?,
+    onDismiss: () -> Unit,
+    onAdd: (String, String, String) -> Unit,
+    onUpdate: (String, String, String, String) -> Unit,
+    onDelete: (ReportTypeDefinition, DeletionResolution, Boolean) -> Unit
+) {
+    var editingType by remember { mutableStateOf<ReportTypeDefinition?>(null) }
+    var showEditor by remember { mutableStateOf(false) }
+    var deletingType by remember { mutableStateOf<ReportTypeDefinition?>(null) }
+
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "Report types",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                TextButton(onClick = {
+                    editingType = null
+                    showEditor = true
+                }) { Text("+ Add") }
+            }
+            LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 360.dp)) {
+                items(types, key = { it.id }) { def ->
+                    val entry = ReportIconCatalog.entry(def.iconKey)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(entry.resId),
+                            contentDescription = null,
+                            tint = parseTypeColor(def.colorHex, entry.accent)
+                        )
+                        Spacer(Modifier.width(10.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(def.name)
+                            if (def.builtin) {
+                                Text(
+                                    "Built-in",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        IconButton(onClick = {
+                            editingType = def
+                            showEditor = true
+                        }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit ${def.name}")
+                        }
+                        if (!def.builtin) {
+                            IconButton(onClick = { deletingType = def }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Delete ${def.name}")
+                            }
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+        }
+    }
+
+    if (showEditor) {
+        ReportTypeEditorDialog(
+            existing = editingType,
+            takenNames = types.map { it.name },
+            onConfirm = { name, icon, colorHex ->
+                val target = editingType
+                if (target == null) onAdd(name, icon, colorHex) else onUpdate(target.id, name, icon, colorHex)
+                showEditor = false
+            },
+            onDismiss = { showEditor = false }
+        )
+    }
+
+    deletingType?.let { target ->
+        val affectedCount = reports.count { it.typeId == target.id }
+        val remainingTypes = types.filter { it.id != target.id }
+        // Remembered preference applies automatically without prompting (§5.1),
+        // unless its conversion target no longer exists.
+        val remembered = rememberedPreference?.takeIf { pref ->
+            pref !is DeletionResolution.ConvertTo || remainingTypes.any { it.id == pref.targetTypeId }
+        }
+        if (remembered != null) {
+            onDelete(target, remembered, false)
+            deletingType = null
+        } else {
+            DeletionResolutionDialog(
+                typeName = target.name,
+                affectedCount = affectedCount,
+                remainingTypes = remainingTypes,
+                onConfirm = { resolution, rememberChoice ->
+                    onDelete(target, resolution, rememberChoice)
+                    deletingType = null
+                },
+                onDismiss = { deletingType = null }
+            )
+        }
+    }
+}
+
+private val TYPE_COLOR_PALETTE = listOf(
+    "#2E7D32", "#C62828", "#F9A825", "#E64A19", "#1565C0", "#00796B",
+    "#795548", "#EF6C00", "#3949AB", "#AD1457", "#5E35B1", "#455A64"
+)
+
+private fun colorToHex(c: Color): String = String.format("#%06X", 0xFFFFFF and c.toArgb())
+
+@Composable
+private fun ReportTypeEditorDialog(
+    existing: ReportTypeDefinition?,
+    takenNames: List<String>,
+    onConfirm: (String, String, String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var name by remember(existing) { mutableStateOf(existing?.name ?: "") }
+    var iconKey by remember(existing) { mutableStateOf(existing?.iconKey ?: "general") }
+    var colorHex by remember(existing) {
+        mutableStateOf(existing?.colorHex ?: colorToHex(ReportIconCatalog.entry(existing?.iconKey ?: "general").accent))
+    }
+    val duplicate = takenNames.any { it.equals(name.trim(), ignoreCase = true) && !it.equals(existing?.name, true) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (existing == null) "Add report type" else "Edit report type") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Name") },
+                    isError = duplicate || name.length > 32,
+                    supportingText = {
+                        when {
+                            duplicate -> Text("Name already in use")
+                            name.length > 32 -> Text("Maximum 32 characters")
+                            else -> Text("${name.trim().length}/32")
+                        }
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(12.dp))
+                Text("Icon", style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(8.dp))
+                IconPickerGrid(selected = iconKey, onSelect = { iconKey = it })
+                Spacer(Modifier.height(12.dp))
+                Text("Color", style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.horizontalScroll(rememberScrollState())
+                ) {
+                    TYPE_COLOR_PALETTE.forEach { hex ->
+                        val selected = hex.equals(colorHex, ignoreCase = true)
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(parseTypeColor(hex))
+                                .border(
+                                    width = if (selected) 3.dp else 1.dp,
+                                    color = if (selected) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.outline
+                                    },
+                                    shape = CircleShape
+                                )
+                                .clickable { colorHex = hex },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (selected) {
+                                Icon(
+                                    painter = painterResource(ReportIconCatalog.entry(iconKey).resId),
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(name, iconKey, colorHex) },
+                enabled = name.isNotBlank() && name.trim().length <= 32 && !duplicate
+            ) { Text("Save") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+@Composable
+private fun IconPickerGrid(selected: String, onSelect: (String) -> Unit) {
+    val gridKeys = remember { ReportIconCatalog.entries.keys.toList() }
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(5),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp)
+    ) {
+        gridItems(gridKeys) { key ->
+            val entry = ReportIconCatalog.entry(key)
+            FilterChip(
+                selected = selected == key,
+                onClick = { onSelect(key) },
+                leadingIcon = {
+                    Icon(painterResource(entry.resId), contentDescription = key, tint = entry.accent)
+                },
+                label = { Text("") }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DeletionResolutionDialog(
+    typeName: String,
+    affectedCount: Int,
+    remainingTypes: List<ReportTypeDefinition>,
+    onConfirm: (DeletionResolution, Boolean) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var option by remember { mutableIntStateOf(0) }   // 0=convert general 1=convert other 2=remove all
+    var targetType by remember { mutableStateOf<ReportTypeDefinition?>(remainingTypes.firstOrNull()) }
+    var rememberChoice by remember { mutableStateOf(false) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Delete \"$typeName\"?") },
+        text = {
+            Column {
+                Text(
+                    "$affectedCount report(s) use this type.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(8.dp))
+                RadioButtonRow(
+                    selected = option == 0,
+                    onClick = { option = 0 },
+                    label = "Convert them to General"
+                )
+                RadioButtonRow(
+                    selected = option == 1,
+                    onClick = { option = 1 },
+                    label = "Convert them to another type"
+                )
+                var menuExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = menuExpanded && option == 1,
+                    onExpandedChange = { if (option == 1) menuExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = targetType?.name ?: "",
+                        onValueChange = {},
+                        readOnly = true,
+                        enabled = option == 1,
+                        label = { Text("Target type") },
+                        trailingIcon = {
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                        },
+                        modifier = Modifier.fillMaxWidth().menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = menuExpanded && option == 1,
+                        onDismissRequest = { menuExpanded = false }
+                    ) {
+                        remainingTypes.forEach { def ->
+                            DropdownMenuItem(
+                                text = {
+                                    val entry = ReportIconCatalog.entry(def.iconKey)
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            painter = painterResource(entry.resId),
+                                            contentDescription = null,
+                                            tint = parseTypeColor(def.colorHex, entry.accent),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(def.name)
+                                    }
+                                },
+                                onClick = {
+                                    targetType = def
+                                    menuExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                RadioButtonRow(
+                    selected = option == 2,
+                    onClick = { option = 2 },
+                    label = "Remove them all"
+                )
+                Spacer(Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = rememberChoice, onCheckedChange = { rememberChoice = it })
+                    Text("Remember my choice")
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val resolution = when (option) {
+                        1 -> DeletionResolution.ConvertTo(targetType?.id ?: return@TextButton)
+                        2 -> DeletionResolution.RemoveReports
+                        else -> DeletionResolution.ConvertToGeneral
+                    }
+                    onConfirm(resolution, rememberChoice)
+                }
+            ) { Text("Delete type") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+@Composable
+private fun RadioButtonRow(selected: Boolean, onClick: () -> Unit, label: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        RadioButton(selected = selected, onClick = onClick)
+        Text(label)
+    }
 }
 
 private fun queryDisplayName(context: android.content.Context, uri: Uri): String? =

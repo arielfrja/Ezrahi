@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Straighten
@@ -24,12 +25,15 @@ import com.arielfaridja.ezrahi.R
 import com.arielfaridja.ezrahi.app.util.Coordinates
 import com.arielfaridja.ezrahi.app.util.CoordFormat
 import com.arielfaridja.ezrahi.app.util.LocationPermissionHelper
+import androidx.compose.ui.res.painterResource
+import com.arielfaridja.ezrahi.app.ui.reports.ReportIconCatalog
 import com.arielfaridja.ezrahi.core.mapengine.MapLayers
 import com.arielfaridja.ezrahi.core.mapengine.MapLibreConfig
 import com.arielfaridja.ezrahi.core.mapengine.MapLibreView
 import com.arielfaridja.ezrahi.core.mapengine.OfflineTileManager
 import com.arielfaridja.ezrahi.domain.model.FieldReportType
 import com.arielfaridja.ezrahi.domain.model.GeoPoint
+import com.arielfaridja.ezrahi.domain.model.ReportTypeDefinition
 import com.arielfaridja.ezrahi.domain.model.StalenessConfig
 import com.arielfaridja.ezrahi.service.LocationTrackingService
 import com.google.firebase.auth.FirebaseAuth
@@ -169,11 +173,23 @@ fun MapScreen(
         }
     }
 
-    LaunchedEffect(mapState.value, state.participants, state.reports) {
+    LaunchedEffect(mapState.value, state.participants, state.reports, state.reportTypes) {
         val map = mapState.value ?: return@LaunchedEffect
         map.style?.let { style ->
             MapLayers.updateParticipants(style, state.participants, state.event?.stalenessConfig ?: StalenessConfig())
-            MapLayers.updateReports(style, state.reports)
+            // Per-type marker bitmaps: one per type definition (icon glyph + user color)
+            val typeBitmaps = state.reportTypes.associate { def ->
+                "rtype_${def.id}" to ReportIconCatalog.renderMarkerBitmap(context, def.iconKey, def.colorHex)
+            } + mapOf(
+                "rtype_general" to ReportIconCatalog.renderMarkerBitmap(context, "general", "#2E7D32"),
+                "rtype_medical" to ReportIconCatalog.renderMarkerBitmap(context, "medical", "#C62828")
+            )
+            MapLayers.ensureReportTypeIcons(style, typeBitmaps)
+            val iconByTypeId = state.reportTypes.associate { it.id to "rtype_${it.id}" }
+            MapLayers.updateReports(style, state.reports) { report ->
+                report.typeId?.let { iconByTypeId[it] }
+                    ?: if (report.type == FieldReportType.MEDICAL) "rtype_medical" else "rtype_general"
+            }
         }
     }
 
@@ -350,34 +366,70 @@ fun MapScreen(
         if (showAddMarkerDialog) {
             var markerTitle by remember { mutableStateOf("") }
             var markerDescription by remember { mutableStateOf("") }
-            var reportType by remember { mutableStateOf(FieldReportType.GENERAL) }
+            val reportTypes by viewModel.reportTypes.collectAsStateWithLifecycle()
+            val effectiveTypes = remember(reportTypes) {
+                if (reportTypes.isEmpty()) {
+                    listOf(
+                        ReportTypeDefinition(name = "GENERAL", iconKey = "general", builtin = true),
+                        ReportTypeDefinition(name = "MEDICAL", iconKey = "medical", builtin = true)
+                    )
+                } else reportTypes
+            }
+            var selectedType by remember(effectiveTypes) { mutableStateOf(effectiveTypes.first()) }
+            var typeMenuExpanded by remember { mutableStateOf(false) }
+            val selectedEntry = ReportIconCatalog.entry(selectedType.iconKey)
             AlertDialog(
                 onDismissRequest = { showAddMarkerDialog = false },
                 title = { Text("Add Marker / הוספת דיווח") },
                 text = {
-                    LazyColumn {
-                        item {
+                    Column {
+                        OutlinedTextField(
+                            value = markerTitle,
+                            onValueChange = { markerTitle = it },
+                            label = { Text("Title / כותרת") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = markerDescription,
+                            onValueChange = { markerDescription = it },
+                            label = { Text("Description / תיאור") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        ExposedDropdownMenuBox(
+                            expanded = typeMenuExpanded,
+                            onExpandedChange = { typeMenuExpanded = it }
+                        ) {
                             OutlinedTextField(
-                                value = markerTitle,
-                                onValueChange = { markerTitle = it },
-                                label = { Text("Title / כותרת") },
-                                modifier = Modifier.fillMaxWidth(),
-                                singleLine = true
+                                value = selectedType.name.replaceFirstChar { it.uppercase() },
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Report type") },
+                                leadingIcon = {
+                                    Icon(painterResource(selectedEntry.resId), contentDescription = null, tint = selectedEntry.accent)
+                                },
+                                trailingIcon = {
+                                    Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                                },
+                                modifier = Modifier.fillMaxWidth().menuAnchor()
                             )
-                            Spacer(Modifier.height(8.dp))
-                            OutlinedTextField(
-                                value = markerDescription,
-                                onValueChange = { markerDescription = it },
-                                label = { Text("Description / תיאור") },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                            Spacer(Modifier.height(12.dp))
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                FieldReportType.entries.forEach { type ->
-                                    FilterChip(
-                                        selected = reportType == type,
-                                        onClick = { reportType = type },
-                                        label = { Text(if (type == FieldReportType.MEDICAL) "Medical" else "General") }
+                            ExposedDropdownMenu(
+                                expanded = typeMenuExpanded,
+                                onDismissRequest = { typeMenuExpanded = false }
+                            ) {
+                                effectiveTypes.forEach { def ->
+                                    val entry = ReportIconCatalog.entry(def.iconKey)
+                                    DropdownMenuItem(
+                                        text = { Text(def.name.replaceFirstChar { it.uppercase() }) },
+                                        leadingIcon = {
+                                            Icon(painterResource(entry.resId), contentDescription = null, tint = entry.accent)
+                                        },
+                                        onClick = {
+                                            selectedType = def
+                                            typeMenuExpanded = false
+                                        }
                                     )
                                 }
                             }
@@ -387,7 +439,7 @@ fun MapScreen(
                 confirmButton = {
                     Button(onClick = {
                         longPressLocation?.let { loc ->
-                            viewModel.addReport(eventId, markerTitle, markerDescription, reportType, loc.latitude, loc.longitude)
+                            viewModel.addReport(eventId, markerTitle, markerDescription, selectedType, loc.latitude, loc.longitude)
                         }
                         showAddMarkerDialog = false
                     }) { Text("Add / הוספה") }

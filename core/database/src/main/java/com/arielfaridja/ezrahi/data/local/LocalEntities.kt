@@ -68,5 +68,6 @@ data class ReportLocalEntity(
     val longitude: Double,
     val reportTime: Long,
     val status: Int,
-    val type: Int
+    val type: Int,
+    val typeId: String? = null
 )
