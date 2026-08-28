@@ -3,6 +3,7 @@ package com.arielfaridja.ezrahi.app.ui.map
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,8 +17,22 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arielfaridja.ezrahi.MainActivity
@@ -30,11 +45,15 @@ import com.arielfaridja.ezrahi.app.ui.reports.ReportIconCatalog
 import com.arielfaridja.ezrahi.core.mapengine.MapLayers
 import com.arielfaridja.ezrahi.core.mapengine.MapLibreConfig
 import com.arielfaridja.ezrahi.core.mapengine.MapLibreView
+import com.arielfaridja.ezrahi.core.mapengine.REPORTS_LAYER
 import com.arielfaridja.ezrahi.core.mapengine.OfflineTileManager
+import com.arielfaridja.ezrahi.domain.model.EventParticipant
+import com.arielfaridja.ezrahi.domain.model.FieldReport
 import com.arielfaridja.ezrahi.domain.model.FieldReportType
 import com.arielfaridja.ezrahi.domain.model.GeoPoint
 import com.arielfaridja.ezrahi.domain.model.ReportTypeDefinition
 import com.arielfaridja.ezrahi.domain.model.StalenessConfig
+import com.arielfaridja.ezrahi.domain.model.roleLabel
 import com.arielfaridja.ezrahi.service.LocationTrackingService
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
@@ -60,6 +79,9 @@ fun MapScreen(
     var showBackgroundExplanation by remember { mutableStateOf(false) }
     var showBatteryExplanation by remember { mutableStateOf(false) }
     var showAddMarkerDialog by remember { mutableStateOf(false) }
+    var selectedReport by remember { mutableStateOf<ReportTip?>(null) }
+    var mapBoxSize by remember { mutableStateOf(IntSize.Zero) }
+    var cameraTick by remember { mutableStateOf(0) }
     var longPressLocation by remember { mutableStateOf<GeoPoint?>(null) }
     var hasFittedRoute by remember { mutableStateOf(false) }
     var styleUri by remember { mutableStateOf<String?>(null) }
@@ -292,27 +314,60 @@ fun MapScreen(
                 CircularProgressIndicator()
             }
         } else {
-            MapLibreView(
-                styleUri = styleUri!!,
-                modifier = Modifier.fillMaxSize().padding(padding),
-                onMapReady = { map ->
-                    mapState.value = map
-                },
-                onMapClick = { latLng ->
-                    if (measureMode) {
-                        measurePoints.add(GeoPoint(latLng.latitude, latLng.longitude))
+            Box(Modifier.fillMaxSize().padding(padding).onSizeChanged { mapBoxSize = it }) {
+                MapLibreView(
+                    styleUri = styleUri!!,
+                    modifier = Modifier.fillMaxSize(),
+                    onMapReady = { map ->
+                        mapState.value = map
+                        // Re-project the open tooltip's marker on every camera move
+                        // (real-time following + hide/show when off-screen) — notes task A.
+                        map.addOnCameraMoveListener { cameraTick++ }
+                    },
+                    onMapClick = { latLng ->
+                        // Marker-click pattern (ADR docs/decisions/0001): layer-scoped
+                        // hit-test instead of per-marker listeners; non-hits fall through.
+                        val map = mapState.value
+                        val hit = map?.let { m ->
+                            runCatching {
+                                val screen = m.projection.toScreenLocation(latLng)
+                                val id = m.queryRenderedFeatures(screen, REPORTS_LAYER)
+                                    .firstOrNull()
+                                    ?.getProperty("reportId")?.asString
+                                Pair(id, screen)
+                            }.getOrNull()
+                        }
+                        val report = hit?.let { (id, screen) -> id?.let { state.reports.firstOrNull { it.id == id } } }
+                        when {
+                            report != null -> {
+                                // Directly switch to the tapped marker's tooltip
+                                // (single tap replaces the open one) — notes task 1.
+                                selectedReport = ReportTip(report, GeoPoint(latLng.latitude, latLng.longitude))
+                            }
+                            selectedReport != null -> selectedReport = null
+                            measureMode -> measurePoints.add(GeoPoint(latLng.latitude, latLng.longitude))
+                        }
+                    },
+                    onLongClick = { latLng, _ ->
+                        val geo = GeoPoint(latLng.latitude, latLng.longitude)
+                        if (measureMode) {
+                            measurePoints.add(geo)
+                        } else {
+                            longPressLocation = geo
+                            showAddMarkerDialog = true
+                        }
                     }
-                },
-                onLongClick = { latLng, _ ->
-                    val geo = GeoPoint(latLng.latitude, latLng.longitude)
-                    if (measureMode) {
-                        measurePoints.add(geo)
-                    } else {
-                        longPressLocation = geo
-                        showAddMarkerDialog = true
-                    }
-                }
-            )
+                )
+                ReportTooltipPopup(
+                    tip = selectedReport,
+                    types = state.reportTypes,
+                    participants = state.participants,
+                    map = mapState.value,
+                    parentSize = mapBoxSize,
+                    cameraTick = cameraTick,
+                    onDismiss = { selectedReport = null }
+                )
+            }
         }
 
         if (showBackgroundExplanation) {
@@ -498,5 +553,234 @@ fun MapScreen(
             }
         }
 
+    }
+}
+
+// Report tooltip anchored to marker position (ADR docs/decisions/0001)
+@Immutable
+data class ReportTip(val report: FieldReport, val latLng: GeoPoint)
+
+@Composable
+private fun ReportTooltipPopup(
+    tip: ReportTip?,
+    types: List<ReportTypeDefinition>,
+    participants: List<EventParticipant>,
+    map: MapLibreMap?,
+    parentSize: IntSize,
+    cameraTick: Int,
+    onDismiss: () -> Unit
+) {
+    val density = LocalDensity.current
+    var tipSize by remember { mutableStateOf(IntSize.Zero) }
+
+    tip?.let { tip ->
+        // Re-project the marker to its current screen position every camera move.
+        val screen = map?.let { m ->
+            runCatching {
+                m.projection.toScreenLocation(
+                    LatLng(tip.latLng.latitude, tip.latLng.longitude)
+                )
+            }.getOrNull()
+        } ?: return@let
+
+        val report = tip.report
+        val def = types.firstOrNull { it.id == report.typeId }
+        val entry = def?.let { ReportIconCatalog.entry(it.iconKey) }
+            ?: ReportIconCatalog.entry(if (report.type == FieldReportType.MEDICAL) "medical" else "general")
+        val accent = def?.let { d ->
+            runCatching { Color(android.graphics.Color.parseColor(d.colorHex)) }.getOrDefault(entry.accent)
+        } ?: entry.accent
+
+        // While the marker is on-screen show the tooltip; otherwise render a small
+        // directional triangle at the nearest screen edge pointing at the report.
+        val onScreen = screen.x >= 0f && screen.y >= 0f &&
+            screen.x <= parentSize.width.toFloat() && screen.y <= parentSize.height.toFloat()
+        if (!onScreen) {
+            ReportOffscreenIndicator(
+                markerX = screen.x,
+                markerY = screen.y,
+                viewportW = parentSize.width,
+                viewportH = parentSize.height,
+                color = accent,
+                onDismiss = onDismiss
+            )
+            return@let
+        }
+
+        val anchor = Offset(screen.x, screen.y)
+        val gapPx = with(density) { 12.dp.toPx() }
+
+        val tipWidth = tipSize.width
+        val tipHeight = tipSize.height
+
+        val left = (anchor.x - tipWidth / 2f).toInt()
+            .coerceIn(0, (parentSize.width - tipWidth).coerceAtLeast(0))
+        val top = (anchor.y - tipHeight - gapPx).toInt()
+            .takeIf { it > 0 }
+            ?: (anchor.y + gapPx).toInt()
+                .coerceAtMost((parentSize.height - tipHeight).coerceAtLeast(0))
+
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Popup(
+                alignment = Alignment.TopStart,
+                offset = IntOffset(left, top),
+                onDismissRequest = onDismiss,
+                // focusable=false lets taps reach the map beneath, so a tap on another
+                // marker switches the tooltip directly (handled in onMapClick) and a tap
+                // on empty map closes it (also onMapClick) — notes task 1.
+                // LTR is forced so the popup uses physical-pixel coordinates from the
+                // map projection (otherwise RTL mirrors the horizontal axis).
+                properties = PopupProperties(focusable = false, dismissOnClickOutside = false)
+            ) {
+            val typeLabel = def?.name ?: when (report.type) {
+                FieldReportType.MEDICAL -> "Medical"
+                FieldReportType.GENERAL -> "General"
+                FieldReportType.UNKNOWN -> "Custom"
+            }
+
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                tonalElevation = 6.dp,
+                shadowElevation = 6.dp,
+                modifier = Modifier
+                    .widthIn(max = 260.dp)
+                    .onSizeChanged { tipSize = it }
+            ) {
+                Column(Modifier.padding(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(entry.resId),
+                            contentDescription = null,
+                            tint = accent,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            report.title.ifBlank { "Report" },
+                            style = MaterialTheme.typography.titleSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        typeLabel.uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = accent
+                    )
+                    if (report.description.isNotBlank()) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            report.description,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    val reporter = participants.firstOrNull { it.userId == report.reporterId }
+                    val reporterLabel = if (reporter != null) {
+                        "${reporter.fullName.ifBlank { report.reporterId }} · ${roleLabel(reporter.role)}"
+                    } else {
+                        report.reporterId
+                    }
+                    Text(
+                        "By $reporterLabel",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        java.text.DateFormat.getDateTimeInstance().format(java.util.Date(report.reportTime)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReportOffscreenIndicator(
+    markerX: Float,
+    markerY: Float,
+    viewportW: Int,
+    viewportH: Int,
+    color: Color,
+    onDismiss: () -> Unit
+) {
+    val density = LocalDensity.current
+    val margin = with(density) { 14.dp.toPx() }
+    val arrowSize = with(density) { 18.dp.toPx() }
+
+    if (viewportW <= 0 || viewportH <= 0) return
+
+    val cx = viewportW / 2f
+    val cy = viewportH / 2f
+    val dx = markerX - cx
+    val dy = markerY - cy
+
+    // Clamp the indicator to the nearest screen edge (with a small margin).
+    val px = markerX.coerceIn(margin, (viewportW - margin).coerceAtLeast(margin))
+    val py = markerY.coerceIn(margin, (viewportH - margin).coerceAtLeast(margin))
+
+    // Triangle is drawn pointing "up" (-y); rotate it to aim at the marker.
+    val degrees = Math.toDegrees(Math.atan2(dy.toDouble(), dx.toDouble())).toFloat() + 90f
+
+    val shadowColor = Color.Black.copy(alpha = 0.25f)
+
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+        Popup(
+            alignment = Alignment.TopStart,
+            offset = IntOffset((px - arrowSize / 2f).toInt(), (py - arrowSize / 2f).toInt()),
+            onDismissRequest = onDismiss,
+            properties = PopupProperties(focusable = false, dismissOnClickOutside = false)
+        ) {
+            Canvas(modifier = Modifier.size(with(density) { arrowSize.toDp() })) {
+                val w = size.width
+                val h = size.height
+                val r = w * 0.22f
+                val ax = w / 2f; val ay = 0f          // apex
+                val bx = 0f;     val by = h           // bottom-left
+                val cx = w;      val cy = h           // bottom-right
+
+                fun unit(x1: Float, y1: Float, x2: Float, y2: Float): Pair<Float, Float> {
+                    val d = kotlin.math.hypot(x2 - x1, y2 - y1).coerceAtLeast(1e-4f)
+                    return ((x2 - x1) / d) to ((y2 - y1) / d)
+                }
+                // Corner A (apex): from edge CA into edge AB
+                val (uAx, uAy) = unit(ax, ay, cx, cy)
+                val (uBx, uBy) = unit(ax, ay, bx, by)
+                val sA = Offset(ax + uAx * r, ay + uAy * r)
+                val eA = Offset(ax + uBx * r, ay + uBy * r)
+                // Corner B: from edge AB into edge BC
+                val (u2x, u2y) = unit(bx, by, ax, ay)
+                val (u3x, u3y) = unit(bx, by, cx, cy)
+                val sB = Offset(bx + u2x * r, by + u2y * r)
+                val eB = Offset(bx + u3x * r, by + u3y * r)
+                // Corner C: from edge BC into edge CA
+                val (u4x, u4y) = unit(cx, cy, bx, by)
+                val (u5x, u5y) = unit(cx, cy, ax, ay)
+                val sC = Offset(cx + u4x * r, cy + u4y * r)
+                val eC = Offset(cx + u5x * r, cy + u5y * r)
+
+                val triangle = Path().apply {
+                    moveTo(eA.x, eA.y)
+                    lineTo(sB.x, sB.y); quadraticBezierTo(bx, by, eB.x, eB.y)
+                    lineTo(sC.x, sC.y); quadraticBezierTo(cx, cy, eC.x, eC.y)
+                    lineTo(sA.x, sA.y); quadraticBezierTo(ax, ay, eA.x, eA.y)
+                    close()
+                }
+
+                rotate(degrees) {
+                    // Little elevated: soft drop shadow offset toward the base.
+                    withTransform({ translate(left = 0f, top = 3f) }) {
+                        drawPath(triangle, shadowColor, alpha = 0.35f)
+                    }
+                    drawPath(triangle, color)
+                }
+            }
+        }
     }
 }

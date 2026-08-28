@@ -24,6 +24,12 @@ Per-phase work plans derived from the roadmap:
 - [`planning/todo-6.md`](./planning/todo-6.md) — Phase 6: Security & Rules
 - [`planning/todo-7.md`](./planning/todo-7.md) — Phase 7: LoRa / Mesh preparation
 
+## Decisions (`decisions/`)
+
+Architecture Decision Records (ADRs):
+
+- [`decisions/0001-map-marker-interaction-symbol-layer-vs-annotation-plugin.md`](./decisions/0001-map-marker-interaction-symbol-layer-vs-annotation-plugin.md) — why map markers are GeoJson sources + style layers with layer-scoped click hit-testing instead of the MapLibre Annotation Plugin
+
 ## Specifications (`specs/`)
 
 Analysis & specification documents for the audit fix series:

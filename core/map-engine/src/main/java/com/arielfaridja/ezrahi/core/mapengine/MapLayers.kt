@@ -97,10 +97,14 @@ object MapLayers {
     fun updateReports(style: Style, reports: List<FieldReport>, imageNameFor: (FieldReport) -> String = { report ->
         if (report.type == FieldReportType.MEDICAL) "report_medical" else "report_general"
     }) {
+        // Marker interaction pattern is documented in docs/decisions/0001:
+        // GeoJson features carry a "reportId" property consumed by the
+        // layer-scoped click hit-test in MapScreen.onMapClick.
         val source = style.getSourceAs<GeoJsonSource>(REPORTS_SRC) ?: return
         val features = reports.mapNotNull { report ->
             val location = report.location ?: return@mapNotNull null
             Feature.fromGeometry(Point.fromLngLat(location.longitude, location.latitude)).also {
+                it.addStringProperty("reportId", report.id)
                 it.addStringProperty("title", report.title.ifEmpty { "Report" })
                 it.addStringProperty("icon", imageNameFor(report))
             }
