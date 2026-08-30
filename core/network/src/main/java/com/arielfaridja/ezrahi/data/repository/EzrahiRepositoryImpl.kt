@@ -153,6 +153,16 @@ class EzrahiRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun eventExists(eventId: String): Boolean =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                firestore.collection("events").document(eventId)
+                    .get()
+                    .await()
+                    .exists()
+            }.getOrDefault(false)
+        }
+
     override fun getEventUpdates(eventId: String): Flow<FieldEvent?> = callbackFlow {
         // 1. Listen to Firestore and cache locally
         val registration = firestore.collection("events").document(eventId)

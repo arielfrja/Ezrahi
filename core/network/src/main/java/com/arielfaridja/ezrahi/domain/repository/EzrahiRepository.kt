@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 
 interface EzrahiRepository {
+    suspend fun eventExists(eventId: String): Boolean
     fun getEventUpdates(eventId: String): Flow<FieldEvent?>
     fun getEvents(): Flow<List<FieldEvent>>
     fun getUserEvents(userId: String): Flow<List<FieldEvent>>

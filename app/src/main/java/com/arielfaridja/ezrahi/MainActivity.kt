@@ -47,6 +47,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -66,12 +67,17 @@ import com.arielfaridja.ezrahi.app.ui.management.EventManagementScreen
 import com.arielfaridja.ezrahi.app.ui.settings.SettingsScreen
 import com.arielfaridja.ezrahi.app.util.EventPrefs
 import com.arielfaridja.ezrahi.app.ui.theme.EzrahiTheme
+import com.arielfaridja.ezrahi.domain.repository.EzrahiRepository
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var repository: EzrahiRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -80,7 +86,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    EzrahiNavApp()
+                    EzrahiNavApp(repository = repository)
                 }
             }
         }
@@ -103,13 +109,14 @@ private val drawerDestinations = listOf(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EzrahiNavApp() {
+fun EzrahiNavApp(repository: EzrahiRepository) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
 
+    val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     var isSignedIn by remember { mutableStateOf(auth.currentUser != null) }
     var currentEventId by remember { mutableStateOf<String?>(null) }
@@ -119,17 +126,6 @@ fun EzrahiNavApp() {
         }
         auth.addAuthStateListener(listener)
         onDispose { auth.removeAuthStateListener(listener) }
-    }
-
-    LaunchedEffect(isSignedIn) {
-        if (isSignedIn) {
-            val current = navController.currentDestination?.route
-            if (current == "auth" || current == "signup") {
-                navController.navigate("events") {
-                    popUpTo("auth") { inclusive = true }
-                }
-            }
-        }
     }
 
     ModalNavigationDrawer(
@@ -183,7 +179,34 @@ fun EzrahiNavApp() {
             }
         }
     ) {
-        NavHost(navController = navController, startDestination = "auth") {
+        NavHost(navController = navController, startDestination = "splash") {
+            composable("splash") {
+                val splashContext = LocalContext.current
+                LaunchedEffect(Unit) {
+                    val signedIn = FirebaseAuth.getInstance().currentUser != null
+                    if (signedIn) {
+                        val lastEventId = EventPrefs.getLastEventId(splashContext)
+                        val exists = lastEventId?.let { repository.eventExists(it) } == true
+                        if (exists && lastEventId != null) {
+                            currentEventId = lastEventId
+                            navController.navigate("map/$lastEventId") {
+                                popUpTo("splash") { inclusive = true }
+                            }
+                        } else {
+                            navController.navigate("events") {
+                                popUpTo("splash") { inclusive = true }
+                            }
+                        }
+                    } else {
+                        navController.navigate("auth") {
+                            popUpTo("splash") { inclusive = true }
+                        }
+                    }
+                }
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
             composable("auth") {
                 AuthScreen(
                     onAuthSuccess = {
