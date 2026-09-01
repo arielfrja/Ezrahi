@@ -76,8 +76,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.arielfaridja.ezrahi.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arielfaridja.ezrahi.domain.model.roleLabel
@@ -160,7 +162,7 @@ fun EventManagementScreen(
                     modifier = Modifier.fillMaxSize().padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Select an activity first / בחר פעילות קודם")
+                    Text(stringResource(R.string.select_activity_first))
                 }
             }
 
@@ -227,7 +229,7 @@ fun EventManagementScreen(
                         1 -> {
                             item(key = "participants-header") {
                                 Text(
-                                    text = "Crew Members / משתתפים",
+                                    text = stringResource(R.string.crew_members),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -255,7 +257,7 @@ fun EventManagementScreen(
                             if (filtered.isEmpty()) {
                                 item(key = "participants-empty") {
                                     Text(
-                                        text = "No participants match this filter / אין משתתפים מתאימים",
+                                        text = stringResource(R.string.no_participants_match),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.padding(vertical = 8.dp)
@@ -267,7 +269,7 @@ fun EventManagementScreen(
                         else -> {
                             item(key = "reports-header") {
                                 Text(
-                                    text = "Field Reports / דיווחים מהשטח",
+                                    text = stringResource(R.string.field_reports),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -573,7 +575,7 @@ private fun StalenessSettingsSection(
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             Text(
-                text = "Staleness Thresholds / ספי רעננות",
+                text = stringResource(R.string.staleness_thresholds),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -1228,7 +1230,7 @@ private fun RoutesSection(
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             Text(
-                text = "Routes / מסלולים",
+                text = stringResource(R.string.routes),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -1286,7 +1288,7 @@ private fun RoutesSection(
                     )
                     Spacer(Modifier.width(8.dp))
                 }
-                Text(if (isUploading) "Uploading..." else "Upload Route / העלה מסלול")
+                Text(if (isUploading) stringResource(R.string.uploading) else stringResource(R.string.upload_route))
             }
 
             if (isManager) {
@@ -1315,7 +1317,7 @@ private fun RoutePermissionsEditor(
     var selectedUids by remember { mutableStateOf(allowedUids) }
 
     Text(
-        text = "Who can upload routes / מי רשאי להעלות מסלולים",
+        text = stringResource(R.string.who_can_upload_routes),
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )

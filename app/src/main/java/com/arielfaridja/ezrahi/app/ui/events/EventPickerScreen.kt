@@ -15,9 +15,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.arielfaridja.ezrahi.R
 import com.arielfaridja.ezrahi.domain.model.FieldEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,7 +43,7 @@ fun EventPickerScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Activities / פעילויות") })
+            TopAppBar(title = { Text(stringResource(R.string.activities_title)) })
         }
     ) { padding ->
         when {
@@ -62,7 +64,7 @@ fun EventPickerScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
                         Spacer(Modifier.height(12.dp))
-                        Text("No activities yet / אין פעילויות")
+                        Text(stringResource(R.string.no_activities_yet))
                     }
                 }
             }
@@ -105,7 +107,7 @@ private fun EventCard(
             }
             Spacer(Modifier.height(4.dp))
             Text(
-                text = if (event.isLive) "Live / פעיל" else "Inactive / לא פעיל",
+                text = if (event.isLive) stringResource(R.string.event_live) else stringResource(R.string.event_inactive),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

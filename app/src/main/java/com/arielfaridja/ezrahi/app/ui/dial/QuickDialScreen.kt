@@ -33,8 +33,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.arielfaridja.ezrahi.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arielfaridja.ezrahi.domain.model.roleLabel
@@ -75,7 +77,7 @@ fun QuickDialScreen(
                     modifier = Modifier.fillMaxSize().padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Select an activity first / בחר פעילות קודם")
+                    Text(stringResource(R.string.select_activity_first))
                 }
             }
 
@@ -98,7 +100,7 @@ fun QuickDialScreen(
                         modifier = Modifier.fillMaxSize().padding(padding),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("No staff contacts yet / אין אנשי צוות זמינים")
+                        Text(stringResource(R.string.no_staff_contacts))
                     }
                 } else {
                     LazyColumn(

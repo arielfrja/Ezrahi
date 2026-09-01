@@ -41,6 +41,7 @@ import com.arielfaridja.ezrahi.app.util.Coordinates
 import com.arielfaridja.ezrahi.app.util.CoordFormat
 import com.arielfaridja.ezrahi.app.util.LocationPermissionHelper
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import com.arielfaridja.ezrahi.app.ui.reports.ReportIconCatalog
 import com.arielfaridja.ezrahi.core.mapengine.MapLayers
 import com.arielfaridja.ezrahi.core.mapengine.MapLibreConfig
@@ -373,23 +374,18 @@ fun MapScreen(
         if (showBackgroundExplanation) {
             AlertDialog(
                 onDismissRequest = { showBackgroundExplanation = false },
-                title = { Text("Background Location / מיקום ברקע") },
+                title = { Text(stringResource(R.string.bg_location_title)) },
                 text = {
-                    Text(
-                        "To keep transmitting your location when the app is in the background, " +
-                            "Ezrahi needs the \"Allow all the time\" location permission.\n\n" +
-                            "Tap Continue to open Settings, then select \"Allow all the time\" under Location.\n\n" +
-                            "כדי להמשיך לשדר את המיקום ברקע, יש להעניק הרשאת \"Allow all the time\"."
-                    )
+                    Text(stringResource(R.string.bg_location_explanation))
                 },
                 confirmButton = {
                     Button(onClick = {
                         showBackgroundExplanation = false
                         appSettingsLauncher.launch(LocationPermissionHelper.appSettingsIntent(context))
-                    }) { Text("Continue / המשך") }
+                    }) { Text(stringResource(R.string.continue_btn)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showBackgroundExplanation = false }) { Text("Not now / לא עכשיו") }
+                    TextButton(onClick = { showBackgroundExplanation = false }) { Text(stringResource(R.string.not_now)) }
                 }
             )
         }
@@ -397,23 +393,18 @@ fun MapScreen(
         if (showBatteryExplanation) {
             AlertDialog(
                 onDismissRequest = { showBatteryExplanation = false },
-                title = { Text("Battery Optimization / חיסכון בסוללה") },
+                title = { Text(stringResource(R.string.battery_opt_title)) },
                 text = {
-                    Text(
-                        "To keep location tracking reliable in the background, " +
-                            "Ezrahi should be exempt from battery optimization.\n\n" +
-                            "Tap Continue to allow it.\n\n" +
-                            "כדי ששירות המיקום ימשיך לפעול ברקע, יש לבטל את חיסכון הסוללה עבור Ezrahi."
-                    )
+                    Text(stringResource(R.string.battery_opt_explanation))
                 },
                 confirmButton = {
                     Button(onClick = {
                         showBatteryExplanation = false
                         batteryOptimizationLauncher.launch(LocationPermissionHelper.batteryOptimizationRequestIntent(context))
-                    }) { Text("Continue / המשך") }
+                    }) { Text(stringResource(R.string.continue_btn)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showBatteryExplanation = false }) { Text("Not now / לא עכשיו") }
+                    TextButton(onClick = { showBatteryExplanation = false }) { Text(stringResource(R.string.not_now)) }
                 }
             )
         }
@@ -435,13 +426,13 @@ fun MapScreen(
             val selectedEntry = ReportIconCatalog.entry(selectedType.iconKey)
             AlertDialog(
                 onDismissRequest = { showAddMarkerDialog = false },
-                title = { Text("Add Marker / הוספת דיווח") },
+                title = { Text(stringResource(R.string.add_marker_title)) },
                 text = {
                     Column {
                         OutlinedTextField(
                             value = markerTitle,
                             onValueChange = { markerTitle = it },
-                            label = { Text("Title / כותרת") },
+                            label = { Text(stringResource(R.string.report_title)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
@@ -449,7 +440,7 @@ fun MapScreen(
                         OutlinedTextField(
                             value = markerDescription,
                             onValueChange = { markerDescription = it },
-                            label = { Text("Description / תיאור") },
+                            label = { Text(stringResource(R.string.report_description)) },
                             modifier = Modifier.fillMaxWidth()
                         )
                         Spacer(Modifier.height(12.dp))
@@ -497,10 +488,10 @@ fun MapScreen(
                             viewModel.addReport(eventId, markerTitle, markerDescription, selectedType, loc.latitude, loc.longitude)
                         }
                         showAddMarkerDialog = false
-                    }) { Text("Add / הוספה") }
+                    }) { Text(stringResource(R.string.add)) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showAddMarkerDialog = false }) { Text("Cancel / ביטול") }
+                    TextButton(onClick = { showAddMarkerDialog = false }) { Text(stringResource(R.string.cancel)) }
                 }
             )
         }

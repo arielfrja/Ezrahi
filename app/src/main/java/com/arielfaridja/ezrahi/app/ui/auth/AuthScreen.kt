@@ -6,11 +6,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.arielfaridja.ezrahi.R
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -30,7 +32,7 @@ fun AuthScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Ezrahi / אזרחי", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Text(stringResource(R.string.app_title), fontSize = 32.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         Text("Field Command & Coordination", fontSize = 16.sp, color = MaterialTheme.colorScheme.secondary)
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -38,7 +40,7 @@ fun AuthScreen(
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("Email / כתובת אימייל") },
+            label = { Text(stringResource(R.string.email)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
@@ -48,7 +50,7 @@ fun AuthScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password / סיסמה") },
+            label = { Text(stringResource(R.string.password)) },
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth(),
@@ -84,12 +86,12 @@ fun AuthScreen(
             if (isLoading) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp))
             } else {
-                Text("Login / כניסה למערכת")
+                Text(stringResource(R.string.login_btn))
             }
         }
 
         TextButton(onClick = onNavigateToSignUp, modifier = Modifier.fillMaxWidth()) {
-            Text("No account? Sign up / אין חשבון? הירשם")
+            Text(stringResource(R.string.no_account_sign_up))
         }
     }
 }

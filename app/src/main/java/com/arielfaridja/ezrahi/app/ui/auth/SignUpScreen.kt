@@ -9,12 +9,14 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.arielfaridja.ezrahi.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
@@ -33,7 +35,7 @@ fun SignUpScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Create Account / הרשמה", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        Text(stringResource(R.string.create_account), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         Text("Field Command & Coordination", fontSize = 16.sp, color = MaterialTheme.colorScheme.secondary)
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -41,7 +43,7 @@ fun SignUpScreen(
         OutlinedTextField(
             value = state.firstName,
             onValueChange = { newValue -> viewModel.updateField { it.copy(firstName = newValue, errorMessage = null) } },
-            label = { Text("First Name / שם פרטי") },
+            label = { Text(stringResource(R.string.first_name)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
@@ -51,7 +53,7 @@ fun SignUpScreen(
         OutlinedTextField(
             value = state.lastName,
             onValueChange = { newValue -> viewModel.updateField { it.copy(lastName = newValue, errorMessage = null) } },
-            label = { Text("Last Name / שם משפחה") },
+            label = { Text(stringResource(R.string.last_name)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
@@ -61,7 +63,7 @@ fun SignUpScreen(
         OutlinedTextField(
             value = state.email,
             onValueChange = { newValue -> viewModel.updateField { it.copy(email = newValue, errorMessage = null) } },
-            label = { Text("Email / כתובת אימייל") },
+            label = { Text(stringResource(R.string.email)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
@@ -72,7 +74,7 @@ fun SignUpScreen(
         OutlinedTextField(
             value = state.phone,
             onValueChange = { newValue -> viewModel.updateField { it.copy(phone = newValue, errorMessage = null) } },
-            label = { Text("Phone / טלפון") },
+            label = { Text(stringResource(R.string.phone)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
@@ -83,7 +85,7 @@ fun SignUpScreen(
         OutlinedTextField(
             value = state.password,
             onValueChange = { newValue -> viewModel.updateField { it.copy(password = newValue, errorMessage = null) } },
-            label = { Text("Password / סיסמה") },
+            label = { Text(stringResource(R.string.password)) },
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth(),
@@ -95,7 +97,7 @@ fun SignUpScreen(
         OutlinedTextField(
             value = state.passwordVerification,
             onValueChange = { newValue -> viewModel.updateField { it.copy(passwordVerification = newValue, errorMessage = null) } },
-            label = { Text("Retype Password / אימות סיסמה") },
+            label = { Text(stringResource(R.string.retype_password)) },
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth(),
@@ -117,12 +119,12 @@ fun SignUpScreen(
             if (state.isLoading) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp))
             } else {
-                Text("Sign Up / הירשם")
+                Text(stringResource(R.string.sign_up))
             }
         }
 
         TextButton(onClick = onNavigateToLogin, modifier = Modifier.fillMaxWidth()) {
-            Text("Already have an account? Login / יש לך חשבון? כניסה")
+            Text(stringResource(R.string.already_have_account_login))
         }
     }
 }

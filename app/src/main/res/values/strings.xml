@@ -1,58 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Ezrahi</string>
-    <string name="users">Users</string>
-    <string name="reports">Reports</string>
-    <string name="routes">Routes</string>
+    <!-- Default language is Hebrew -->
+    <string name="app_name">אזרחי</string>
+    <string name="app_title">אזרחי</string>
+    <string name="users">משתמשים</string>
+    <string name="reports">דיווחים</string>
+    <string name="routes">מסלולים</string>
+
     <!-- Preference Titles -->
 
     <!-- Messages Preferences -->
 
     <!-- Sync Preferences -->
     <string name="current_user_pref" translatable="false">UserSharedPref</string>
-    <string name="TrackingNotificationTitle">Location Tracking Service</string>
-    <string name="TrackingNotificationText">The location tracking service runs in the background</string>
-    <string name="don_t_have_an_account_yet">Don\'t have an account yet?</string>
-    <string name="edit_button">Edit</string>
-    <string name="activity_name">Activity Name</string>
-    <string name="Click_again_to_exit">Press back again to exit</string>
-    <string name="cancel">Cancel</string>
-    <string name="Add">Add</string>
-    <string name="add_marker">Add Marker</string>
-    <string name="cant_get_occurred_location_right_now">Can\'t get current location right now</string>
-    <string name="general">General</string>
-    <string name="medical">Medical</string>
-    <string name="report_add_success">Report added successfully</string>
-    <!-- Added for map fragment accessibility -->
-    <string name="map_content_desc">Interactive map for navigation and reports</string>
-    <string name="toolbar_map">Map Toolbar</string>
-    <string name="my_location_btn_desc">Go to my location on the map</string>
-    <!-- Added for MapFragment dialogs -->
-    <string name="enable_gps">Enable GPS</string>
-    <string name="gps_not_enabled">GPS is not enabled. Do you want to enable it now?</string>
-    <string name="yes">Yes</string>
-    <string name="no">No</string>
-    <string name="enable_location_services">Enable Location Services</string>
-    <string name="location_services_required">Location services are required for this app. Please enable location services in your device settings.</string>
-    <string name="go_to_settings">Go to Settings</string>
-    <string name="please_assign_activity">Please assign an activity to continue.</string>
-    <string name="ok">OK</string>
-    <!-- Added missing strings for login screen -->
-    <string name="email_or_phone">Email or phone</string>
-    <string name="login">Login</string>
-    <string name="login_using_email">Login using email:</string>
-    <string name="password">Password</string>
-    <string name="unknown_error">Unknown error</string>
-    <string name="stop">STOP</string>
-    <string name="set_post_signed_up_action">set post signed up action</string>
-    <string name="user_shared_pref">UserSharedPref</string>
-    <string name="id">id</string>
-    <string name="first_name">firstName</string>
-    <string name="last_name">lastName</string>
-    <string name="phone">phone</string>
-    <string name="email">email</string>
-    <string name="user_avatar">User avatar</string>
-    <string name="select_activity">select_activity</string>
+    <string name="TrackingNotificationTitle">שירות מעקב מיקום</string>
+    <string name="TrackingNotificationText">שירות מעקב המיקום פועל ברקע</string>
+    <string name="don_t_have_an_account_yet">עדיין אין לך חשבון?</string>
+    <string name="edit_button">ערוך</string>
+    <string name="activity_name">שם הפעילות</string>
+    <string name="Click_again_to_exit">לחץ שוב כדי לצאת</string>
+    <string name="cancel">ביטול</string>
+    <string name="Add">הוסף</string>
+    <string name="add_marker">הוסף סימון</string>
+    <string name="cant_get_occurred_location_right_now">לא ניתן לאתר מיקום כעת</string>
+    <string name="general">כללי</string>
+    <string name="medical">רפואי</string>
+    <string name="report_add_success">הדיווח נוסף בהצלחה</string>
 
-    <string name="current_activity">Current Activity</string>
-    <string name="choose_your_current_activity">Choose your current activity</string>
+    <!-- Added for map fragment accessibility -->
+    <string name="map_content_desc">מפה אינטראקטיבית לניווט ודיווחים</string>
+    <string name="toolbar_map">סרגל מפה</string>
+    <string name="my_location_btn_desc">עבור למיקומי הנוכחי במפה</string>
+
+    <!-- Added for MapFragment dialogs -->
+    <string name="enable_gps">הפעל GPS</string>
+    <string name="gps_not_enabled">ה-GPS אינו מופעל. האם להפעיל אותו כעת?</string>
+    <string name="yes">כן</string>
+    <string name="no">לא</string>
+    <string name="enable_location_services">הפעל שירותי מיקום</string>
+    <string name="location_services_required">נדרש להפעיל שירותי מיקום עבור יישום זה. אנא אפשר שירותי מיקום בהגדרות המכשיר.</string>
+    <string name="go_to_settings">עבור להגדרות</string>
+    <string name="please_assign_activity">אנא הקצה פעילות כדי להמשיך.</string>
+    <string name="ok">אישור</string>
+
+    <!-- Added missing strings for login screen -->
+    <string name="email_or_phone">אימייל או טלפון</string>
+    <string name="login">התחברות</string>
+    <string name="login_using_email">התחבר באמצעות אימייל:</string>
+    <string name="password">סיסמה</string>
+    <string name="unknown_error">שגיאה לא ידועה</string>
+    <string name="stop">עצור</string>
+    <string name="set_post_signed_up_action">הגדר פעולה לאחר הרשמה</string>
+    <string name="user_shared_pref">UserSharedPref</string>
+    <string name="id">מזהה</string>
+    <string name="first_name">שם פרטי</string>
+    <string name="last_name">שם משפחה</string>
+    <string name="phone">טלפון</string>
+    <string name="email">אימייל</string>
+    <string name="user_avatar">תמונת משתמש</string>
+    <string name="select_activity">בחר פעילות</string>
+
+    <string name="current_activity">הפעילות הנוכחית</string>
+    <string name="choose_your_current_activity">בחר את הפעילות הנוכחית שלך</string>
+
+    <!-- Extracted bilingual UI strings -->
+    <string name="bg_location_title">מיקום ברקע</string>
+    <string name="bg_location_explanation">כדי להמשיך לשדר את המיקום ברקע, יש להעניק הרשאת "Allow all the time".</string>
+    <string name="continue_btn">המשך</string>
+    <string name="not_now">לא עכשיו</string>
+    <string name="battery_opt_title">חיסכון בסוללה</string>
+    <string name="battery_opt_explanation">כדי ששירות המיקום ימשיך לפעול ברקע, יש לבטל את חיסכון הסוללה עבור Ezrahi.</string>
+    <string name="add_marker_title">הוספת דיווח</string>
+    <string name="report_title">כותרת</string>
+    <string name="report_description">תיאור</string>
+    <string name="add">הוספה</string>
+    <string name="activities_title">פעילויות</string>
+    <string name="no_activities_yet">אין פעילויות</string>
+    <string name="event_live">פעיל</string>
+    <string name="event_inactive">לא פעיל</string>
+    <string name="create_account">הרשמה</string>
+    <string name="retype_password">אימות סיסמה</string>
+    <string name="sign_up">הירשם</string>
+    <string name="already_have_account_login">יש לך חשבון? כניסה</string>
+    <string name="login_btn">כניסה למערכת</string>
+    <string name="no_account_sign_up">אין חשבון? הירשם</string>
+    <string name="select_activity_first">בחר פעילות קודם</string>
+    <string name="messenger_chats">צ\'אטים חיצוניים</string>
+    <string name="no_staff_contacts">אין אנשי צוות זמינים</string>
+    <string name="no_other_participants">אין משתתפים נוספים</string>
+    <string name="no_messages_yet">אין הודעות עדיין</string>
+    <string name="no_channel_messages">אין הודעות בערוץ זה</string>
+    <string name="channels">ערוצים</string>
+    <string name="direct_chat">אישי</string>
+    <string name="crew_members">משתתפים</string>
+    <string name="no_participants_match">אין משתתפים מתאימים</string>
+    <string name="field_reports">דיווחים מהשטח</string>
+    <string name="staleness_thresholds">ספי רעננות</string>
+    <string name="uploading">מעלה...</string>
+    <string name="upload_route">העלה מסלול</string>
+    <string name="who_can_upload_routes">מי רשאי להעלות מסלולים</string>
 </resources>

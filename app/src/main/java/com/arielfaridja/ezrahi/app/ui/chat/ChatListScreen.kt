@@ -33,8 +33,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.arielfaridja.ezrahi.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arielfaridja.ezrahi.domain.model.FieldMessage
@@ -91,7 +93,7 @@ fun ChatListScreen(
                 ) {
                     item(key = "header-channels") {
                         Text(
-                            text = "Channels / ערוצים",
+                            text = stringResource(R.string.channels),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 4.dp)
@@ -119,7 +121,7 @@ fun ChatListScreen(
                     }
                     item(key = "header-direct") {
                         Text(
-                            text = "Direct / אישי",
+                            text = stringResource(R.string.direct_chat),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 12.dp)
@@ -141,7 +143,7 @@ fun ChatListScreen(
                     if (state.participants.isEmpty()) {
                         item(key = "direct-empty") {
                             Text(
-                                text = "No other participants yet / אין משתתפים נוספים",
+                                text = stringResource(R.string.no_other_participants),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(vertical = 8.dp)

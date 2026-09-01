@@ -33,8 +33,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.arielfaridja.ezrahi.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arielfaridja.ezrahi.domain.model.roleLabel
@@ -88,7 +90,7 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxSize().padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Select an activity first / בחר פעילות קודם")
+                    Text(stringResource(R.string.select_activity_first))
                 }
             }
 
@@ -125,7 +127,7 @@ fun SettingsScreen(
                         }
                     }
                     Text(
-                        text = "Messenger chats / צ'אטים חיצוניים",
+                        text = stringResource(R.string.messenger_chats),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
